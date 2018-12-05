@@ -189,7 +189,7 @@ ULIBS =
 
 # List of available AVR programmer.
 AVRDUDE_PROGRAMMER    = avrdude
-AVRDUDE_PROGRAMMER_ID = wiring
+AVRDUDE_PROGRAMMER_ID = arduino
 DFU_PROGRAMMER        = dfu-programmer
 MICRONUCLEUS          = micronucleus
 
@@ -205,7 +205,7 @@ else
 endif
 
 # AVR serial port.
-AVRDUDE_PORT = /dev/ttyUSB0
+AVRDUDE_PORT = /dev/ttyACM0
 
 AVRDUDE_WRITE_FLASH = -D -U flash:w:$(BUILDDIR)/$(PROJECT).hex
 
