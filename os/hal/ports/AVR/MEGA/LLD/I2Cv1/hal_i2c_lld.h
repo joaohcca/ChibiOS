@@ -31,6 +31,7 @@
 /* Driver constants.                                                        */
 /*==========================================================================*/
 
+/**MASTER DEF                                       *?
 /** @brief   START transmitted.                     */
 #define TWI_START                  0x08
 /** @brief   Repeated START transmitted.            */
@@ -57,6 +58,60 @@
 #define TWI_MASTER_RX_DATA_ACK     0x50
 /** @brief   DATA received with NACK response.      */
 #define TWI_MASTER_RX_DATA_NACK    0x58
+
+/* SLAVE DEF                                         */
+/*SLAVE_RECIEVER_MODE								 */
+/**@brief   own SLA+W recieved ACK has been returned */
+#define TWI_SLAVE_RX_ADDR_ACK      0x60
+
+/**@brief   Arbitration lost in SLA+R/W as master, recieved SLA+W ACK RETURN*/
+#define TWI_SLAVE_RX_POST_ARB_LOST 0x68
+
+/**@brief  general call address received ACK has been returned */
+#define TWI_SLAVE_RX_GCA           0x70
+
+/**@brief  Arbitration lost in SLA+R/W as master; GCA recieved  */
+#define TWI_SLAVE_RX_GCA_POST_ARB_LOST      0x78
+
+/**@brief   previously addressed with own SLA+W data recieved ACK */
+#define TWI_SLAVE_RX_DATA_ACK      0x80
+
+/**@brief   previously addressed with own SLA+W data recieved NACK */
+#define TWI_SLAVE_RX_DATA_NACK      0x88
+
+/**@brief   previously addressed with GCA DATA recieved ACK */
+#define TWI_SLAVE_RX_GCA_DATA_ACK      0x90
+
+/**@brief   previously addressed with GCA DATA recieved NACK */
+#define TWI_SLAVE_RX_GCA_DATA_NACK      0x98
+
+/**@brief   stop condition or repeated start recieved while still addressed as slave*/
+#define TWI_SLAVE_RX_STOP      0xA0
+
+/*SLAVE_TRANSMITTER_MODE                              */
+
+/**@brief   own SLA+R recieved ACK has been returned */
+#define TWI_SLAVE_TX_ADDR_ACK      0xA8
+
+/**@brief   Arbitration lost in SLA+R/W as master, recieved SLA+R ACK RETURN */
+#define TWI_SLAVE_TX_POST_ARB_LOST       0xB0
+
+/**@brief DATA BYTE in TWDR has been transmitted, ACK returned*/
+#define TWI_DATA_TX_ACK					0xB8
+
+/**@brief DATA BYTE in TWDR has been transmitted, NACK returned*/
+#define TWI_DATA_TX_NACK					0xC0
+
+/**@brief last DATA BYTE in TWDR has been transmitted, NACK returned*/
+#define TWI_LAST_DATA_TX_ACK					0xC8
+
+
+
+
+
+
+
+
 
 /*==========================================================================*/
 /* Driver pre-compile time settings.                                        */
