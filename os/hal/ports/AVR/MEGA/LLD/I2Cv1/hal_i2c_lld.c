@@ -100,7 +100,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
     if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
       TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
     }
-    else {
+    else {TWI_MASTER_RX_ADD
       TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
     }
     break;
@@ -113,6 +113,63 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   case TWI_MASTER_RX_ADDR_NACK:
     i2cp->errors |= I2C_ACK_FAILURE;
     break;
+  case TWI_SLAVE_RX_ADDR_ACK:
+  /*decision making based on rxbytes on slave
+    on the last byte recieved send nack to bus*/
+  /*same decision making on the 0x68 and 0x70)*/
+    if (i2cp->rxidx ==(i2cp->rxbytes -1)){
+      TWCR = (1 << TWINT) | (1 << TWIE)
+    }
+    else{
+      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE))
+    }
+  break;
+  case TWI_SLAVE_RX_DATA_ACK:
+  /*insert the data from bus in TWDR*/
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR;
+    /*check last byte*/
+  if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
+    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  }
+  /*if not last byte return ack to continue communication with master*/
+  else {
+    i2cp->rxidx++;
+    TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  }
+  break;
+  case TWI_SLAVE_TX_ADDR_ACK:
+  /*load data from buffer to TWDR*/
+  /*check if there's more data to transmmit*/
+    TWDR = i2cp->txbuf
+       if (i2cp->txidx ==(i2cp->txbytes -1)){
+    TWCR = (1 << TWINT | (1 << TWIE))
+  }
+  else{
+    i2cp->txidx++;
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+  }
+  break;
+  case TWI_SLAVE_TX_ADDR_ACK:
+  /*load data and check for nack transmission*/
+    TWDR = i2cp->txbuf 
+  if (i2cp->txidx ==(i2cp->txbytes -1)){
+    TWCR = (1 << TWINT | (1 << TWIE))
+  }
+  else{
+    i2cp->txidx++;
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+  }
+  break;
+  case TWI_SLAVE_STOP: 
+  /*currently considering slave add recognition and no start send*/
+  TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  break;
+  case TWI_SLAVE_TX_DATA_NACK: 
+  TWCR = TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+  break;
+  case TWI_SLAVE_TX_LAST_DATA_ACK
+  TWCR = ((1 << TWINT) | (1 << TWIE))
+  break;
   case TWI_ARBITRATION_LOST:
     i2cp->errors |= I2C_ARBITRATION_LOST;
     break;

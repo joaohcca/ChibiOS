@@ -60,7 +60,9 @@
 #define TWI_MASTER_RX_DATA_NACK    0x58
 
 /* SLAVE DEF                                         */
+
 /*SLAVE_RECIEVER_MODE								 */
+
 /**@brief   own SLA+W recieved ACK has been returned */
 #define TWI_SLAVE_RX_ADDR_ACK      0x60
 
@@ -86,7 +88,7 @@
 #define TWI_SLAVE_RX_GCA_DATA_NACK      0x98
 
 /**@brief   stop condition or repeated start recieved while still addressed as slave*/
-#define TWI_SLAVE_RX_STOP      0xA0
+#define TWI_SLAVE_STOP      0xA0
 
 /*SLAVE_TRANSMITTER_MODE                              */
 
@@ -97,13 +99,13 @@
 #define TWI_SLAVE_TX_POST_ARB_LOST       0xB0
 
 /**@brief DATA BYTE in TWDR has been transmitted, ACK returned*/
-#define TWI_DATA_TX_ACK					0xB8
+#define TWI_SLAVE_TX_DATA_ACK					0xB8
 
 /**@brief DATA BYTE in TWDR has been transmitted, NACK returned*/
-#define TWI_DATA_TX_NACK					0xC0
+#define TWI_SLAVE_TX_DATA_NACK					0xC0
 
 /**@brief last DATA BYTE in TWDR has been transmitted, NACK returned*/
-#define TWI_LAST_DATA_TX_ACK					0xC8
+#define TWI_SLAVE_TX_LAST_DATA_ACK					0xC8
 
 
 
