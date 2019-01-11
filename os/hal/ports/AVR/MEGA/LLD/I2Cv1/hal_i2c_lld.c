@@ -21,7 +21,6 @@
  * @addtogroup I2C
  * @{
  */
-
 #include "hal.h"
 
 #if HAL_USE_I2C || defined(__DOXYGEN__)
@@ -142,7 +141,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   /*check if there's more data to transmmit*/
     TWDR = i2cp->txbuf
        if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE))
+    TWCR = ((1 << TWINT) | (1 << TWIE))
   }
   else{
     i2cp->txidx++;
@@ -326,7 +325,35 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
-#endif /* HAL_USE_I2C */
+
+/* Adding:  i2c_lld_matchAddress(), i2c_lld_unmatchAddress(), i2c_lld_unmatchAll(), i2c_lld_slaveReceive() e i2c_lld_slaveReply()
+/*brief*/
+msg_t i2c_lld_matchAddress(){}
+
+//initialization of the I2C protocol as slave
+//add TWCR and TWAR initialization To DO: ADD general call enable
+// Slave Reciever TWAR=$deviceaddr && TWGCE << 0 ; TWCR TWEN=1 TWEA=1 TWINT=0 TWSTA=0 TWSTO=0 TWWC=0
+// Slave Transmitt  TWAR=$deviceaddr && TWGCE << 0 ; TWCR TWEN=1 TWEA=1 TWINT=0 TWSTA=0 TWSTO=0 TWWC=0
+/*brief*/
+void i2c_ld_unmatchAddress(){}
+
+//remove TWAR definition set TWSTOP=1 
+/*brief*/
+void i2c_lld_unmatchAll(){}
+
+/*@brief   Configure callbacks & buffers to receive messages
+ * @details             Call i2cMatchAddress() after this to start processing
+ *     Enabling match addresses before installing handler callbacks can
+ *     result in locking the I2C bus when a master accesses those
+ *     unconfigured slave addresses
+ *
+ * @notapi
+ */
+void i2c_lld_slaveReceive(I2CDriver *i2cp, const *i2cp->rxbuf){}
+
+void i2c_lld_slaveReply(I2CDriver *i2cp, const *i2cp->txbuf){}
+
 
 /** @} */
 
+#endif /*HAL_USE_I2C */
