@@ -99,7 +99,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
     if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
       TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
     }
-    else {TWI_MASTER_RX_ADD
+    else {
       TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
     }
     break;
