@@ -325,21 +325,51 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
-
 /* Adding:  i2c_lld_matchAddress(), i2c_lld_unmatchAddress(), i2c_lld_unmatchAll(), i2c_lld_slaveReceive() e i2c_lld_slaveReply()
-/*brief*/
-msg_t i2c_lld_matchAddress(){}
+/*@brief Configure to respond to messages directed to the given i2cadr
+* @param[in] i2cp      pointer to the @p I2CDriver object
+*  @param[in] i2cadr    I2C bus address
+* @return              Length of message OR the type of event received
+ * @retval I2C_OK       Success
+ * @retval I2C_ERROR    Cannot match address in addition of those already (como chegar aqui?)
+ *  * @details MatchAddress calls are cumulative.
+ *          Specify address zero to match I2C "all call"
+ *          Most hardware supports matching only a signle nonzero address.
+ *
+ * @api
+ */
+msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
+//I2C_TypeDef *dp = i2cp->i2c; /*duvida(1) o que seria o campo do i2c que nao existe no struct*/
+  
+  if (i2cadr != 0 ) 
+    uint32_t adr = i2cadr << 1;                        /*by pass no bit do GC*/
+    i2cp->addr = adr                                                /*escrever i2cadr no Two Wire Address Register*/
+    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); /*setar flags no Control register*/
+    return I2C_OK
+  else
+    return I2C_ERROR
 
-//initialization of the I2C protocol as slave
-//add TWCR and TWAR initialization To DO: ADD general call enable
-// Slave Reciever TWAR=$deviceaddr && TWGCE << 0 ; TWCR TWEN=1 TWEA=1 TWINT=0 TWSTA=0 TWSTO=0 TWWC=0
-// Slave Transmitt  TWAR=$deviceaddr && TWGCE << 0 ; TWCR TWEN=1 TWEA=1 TWINT=0 TWSTA=0 TWSTO=0 TWWC=0
-/*brief*/
-void i2c_ld_unmatchAddress(){}
+}
+/* A ideia é parar de responder ao endereço especificado*/
+/*checar se tem algo em TWAR e remove o que tiver dúvida(3)*/ 
 
+void i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
+  
+  if (i2cp->addr == i2cadr & i2cadr != 0)
+  TWAR = 0 //zerar TWAR
+  TWCR = ((1 << TWINT) | (1 << TWEN) | (1<< TWEA)); /*setar flags no Control register*/
+  /*TO DO: enviar um stop no bus*/
+}
 //remove TWAR definition set TWSTOP=1 
 /*brief*/
-void i2c_lld_unmatchAll(){}
+
+/*hermano sugeriu usar uma chamada do anterior*/
+
+void i2c_lld_unmatchAll(I2CDriver *i2cp){
+  TWAR = 0 //zerar TWAR
+  TWCR = ((1 << TWINT) | (1 << TWEN) | (1<< TWEA));
+
+}
 
 /*@brief   Configure callbacks & buffers to receive messages
  * @details             Call i2cMatchAddress() after this to start processing
@@ -349,9 +379,15 @@ void i2c_lld_unmatchAll(){}
  *
  * @notapi
  */
-void i2c_lld_slaveReceive(I2CDriver *i2cp, const *i2cp->rxbuf){}
 
-void i2c_lld_slaveReply(I2CDriver *i2cp, const *i2cp->txbuf){}
+/*Usar as funcoes do mestre como referência e ver diferenças*/
+void i2c_lld_slaveReceive(I2CDriver *i2cp, const *i2cp->rxbuf){
+}
+
+void i2c_lld_slaveReply(I2CDriver *i2cp, const *i2cp->txbuf){
+
+
+}
 
 
 /** @} */
