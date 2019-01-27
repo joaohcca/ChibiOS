@@ -112,10 +112,11 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   case TWI_MASTER_RX_ADDR_NACK:
     i2cp->errors |= I2C_ACK_FAILURE;
     break;
-  case TWI_SLAVE_RX_ADDR_ACK:
-  /*decision making based on rxbytes on slave
-    on the last byte recieved send nack to bus*/
-  /*same decision making on the 0x68 and 0x70)*/
+
+  /*slave recieve status*/
+  case TWI_SLAVE_RX_ADDR_ACK: /*ref $60*/
+  /*review cases where state 0x60 should return nack (not initialize ?)
+  same decision making on the 0x68 and 0x70)*/
     if (i2cp->rxidx ==(i2cp->rxbytes -1)){
       TWCR = (1 << TWINT) | (1 << TWIE)
     }
@@ -123,52 +124,78 @@ OSAL_IRQ_HANDLER(TWI_vect) {
       TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE))
     }
   break;
-  case TWI_SLAVE_RX_DATA_ACK:
-  /*insert the data from bus in TWDR*/
+  case TWI_SLAVE_RX_POST_ARB_LOST: /*ref $68*/
+    if (i2cp->rxidx ==(i2cp->rxbytes -1)){
+      TWCR = (1 << TWINT) | (1 << TWIE)
+    }
+    else{
+      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE))
+    }
+  case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
+  /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR;
-    /*check last byte*/
+  /*send nack master move to $88*/
   if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
     TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
-  /*if not last byte return ack to continue communication with master*/
+  /*can recieve more bytes stay in $80*/
   else {
     i2cp->rxidx++;
     TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
   break;
-  case TWI_SLAVE_TX_ADDR_ACK:
+  case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR;
+   /*implement decision making past communication with flags*/
+   /*default to retain addr and not send start*/
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA))
+  break;
+  case TWI_SLAVE_STOP:
+  /*default to retain addr and not send start*/
+   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA))
+
+  /*slave transmitt status*/
+  case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
   /*load data from buffer to TWDR*/
   /*check if there's more data to transmmit*/
-    TWDR = i2cp->txbuf
+    TWDR = i2cp->txbuf[i2cp->txidx];
        if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = ((1 << TWINT) | (1 << TWIE))
+    TWCR = ((1 << TWINT) | (1 << TWIE));
   }
   else{
     i2cp->txidx++;
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
   }
   break;
-  case TWI_SLAVE_TX_ADDR_ACK:
+  case TWI_SLAVE_TX_POST_ARB_LOST:/*ref $B0*/
   /*load data and check for nack transmission*/
-    TWDR = i2cp->txbuf 
+    TWDR = i2cp->txbuf[i2cp->txidx];
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE))
+    TWCR = (1 << TWINT | (1 << TWIE));
   }
   else{
-    i2cp->txidx++;
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
   }
   break;
-  case TWI_SLAVE_STOP: 
-  /*currently considering slave add recognition and no start send*/
-  TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  case TWI_SLAVE_TX_DATA_ACK: /*ref $B8*/
+    TWDR = i2cp->txbuf[i2cp->txidx++];
+  if (i2cp->txidx ==(i2cp->txbytes -1)){
+    TWCR = (1 << TWINT | (1 << TWIE));
+  }
+  else{
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
+  }
   break;
-  case TWI_SLAVE_TX_DATA_NACK: 
-  TWCR = TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE))
+  case TWI_SLAVE_TX_DATA_NACK: /*ref $C0*/
+  /*implement decision making past communication with flags*/
+   /*default to retain addr and not send start*/
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
   break;
-  case TWI_SLAVE_TX_LAST_DATA_ACK
-  TWCR = ((1 << TWINT) | (1 << TWIE))
-  break;
+  case TWI_SLAVE_TX_LAST_DATA_ACK: /*ref $C8*/
+  /*implement decision making past communication with flags*/
+   /*default to retain addr and not send start*/
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
+   break;
   case TWI_ARBITRATION_LOST:
     i2cp->errors |= I2C_ARBITRATION_LOST;
     break;
@@ -220,14 +247,12 @@ void i2c_lld_start(I2CDriver *i2cp) {
 
   /* Configure prescaler to 1. */
   TWSR &= 0xF8;
-
   if (i2cp->config != NULL)
     clock_speed = i2cp->config->clock_speed;
 
   /* Configure baudrate. */
   TWBR = ((F_CPU / clock_speed) - 16) / 2;
-}
-
+} 
 /**
  * @brief   Deactivates the I2C peripheral.
  *
@@ -262,22 +287,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
  *                      timeout the driver must be stopped and restarted
  *                      because the bus is in an uncertain state</b>.
  *
- * @notapi
- */
-msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
-                                     uint8_t *rxbuf, size_t rxbytes,
-                                     systime_t timeout) {
-
-  i2cp->errors = I2C_NO_ERROR;
-  i2cp->addr = addr;
-  i2cp->txbuf = NULL;
-  i2cp->txbytes = 0;
-  i2cp->txidx = 0;
-  i2cp->rxbuf = rxbuf;
-  i2cp->rxbytes = rxbytes;
-  i2cp->rxidx = 0;
-
-  /* Send START. */
+ /* Send START. */
   TWCR = ((1 << TWSTA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
 
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
@@ -330,47 +340,35 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 * @param[in] i2cp      pointer to the @p I2CDriver object
 *  @param[in] i2cadr    I2C bus address
 * @return              Length of message OR the type of event received
- * @retval I2C_OK       Success
- * @retval I2C_ERROR    Cannot match address in addition of those already (como chegar aqui?)
- *  * @details MatchAddress calls are cumulative.
- *          Specify address zero to match I2C "all call"
- *          Most hardware supports matching only a signle nonzero address.
- *
- * @api
- */
+* @retval I2C_OK       Success
+* @retval I2C_ERROR    Cannot match address in addition of those already (como chegar aqui?)
+*  * @details MatchAddress calls are cumulative.
+*          Specify address zero to match I2C "all call"
+*          Most hardware supports matching only a signle nonzero address.
+*
+* @api
+*/
 msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
-//I2C_TypeDef *dp = i2cp->i2c; /*duvida(1) o que seria o campo do i2c que nao existe no struct*/
-  
   if (i2cadr != 0 ) 
-    uint32_t adr = i2cadr << 1;                        /*by pass no bit do GC*/
-    i2cp->addr = adr                                                /*escrever i2cadr no Two Wire Address Register*/
-    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); /*setar flags no Control register*/
+    uint32_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
+    i2cp->addr = adr;                                               /*Implement slave addr*/
+    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); /*set the nescessary flags whitout TWIE (?)*/
     return I2C_OK
   else
     return I2C_ERROR
 
 }
-/* A ideia é parar de responder ao endereço especificado*/
-/*checar se tem algo em TWAR e remove o que tiver dúvida(3)*/ 
+/*stop respond to certain addr*/
 
 void i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   
   if (i2cp->addr == i2cadr & i2cadr != 0)
-  TWAR = 0 //zerar TWAR
-  TWCR = ((1 << TWINT) | (1 << TWEN) | (1<< TWEA)); /*setar flags no Control register*/
-  /*TO DO: enviar um stop no bus*/
+  TWAR = 0; //unset previously configured salve addr
 }
-//remove TWAR definition set TWSTOP=1 
-/*brief*/
-
-/*hermano sugeriu usar uma chamada do anterior*/
 
 void i2c_lld_unmatchAll(I2CDriver *i2cp){
-  TWAR = 0 //zerar TWAR
-  TWCR = ((1 << TWINT) | (1 << TWEN) | (1<< TWEA));
-
+  TWAR = 0; //force unset previously configured salve addr
 }
-
 /*@brief   Configure callbacks & buffers to receive messages
  * @details             Call i2cMatchAddress() after this to start processing
  *     Enabling match addresses before installing handler callbacks can
@@ -381,12 +379,43 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
  */
 
 /*Usar as funcoes do mestre como referência e ver diferenças*/
-void i2c_lld_slaveReceive(I2CDriver *i2cp, const *i2cp->rxbuf){
+void i2c_lld_slaveReceive(I2CDriver *i2cp, const *rxbuf){
+ 
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->addr = addr;
+  i2cp->txbuf = txbuf;
+  i2cp->txbytes = txbytes;
+  i2cp->txidx = 0;
+  i2cp->rxbuf = rxbuf;
+  i2cp->rxbytes = rxbytes;
+  i2cp->rxidx = 0;
+
+/*fazer chamda do match address 
+i2c_lld_matchAddress(i2cp, i2cp->addr)
+/*passar o reply do SO para o TWDR (tamanho, idx e msg)
+(pensar como fazer)
+/*enviar os dados do TWDR via I2C
+TWDR = */
+/*status no TWCR e TWSR*/
 }
 
-void i2c_lld_slaveReply(I2CDriver *i2cp, const *i2cp->txbuf){
+void i2c_lld_slaveReply(I2CDriver *i2cp, const *txbuf ){
+  
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->txbuf = txbuf;
+  i2cp->txbytes = txbytes;
+  i2cp->txidx = 0;
+  i2cp->rxbuf = rxbuf;
+  i2cp->rxbytes = rxbytes;
+  i2cp->rxidx = 0;
 
-
+/*fazer chamda do match address
+i2c_lld_matchAddress(i2cp, i2cp->addr)
+/*passar o reply do SO para o TWDR (tamanho, idx e msg)
+(pensar como fazer)
+/*enviar os dados do TWDR via I2C
+TWDR = */
+/*status no TWCR e TWSR*/
 }
 
 
