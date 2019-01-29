@@ -288,6 +288,19 @@ void i2c_lld_stop(I2CDriver *i2cp) {
  *                      because the bus is in an uncertain state</b>.
  *
  /* Send START. */
+msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
+                                     uint8_t *rxbuf, size_t rxbytes,
+                                     systime_t timeout) {
+
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->addr = addr;
+  i2cp->txbuf = NULL;
+  i2cp->txbytes = 0;
+  i2cp->txidx = 0;
+  i2cp->rxbuf = rxbuf;
+  i2cp->rxbytes = rxbytes;
+  i2cp->rxidx = 0;
+
   TWCR = ((1 << TWSTA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
 
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
@@ -363,11 +376,11 @@ msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
 void i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   
   if (i2cp->addr == i2cadr & i2cadr != 0)
-  TWAR = 0; //unset previously configured salve addr
+  TWAR = 0; //unset previously configured slave addr
 }
 
 void i2c_lld_unmatchAll(I2CDriver *i2cp){
-  TWAR = 0; //force unset previously configured salve addr
+  TWAR = 0; //force unset previously configured slave addr
 }
 /*@brief   Configure callbacks & buffers to receive messages
  * @details             Call i2cMatchAddress() after this to start processing
@@ -383,19 +396,14 @@ void i2c_lld_slaveReceive(I2CDriver *i2cp, const *rxbuf){
  
   i2cp->errors = I2C_NO_ERROR;
   i2cp->addr = addr;
-  i2cp->txbuf = txbuf;
-  i2cp->txbytes = txbytes;
-  i2cp->txidx = 0;
   i2cp->rxbuf = rxbuf;
   i2cp->rxbytes = rxbytes;
   i2cp->rxidx = 0;
 
-/*fazer chamda do match address 
 i2c_lld_matchAddress(i2cp, i2cp->addr)
-/*passar o reply do SO para o TWDR (tamanho, idx e msg)
-(pensar como fazer)
-/*enviar os dados do TWDR via I2C
-TWDR = */
+
+TWSR = TWI_SLAVE_RX_ADDR_ACK
+
 /*status no TWCR e TWSR*/
 }
 
@@ -405,20 +413,14 @@ void i2c_lld_slaveReply(I2CDriver *i2cp, const *txbuf ){
   i2cp->txbuf = txbuf;
   i2cp->txbytes = txbytes;
   i2cp->txidx = 0;
-  i2cp->rxbuf = rxbuf;
-  i2cp->rxbytes = rxbytes;
-  i2cp->rxidx = 0;
 
-/*fazer chamda do match address
-i2c_lld_matchAddress(i2cp, i2cp->addr)
-/*passar o reply do SO para o TWDR (tamanho, idx e msg)
-(pensar como fazer)
-/*enviar os dados do TWDR via I2C
-TWDR = */
-/*status no TWCR e TWSR*/
+i2c_lld_matchAddress(I2CDriver *i2cp, i2cp->addr);
+
+TWSR = TWI_SLAVE_TX_ADDR_ACK
+
 }
 
 
 /** @} */
 
-#endif /*HAL_USE_I2C */
+#endif /*HAL_USE_I2C */((1 << TWINT) | (1 << TWEN) | (1 << TWIE)
