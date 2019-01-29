@@ -399,12 +399,9 @@ void i2c_lld_slaveReceive(I2CDriver *i2cp, const *rxbuf){
   i2cp->rxbuf = rxbuf;
   i2cp->rxbytes = rxbytes;
   i2cp->rxidx = 0;
-
 i2c_lld_matchAddress(i2cp, i2cp->addr)
-
+/*point to next FSM state*/
 TWSR = TWI_SLAVE_RX_ADDR_ACK
-
-/*status no TWCR e TWSR*/
 }
 
 void i2c_lld_slaveReply(I2CDriver *i2cp, const *txbuf ){
@@ -416,6 +413,7 @@ void i2c_lld_slaveReply(I2CDriver *i2cp, const *txbuf ){
 
 i2c_lld_matchAddress(I2CDriver *i2cp, i2cp->addr);
 
+/*point to next FSM state*/
 TWSR = TWI_SLAVE_TX_ADDR_ACK
 
 }
@@ -423,4 +421,4 @@ TWSR = TWI_SLAVE_TX_ADDR_ACK
 
 /** @} */
 
-#endif /*HAL_USE_I2C */((1 << TWINT) | (1 << TWEN) | (1 << TWIE)
+#endif 
