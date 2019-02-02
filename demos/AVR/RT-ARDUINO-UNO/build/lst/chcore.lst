@@ -1,0 +1,890 @@
+   1               		.file	"chcore.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text._port_switch,"ax",@progbits
+  11               		.weak	_port_switch
+  13               	_port_switch:
+  14               	.LFB148:
+  15               		.file 1 "../../../os/common/ports/AVR/chcore.c"
+   1:../../../os/common/ports/AVR/chcore.c **** /*
+   2:../../../os/common/ports/AVR/chcore.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/ports/AVR/chcore.c **** 
+   4:../../../os/common/ports/AVR/chcore.c ****     This file is part of ChibiOS.
+   5:../../../os/common/ports/AVR/chcore.c **** 
+   6:../../../os/common/ports/AVR/chcore.c ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/ports/AVR/chcore.c ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/ports/AVR/chcore.c ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/ports/AVR/chcore.c ****     (at your option) any later version.
+  10:../../../os/common/ports/AVR/chcore.c **** 
+  11:../../../os/common/ports/AVR/chcore.c ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/ports/AVR/chcore.c ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/ports/AVR/chcore.c ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/ports/AVR/chcore.c ****     GNU General Public License for more details.
+  15:../../../os/common/ports/AVR/chcore.c **** 
+  16:../../../os/common/ports/AVR/chcore.c ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/ports/AVR/chcore.c ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/ports/AVR/chcore.c **** */
+  19:../../../os/common/ports/AVR/chcore.c **** 
+  20:../../../os/common/ports/AVR/chcore.c **** /**
+  21:../../../os/common/ports/AVR/chcore.c ****  * @file    AVR/chcore.c
+  22:../../../os/common/ports/AVR/chcore.c ****  * @brief   AVR architecture port code.
+  23:../../../os/common/ports/AVR/chcore.c ****  *
+  24:../../../os/common/ports/AVR/chcore.c ****  * @addtogroup AVR_CORE
+  25:../../../os/common/ports/AVR/chcore.c ****  * @{
+  26:../../../os/common/ports/AVR/chcore.c ****  */
+  27:../../../os/common/ports/AVR/chcore.c **** 
+  28:../../../os/common/ports/AVR/chcore.c **** #include "ch.h"
+  29:../../../os/common/ports/AVR/chcore.c **** 
+  30:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  31:../../../os/common/ports/AVR/chcore.c **** /* Module local definitions.                                                 */
+  32:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  33:../../../os/common/ports/AVR/chcore.c **** 
+  34:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  35:../../../os/common/ports/AVR/chcore.c **** /* Module exported variables.                                                */
+  36:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  37:../../../os/common/ports/AVR/chcore.c **** 
+  38:../../../os/common/ports/AVR/chcore.c **** /* Executing-in-ISR global flag.*/
+  39:../../../os/common/ports/AVR/chcore.c **** bool __avr_in_isr;
+  40:../../../os/common/ports/AVR/chcore.c **** 
+  41:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  42:../../../os/common/ports/AVR/chcore.c **** /* Module local types.                                                       */
+  43:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  44:../../../os/common/ports/AVR/chcore.c **** 
+  45:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  46:../../../os/common/ports/AVR/chcore.c **** /* Module local variables.                                                   */
+  47:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  48:../../../os/common/ports/AVR/chcore.c **** 
+  49:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  50:../../../os/common/ports/AVR/chcore.c **** /* Module local functions.                                                   */
+  51:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  52:../../../os/common/ports/AVR/chcore.c **** 
+  53:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  54:../../../os/common/ports/AVR/chcore.c **** /* Module exported functions.                                                */
+  55:../../../os/common/ports/AVR/chcore.c **** /*===========================================================================*/
+  56:../../../os/common/ports/AVR/chcore.c **** 
+  57:../../../os/common/ports/AVR/chcore.c **** /**
+  58:../../../os/common/ports/AVR/chcore.c ****  * @brief   Performs a context switch between two threads.
+  59:../../../os/common/ports/AVR/chcore.c ****  * @details This is the most critical code in any port, this function
+  60:../../../os/common/ports/AVR/chcore.c ****  *          is responsible for the context switch between 2 threads.
+  61:../../../os/common/ports/AVR/chcore.c ****  * @note    The implementation of this code affects <b>directly</b> the context
+  62:../../../os/common/ports/AVR/chcore.c ****  *          switch performance so optimize here as much as you can.
+  63:../../../os/common/ports/AVR/chcore.c ****  *
+  64:../../../os/common/ports/AVR/chcore.c ****  * @param[in] ntp       the thread to be switched in
+  65:../../../os/common/ports/AVR/chcore.c ****  * @param[in] otp       the thread to be switched out
+  66:../../../os/common/ports/AVR/chcore.c ****  *
+  67:../../../os/common/ports/AVR/chcore.c ****  * @todo    Put into an asm module, use of naked attribute is problematic.
+  68:../../../os/common/ports/AVR/chcore.c ****  */
+  69:../../../os/common/ports/AVR/chcore.c **** #if !defined(__DOXYGEN__)
+  70:../../../os/common/ports/AVR/chcore.c **** __attribute__((naked, weak))
+  71:../../../os/common/ports/AVR/chcore.c **** #endif
+  72:../../../os/common/ports/AVR/chcore.c **** void _port_switch(thread_t *ntp, thread_t *otp) {
+  16               		.loc 1 72 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: naked */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  73:../../../os/common/ports/AVR/chcore.c **** 
+  74:../../../os/common/ports/AVR/chcore.c ****   (void)ntp;
+  75:../../../os/common/ports/AVR/chcore.c ****   (void)otp;
+  76:../../../os/common/ports/AVR/chcore.c **** 
+  77:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r2");
+  23               		.loc 1 77 0
+  24               	/* #APP */
+  25               	 ;  77 "../../../os/common/ports/AVR/chcore.c" 1
+  26 0000 2F92      		push    r2
+  27               	 ;  0 "" 2
+  78:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r3");
+  28               		.loc 1 78 0
+  29               	 ;  78 "../../../os/common/ports/AVR/chcore.c" 1
+  30 0002 3F92      		push    r3
+  31               	 ;  0 "" 2
+  79:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r4");
+  32               		.loc 1 79 0
+  33               	 ;  79 "../../../os/common/ports/AVR/chcore.c" 1
+  34 0004 4F92      		push    r4
+  35               	 ;  0 "" 2
+  80:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r5");
+  36               		.loc 1 80 0
+  37               	 ;  80 "../../../os/common/ports/AVR/chcore.c" 1
+  38 0006 5F92      		push    r5
+  39               	 ;  0 "" 2
+  81:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r6");
+  40               		.loc 1 81 0
+  41               	 ;  81 "../../../os/common/ports/AVR/chcore.c" 1
+  42 0008 6F92      		push    r6
+  43               	 ;  0 "" 2
+  82:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r7");
+  44               		.loc 1 82 0
+  45               	 ;  82 "../../../os/common/ports/AVR/chcore.c" 1
+  46 000a 7F92      		push    r7
+  47               	 ;  0 "" 2
+  83:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r8");
+  48               		.loc 1 83 0
+  49               	 ;  83 "../../../os/common/ports/AVR/chcore.c" 1
+  50 000c 8F92      		push    r8
+  51               	 ;  0 "" 2
+  84:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r9");
+  52               		.loc 1 84 0
+  53               	 ;  84 "../../../os/common/ports/AVR/chcore.c" 1
+  54 000e 9F92      		push    r9
+  55               	 ;  0 "" 2
+  85:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r10");
+  56               		.loc 1 85 0
+  57               	 ;  85 "../../../os/common/ports/AVR/chcore.c" 1
+  58 0010 AF92      		push    r10
+  59               	 ;  0 "" 2
+  86:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r11");
+  60               		.loc 1 86 0
+  61               	 ;  86 "../../../os/common/ports/AVR/chcore.c" 1
+  62 0012 BF92      		push    r11
+  63               	 ;  0 "" 2
+  87:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r12");
+  64               		.loc 1 87 0
+  65               	 ;  87 "../../../os/common/ports/AVR/chcore.c" 1
+  66 0014 CF92      		push    r12
+  67               	 ;  0 "" 2
+  88:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r13");
+  68               		.loc 1 88 0
+  69               	 ;  88 "../../../os/common/ports/AVR/chcore.c" 1
+  70 0016 DF92      		push    r13
+  71               	 ;  0 "" 2
+  89:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r14");
+  72               		.loc 1 89 0
+  73               	 ;  89 "../../../os/common/ports/AVR/chcore.c" 1
+  74 0018 EF92      		push    r14
+  75               	 ;  0 "" 2
+  90:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r15");
+  76               		.loc 1 90 0
+  77               	 ;  90 "../../../os/common/ports/AVR/chcore.c" 1
+  78 001a FF92      		push    r15
+  79               	 ;  0 "" 2
+  91:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r16");
+  80               		.loc 1 91 0
+  81               	 ;  91 "../../../os/common/ports/AVR/chcore.c" 1
+  82 001c 0F93      		push    r16
+  83               	 ;  0 "" 2
+  92:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r17");
+  84               		.loc 1 92 0
+  85               	 ;  92 "../../../os/common/ports/AVR/chcore.c" 1
+  86 001e 1F93      		push    r17
+  87               	 ;  0 "" 2
+  93:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r28");
+  88               		.loc 1 93 0
+  89               	 ;  93 "../../../os/common/ports/AVR/chcore.c" 1
+  90 0020 CF93      		push    r28
+  91               	 ;  0 "" 2
+  94:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("push    r29");
+  92               		.loc 1 94 0
+  93               	 ;  94 "../../../os/common/ports/AVR/chcore.c" 1
+  94 0022 DF93      		push    r29
+  95               	 ;  0 "" 2
+  95:../../../os/common/ports/AVR/chcore.c **** 
+  96:../../../os/common/ports/AVR/chcore.c **** #if defined(_CHIBIOS_RT_)
+  97:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r30, r22");
+  96               		.loc 1 97 0
+  97               	 ;  97 "../../../os/common/ports/AVR/chcore.c" 1
+  98 0024 FB01      		movw    r30, r22
+  99               	 ;  0 "" 2
+  98:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("in      r0, 0x3d");
+ 100               		.loc 1 98 0
+ 101               	 ;  98 "../../../os/common/ports/AVR/chcore.c" 1
+ 102 0026 0DB6      		in      r0, 0x3d
+ 103               	 ;  0 "" 2
+  99:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("std     Z+5, r0");
+ 104               		.loc 1 99 0
+ 105               	 ;  99 "../../../os/common/ports/AVR/chcore.c" 1
+ 106 0028 0582      		std     Z+5, r0
+ 107               	 ;  0 "" 2
+ 100:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("in      r0, 0x3e");
+ 108               		.loc 1 100 0
+ 109               	 ;  100 "../../../os/common/ports/AVR/chcore.c" 1
+ 110 002a 0EB6      		in      r0, 0x3e
+ 111               	 ;  0 "" 2
+ 101:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("std     Z+6, r0");
+ 112               		.loc 1 101 0
+ 113               	 ;  101 "../../../os/common/ports/AVR/chcore.c" 1
+ 114 002c 0682      		std     Z+6, r0
+ 115               	 ;  0 "" 2
+ 102:../../../os/common/ports/AVR/chcore.c **** 
+ 103:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r30, r24");
+ 116               		.loc 1 103 0
+ 117               	 ;  103 "../../../os/common/ports/AVR/chcore.c" 1
+ 118 002e FC01      		movw    r30, r24
+ 119               	 ;  0 "" 2
+ 104:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("ldd     r0, Z+5");
+ 120               		.loc 1 104 0
+ 121               	 ;  104 "../../../os/common/ports/AVR/chcore.c" 1
+ 122 0030 0580      		ldd     r0, Z+5
+ 123               	 ;  0 "" 2
+ 105:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("out     0x3d, r0");
+ 124               		.loc 1 105 0
+ 125               	 ;  105 "../../../os/common/ports/AVR/chcore.c" 1
+ 126 0032 0DBE      		out     0x3d, r0
+ 127               	 ;  0 "" 2
+ 106:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("ldd     r0, Z+6");
+ 128               		.loc 1 106 0
+ 129               	 ;  106 "../../../os/common/ports/AVR/chcore.c" 1
+ 130 0034 0680      		ldd     r0, Z+6
+ 131               	 ;  0 "" 2
+ 107:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("out     0x3e, r0");
+ 132               		.loc 1 107 0
+ 133               	 ;  107 "../../../os/common/ports/AVR/chcore.c" 1
+ 134 0036 0EBE      		out     0x3e, r0
+ 135               	 ;  0 "" 2
+ 108:../../../os/common/ports/AVR/chcore.c **** #endif
+ 109:../../../os/common/ports/AVR/chcore.c **** 
+ 110:../../../os/common/ports/AVR/chcore.c **** #if defined(_CHIBIOS_NIL_)
+ 111:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r30, r22");
+ 112:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("in      r0, 0x3d");
+ 113:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("std     Z+0, r0");
+ 114:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("in      r0, 0x3e");
+ 115:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("std     Z+1, r0");
+ 116:../../../os/common/ports/AVR/chcore.c **** 
+ 117:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r30, r24");
+ 118:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("ldd     r0, Z+0");
+ 119:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("out     0x3d, r0");
+ 120:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("ldd     r0, Z+1");
+ 121:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("out     0x3e, r0");
+ 122:../../../os/common/ports/AVR/chcore.c **** #endif
+ 123:../../../os/common/ports/AVR/chcore.c **** 
+ 124:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r29");
+ 136               		.loc 1 124 0
+ 137               	 ;  124 "../../../os/common/ports/AVR/chcore.c" 1
+ 138 0038 DF91      		pop     r29
+ 139               	 ;  0 "" 2
+ 125:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r28");
+ 140               		.loc 1 125 0
+ 141               	 ;  125 "../../../os/common/ports/AVR/chcore.c" 1
+ 142 003a CF91      		pop     r28
+ 143               	 ;  0 "" 2
+ 126:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r17");
+ 144               		.loc 1 126 0
+ 145               	 ;  126 "../../../os/common/ports/AVR/chcore.c" 1
+ 146 003c 1F91      		pop     r17
+ 147               	 ;  0 "" 2
+ 127:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r16");
+ 148               		.loc 1 127 0
+ 149               	 ;  127 "../../../os/common/ports/AVR/chcore.c" 1
+ 150 003e 0F91      		pop     r16
+ 151               	 ;  0 "" 2
+ 128:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r15");
+ 152               		.loc 1 128 0
+ 153               	 ;  128 "../../../os/common/ports/AVR/chcore.c" 1
+ 154 0040 FF90      		pop     r15
+ 155               	 ;  0 "" 2
+ 129:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r14");
+ 156               		.loc 1 129 0
+ 157               	 ;  129 "../../../os/common/ports/AVR/chcore.c" 1
+ 158 0042 EF90      		pop     r14
+ 159               	 ;  0 "" 2
+ 130:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r13");
+ 160               		.loc 1 130 0
+ 161               	 ;  130 "../../../os/common/ports/AVR/chcore.c" 1
+ 162 0044 DF90      		pop     r13
+ 163               	 ;  0 "" 2
+ 131:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r12");
+ 164               		.loc 1 131 0
+ 165               	 ;  131 "../../../os/common/ports/AVR/chcore.c" 1
+ 166 0046 CF90      		pop     r12
+ 167               	 ;  0 "" 2
+ 132:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r11");
+ 168               		.loc 1 132 0
+ 169               	 ;  132 "../../../os/common/ports/AVR/chcore.c" 1
+ 170 0048 BF90      		pop     r11
+ 171               	 ;  0 "" 2
+ 133:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r10");
+ 172               		.loc 1 133 0
+ 173               	 ;  133 "../../../os/common/ports/AVR/chcore.c" 1
+ 174 004a AF90      		pop     r10
+ 175               	 ;  0 "" 2
+ 134:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r9");
+ 176               		.loc 1 134 0
+ 177               	 ;  134 "../../../os/common/ports/AVR/chcore.c" 1
+ 178 004c 9F90      		pop     r9
+ 179               	 ;  0 "" 2
+ 135:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r8");
+ 180               		.loc 1 135 0
+ 181               	 ;  135 "../../../os/common/ports/AVR/chcore.c" 1
+ 182 004e 8F90      		pop     r8
+ 183               	 ;  0 "" 2
+ 136:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r7");
+ 184               		.loc 1 136 0
+ 185               	 ;  136 "../../../os/common/ports/AVR/chcore.c" 1
+ 186 0050 7F90      		pop     r7
+ 187               	 ;  0 "" 2
+ 137:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r6");
+ 188               		.loc 1 137 0
+ 189               	 ;  137 "../../../os/common/ports/AVR/chcore.c" 1
+ 190 0052 6F90      		pop     r6
+ 191               	 ;  0 "" 2
+ 138:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r5");
+ 192               		.loc 1 138 0
+ 193               	 ;  138 "../../../os/common/ports/AVR/chcore.c" 1
+ 194 0054 5F90      		pop     r5
+ 195               	 ;  0 "" 2
+ 139:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r4");
+ 196               		.loc 1 139 0
+ 197               	 ;  139 "../../../os/common/ports/AVR/chcore.c" 1
+ 198 0056 4F90      		pop     r4
+ 199               	 ;  0 "" 2
+ 140:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r3");
+ 200               		.loc 1 140 0
+ 201               	 ;  140 "../../../os/common/ports/AVR/chcore.c" 1
+ 202 0058 3F90      		pop     r3
+ 203               	 ;  0 "" 2
+ 141:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("pop     r2");
+ 204               		.loc 1 141 0
+ 205               	 ;  141 "../../../os/common/ports/AVR/chcore.c" 1
+ 206 005a 2F90      		pop     r2
+ 207               	 ;  0 "" 2
+ 142:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("ret");
+ 208               		.loc 1 142 0
+ 209               	 ;  142 "../../../os/common/ports/AVR/chcore.c" 1
+ 210 005c 0895      		ret
+ 211               	 ;  0 "" 2
+ 212               	/* epilogue start */
+ 143:../../../os/common/ports/AVR/chcore.c **** }
+ 213               		.loc 1 143 0
+ 214               	/* #NOAPP */
+ 215               		.cfi_endproc
+ 216               	.LFE148:
+ 218               		.section	.text._port_thread_start,"ax",@progbits
+ 219               	.global	_port_thread_start
+ 221               	_port_thread_start:
+ 222               	.LFB149:
+ 144:../../../os/common/ports/AVR/chcore.c **** 
+ 145:../../../os/common/ports/AVR/chcore.c **** /**
+ 146:../../../os/common/ports/AVR/chcore.c ****  * @brief   Start a thread by invoking its work function.
+ 147:../../../os/common/ports/AVR/chcore.c ****  * @details If the work function returns @p chThdExit() is automatically
+ 148:../../../os/common/ports/AVR/chcore.c ****  *          invoked.
+ 149:../../../os/common/ports/AVR/chcore.c ****  */
+ 150:../../../os/common/ports/AVR/chcore.c **** void _port_thread_start(void) {
+ 223               		.loc 1 150 0
+ 224               		.cfi_startproc
+ 225               	/* prologue: function */
+ 226               	/* frame size = 0 */
+ 227               	/* stack size = 0 */
+ 228               	.L__stack_usage = 0
+ 229               	.LBB8:
+ 230               	.LBB9:
+ 231               	.LBB10:
+ 232               	.LBB11:
+ 233               		.file 2 "../../../os/common/ports/AVR/chcore.h"
+   1:../../../os/common/ports/AVR/chcore.h **** /*
+   2:../../../os/common/ports/AVR/chcore.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/ports/AVR/chcore.h **** 
+   4:../../../os/common/ports/AVR/chcore.h ****     This file is part of ChibiOS.
+   5:../../../os/common/ports/AVR/chcore.h **** 
+   6:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/ports/AVR/chcore.h ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/ports/AVR/chcore.h ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/ports/AVR/chcore.h ****     (at your option) any later version.
+  10:../../../os/common/ports/AVR/chcore.h **** 
+  11:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/ports/AVR/chcore.h ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/ports/AVR/chcore.h ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/ports/AVR/chcore.h ****     GNU General Public License for more details.
+  15:../../../os/common/ports/AVR/chcore.h **** 
+  16:../../../os/common/ports/AVR/chcore.h ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/ports/AVR/chcore.h ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/ports/AVR/chcore.h **** */
+  19:../../../os/common/ports/AVR/chcore.h **** 
+  20:../../../os/common/ports/AVR/chcore.h **** /**
+  21:../../../os/common/ports/AVR/chcore.h ****  * @file    templates/chcore.h
+  22:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port related template macros and structures.
+  23:../../../os/common/ports/AVR/chcore.h ****  * @details This file is a template of the system driver macros provided by
+  24:../../../os/common/ports/AVR/chcore.h ****  *          a port.
+  25:../../../os/common/ports/AVR/chcore.h ****  *
+  26:../../../os/common/ports/AVR/chcore.h ****  * @addtogroup core
+  27:../../../os/common/ports/AVR/chcore.h ****  * @{
+  28:../../../os/common/ports/AVR/chcore.h ****  */
+  29:../../../os/common/ports/AVR/chcore.h **** 
+  30:../../../os/common/ports/AVR/chcore.h **** #ifndef CHCORE_H
+  31:../../../os/common/ports/AVR/chcore.h **** #define CHCORE_H
+  32:../../../os/common/ports/AVR/chcore.h **** 
+  33:../../../os/common/ports/AVR/chcore.h **** #include <avr/io.h>
+  34:../../../os/common/ports/AVR/chcore.h **** #include <avr/interrupt.h>
+  35:../../../os/common/ports/AVR/chcore.h **** 
+  36:../../../os/common/ports/AVR/chcore.h **** extern bool __avr_in_isr;
+  37:../../../os/common/ports/AVR/chcore.h **** 
+  38:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  39:../../../os/common/ports/AVR/chcore.h **** /* Module constants.                                                         */
+  40:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  41:../../../os/common/ports/AVR/chcore.h **** 
+  42:../../../os/common/ports/AVR/chcore.h **** /**
+  43:../../../os/common/ports/AVR/chcore.h ****  * @name    Port Capabilities and Constants
+  44:../../../os/common/ports/AVR/chcore.h ****  * @{
+  45:../../../os/common/ports/AVR/chcore.h ****  */
+  46:../../../os/common/ports/AVR/chcore.h **** /**
+  47:../../../os/common/ports/AVR/chcore.h ****  * @brief   This port supports a realtime counter.
+  48:../../../os/common/ports/AVR/chcore.h ****  */
+  49:../../../os/common/ports/AVR/chcore.h **** #define PORT_SUPPORTS_RT                FALSE
+  50:../../../os/common/ports/AVR/chcore.h **** 
+  51:../../../os/common/ports/AVR/chcore.h **** /**
+  52:../../../os/common/ports/AVR/chcore.h ****  * @brief   Natural alignment constant.
+  53:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the minimum alignment for pointer-size variables.
+  54:../../../os/common/ports/AVR/chcore.h ****  */
+  55:../../../os/common/ports/AVR/chcore.h **** #define PORT_NATURAL_ALIGN              1U
+  56:../../../os/common/ports/AVR/chcore.h **** 
+  57:../../../os/common/ports/AVR/chcore.h **** /**
+  58:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack alignment constant.
+  59:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignement required for the stack pointer.
+  60:../../../os/common/ports/AVR/chcore.h ****  */
+  61:../../../os/common/ports/AVR/chcore.h **** #define PORT_STACK_ALIGN                1U
+  62:../../../os/common/ports/AVR/chcore.h **** 
+  63:../../../os/common/ports/AVR/chcore.h **** /**
+  64:../../../os/common/ports/AVR/chcore.h ****  * @brief   Working Areas alignment constant.
+  65:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignment to be enforced for thread working areas.
+  66:../../../os/common/ports/AVR/chcore.h ****  */
+  67:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA_ALIGN         1U
+  68:../../../os/common/ports/AVR/chcore.h **** /** @} */
+  69:../../../os/common/ports/AVR/chcore.h **** 
+  70:../../../os/common/ports/AVR/chcore.h **** /**
+  71:../../../os/common/ports/AVR/chcore.h ****  * @name    Architecture and Compiler
+  72:../../../os/common/ports/AVR/chcore.h ****  * @{
+  73:../../../os/common/ports/AVR/chcore.h ****  */
+  74:../../../os/common/ports/AVR/chcore.h **** /**
+  75:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining an AVR architecture.
+  76:../../../os/common/ports/AVR/chcore.h ****  */
+  77:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR
+  78:../../../os/common/ports/AVR/chcore.h **** 
+  79:../../../os/common/ports/AVR/chcore.h **** /**
+  80:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining the specific AVR architecture.
+  81:../../../os/common/ports/AVR/chcore.h ****  */
+  82:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR_MEGAAVR
+  83:../../../os/common/ports/AVR/chcore.h **** 
+  84:../../../os/common/ports/AVR/chcore.h **** /**
+  85:../../../os/common/ports/AVR/chcore.h ****  * @brief   Name of the implemented architecture.
+  86:../../../os/common/ports/AVR/chcore.h ****  */
+  87:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_NAME          "MegaAVR"
+  88:../../../os/common/ports/AVR/chcore.h **** 
+  89:../../../os/common/ports/AVR/chcore.h **** /**
+  90:../../../os/common/ports/AVR/chcore.h ****  * @brief   Compiler name and version.
+  91:../../../os/common/ports/AVR/chcore.h ****  */
+  92:../../../os/common/ports/AVR/chcore.h **** #if defined(__GNUC__) || defined(__DOXYGEN__)
+  93:../../../os/common/ports/AVR/chcore.h **** #define PORT_COMPILER_NAME              "GCC " __VERSION__
+  94:../../../os/common/ports/AVR/chcore.h **** 
+  95:../../../os/common/ports/AVR/chcore.h **** #else
+  96:../../../os/common/ports/AVR/chcore.h **** #error "unsupported compiler"
+  97:../../../os/common/ports/AVR/chcore.h **** #endif
+  98:../../../os/common/ports/AVR/chcore.h **** 
+  99:../../../os/common/ports/AVR/chcore.h **** /**
+ 100:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-specific information string.
+ 101:../../../os/common/ports/AVR/chcore.h ****  */
+ 102:../../../os/common/ports/AVR/chcore.h **** #define PORT_INFO                       "None"
+ 103:../../../os/common/ports/AVR/chcore.h **** /** @} */
+ 104:../../../os/common/ports/AVR/chcore.h **** 
+ 105:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 106:../../../os/common/ports/AVR/chcore.h **** /* Module pre-compile time settings.                                         */
+ 107:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 108:../../../os/common/ports/AVR/chcore.h **** 
+ 109:../../../os/common/ports/AVR/chcore.h **** /**
+ 110:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack size for the system idle thread.
+ 111:../../../os/common/ports/AVR/chcore.h ****  * @details This size depends on the idle thread implementation, usually
+ 112:../../../os/common/ports/AVR/chcore.h ****  *          the idle thread should take no more space than those reserved
+ 113:../../../os/common/ports/AVR/chcore.h ****  *          by @p PORT_INT_REQUIRED_STACK.
+ 114:../../../os/common/ports/AVR/chcore.h ****  */
+ 115:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_IDLE_THREAD_STACK_SIZE) || defined(__DOXYGEN__)
+ 116:../../../os/common/ports/AVR/chcore.h **** #define PORT_IDLE_THREAD_STACK_SIZE     8
+ 117:../../../os/common/ports/AVR/chcore.h **** #endif
+ 118:../../../os/common/ports/AVR/chcore.h **** 
+ 119:../../../os/common/ports/AVR/chcore.h **** /**
+ 120:../../../os/common/ports/AVR/chcore.h ****  * @brief   Per-thread stack overhead for interrupts servicing.
+ 121:../../../os/common/ports/AVR/chcore.h ****  * @details This constant is used in the calculation of the correct working
+ 122:../../../os/common/ports/AVR/chcore.h ****  *          area size.
+ 123:../../../os/common/ports/AVR/chcore.h ****  */
+ 124:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_INT_REQUIRED_STACK) || defined(__DOXYGEN__)
+ 125:../../../os/common/ports/AVR/chcore.h **** #define PORT_INT_REQUIRED_STACK         32
+ 126:../../../os/common/ports/AVR/chcore.h **** #endif
+ 127:../../../os/common/ports/AVR/chcore.h **** 
+ 128:../../../os/common/ports/AVR/chcore.h **** /**
+ 129:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables an alternative timer implementation.
+ 130:../../../os/common/ports/AVR/chcore.h ****  * @details Usually the port uses a timer interface defined in the file
+ 131:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer.h, if this option is enabled then the file
+ 132:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer_alt.h is included instead.
+ 133:../../../os/common/ports/AVR/chcore.h ****  */
+ 134:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_USE_ALT_TIMER) || defined(__DOXYGEN__)
+ 135:../../../os/common/ports/AVR/chcore.h **** #define PORT_USE_ALT_TIMER              FALSE
+ 136:../../../os/common/ports/AVR/chcore.h **** #endif
+ 137:../../../os/common/ports/AVR/chcore.h **** 
+ 138:../../../os/common/ports/AVR/chcore.h **** /**
+ 139:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables a "wait for interrupt" instruction in the idle loop.
+ 140:../../../os/common/ports/AVR/chcore.h ****  */
+ 141:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_AVR_WFI_SLEEP_IDLE) || defined(__DOXYGEN__)
+ 142:../../../os/common/ports/AVR/chcore.h **** #define PORT_AVR_WFI_SLEEP_IDLE      FALSE
+ 143:../../../os/common/ports/AVR/chcore.h **** #endif
+ 144:../../../os/common/ports/AVR/chcore.h **** 
+ 145:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 146:../../../os/common/ports/AVR/chcore.h **** /* Derived constants and error checks.                                       */
+ 147:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 148:../../../os/common/ports/AVR/chcore.h **** 
+ 149:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 150:../../../os/common/ports/AVR/chcore.h **** /* Module data structures and types.                                         */
+ 151:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 152:../../../os/common/ports/AVR/chcore.h **** 
+ 153:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 154:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 155:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 156:../../../os/common/ports/AVR/chcore.h **** 
+ 157:../../../os/common/ports/AVR/chcore.h **** /**
+ 158:../../../os/common/ports/AVR/chcore.h ****  * @brief   Type of stack and memory alignment enforcement.
+ 159:../../../os/common/ports/AVR/chcore.h ****  * @note    In this architecture the stack alignment is enforced to 8 bits.
+ 160:../../../os/common/ports/AVR/chcore.h ****  */
+ 161:../../../os/common/ports/AVR/chcore.h **** typedef uint8_t stkalign_t;
+ 162:../../../os/common/ports/AVR/chcore.h **** 
+ 163:../../../os/common/ports/AVR/chcore.h **** /**
+ 164:../../../os/common/ports/AVR/chcore.h ****  * @brief   Interrupt saved context.
+ 165:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the stack frame saved during a
+ 166:../../../os/common/ports/AVR/chcore.h ****  *          preemption-capable interrupt handler.
+ 167:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 168:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 169:../../../os/common/ports/AVR/chcore.h ****  */
+ 170:../../../os/common/ports/AVR/chcore.h **** struct port_extctx {
+ 171:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 172:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r31;
+ 173:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r30;
+ 174:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r27;
+ 175:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r26;
+ 176:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r25;
+ 177:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r24;
+ 178:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r23;
+ 179:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r22;
+ 180:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r21;
+ 181:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r20;
+ 182:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r19;
+ 183:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r18;
+ 184:../../../os/common/ports/AVR/chcore.h ****   uint8_t       sr;
+ 185:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r1;
+ 186:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r0;
+ 187:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 188:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 189:../../../os/common/ports/AVR/chcore.h **** #endif
+ 190:../../../os/common/ports/AVR/chcore.h ****   uint16_t      pc;
+ 191:../../../os/common/ports/AVR/chcore.h **** };
+ 192:../../../os/common/ports/AVR/chcore.h **** 
+ 193:../../../os/common/ports/AVR/chcore.h **** /**
+ 194:../../../os/common/ports/AVR/chcore.h ****  * @brief   System saved context.
+ 195:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the inner stack frame during a context
+ 196:../../../os/common/ports/AVR/chcore.h ****  *          switching.
+ 197:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 198:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 199:../../../os/common/ports/AVR/chcore.h ****  * @note    LR is stored in the caller context so it is not present in this
+ 200:../../../os/common/ports/AVR/chcore.h ****  *          structure.
+ 201:../../../os/common/ports/AVR/chcore.h ****  */
+ 202:../../../os/common/ports/AVR/chcore.h **** struct port_intctx {
+ 203:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 204:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r29;
+ 205:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r28;
+ 206:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r17;
+ 207:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r16;
+ 208:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r15;
+ 209:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r14;
+ 210:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r13;
+ 211:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r12;
+ 212:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r11;
+ 213:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r10;
+ 214:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r9;
+ 215:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r8;
+ 216:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r7;
+ 217:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r6;
+ 218:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r5;
+ 219:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r4;
+ 220:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r3;
+ 221:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r2;
+ 222:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 223:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 224:../../../os/common/ports/AVR/chcore.h **** #endif
+ 225:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcl;
+ 226:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pch;
+ 227:../../../os/common/ports/AVR/chcore.h **** };
+ 228:../../../os/common/ports/AVR/chcore.h **** 
+ 229:../../../os/common/ports/AVR/chcore.h **** /**
+ 230:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p thread_t structure.
+ 231:../../../os/common/ports/AVR/chcore.h ****  * @details This structure usually contains just the saved stack pointer
+ 232:../../../os/common/ports/AVR/chcore.h ****  *          defined as a pointer to a @p port_intctx structure.
+ 233:../../../os/common/ports/AVR/chcore.h ****  */
+ 234:../../../os/common/ports/AVR/chcore.h **** struct port_context {
+ 235:../../../os/common/ports/AVR/chcore.h ****   struct port_intctx *sp;
+ 236:../../../os/common/ports/AVR/chcore.h **** };
+ 237:../../../os/common/ports/AVR/chcore.h **** 
+ 238:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 239:../../../os/common/ports/AVR/chcore.h **** 
+ 240:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 241:../../../os/common/ports/AVR/chcore.h **** /* Module macros.                                                            */
+ 242:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 243:../../../os/common/ports/AVR/chcore.h **** 
+ 244:../../../os/common/ports/AVR/chcore.h **** /**
+ 245:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p chThdCreateI() API.
+ 246:../../../os/common/ports/AVR/chcore.h ****  * @details This code usually setup the context switching frame represented
+ 247:../../../os/common/ports/AVR/chcore.h ****  *          by an @p port_intctx structure.
+ 248:../../../os/common/ports/AVR/chcore.h ****  */
+ 249:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__) || defined(__DOXYGEN__)
+ 250:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 251:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 252:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 253:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 254:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 255:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 256:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 257:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcx = (uint8_t)0;                                             \
+ 258:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 259:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 260:../../../os/common/ports/AVR/chcore.h **** }
+ 261:../../../os/common/ports/AVR/chcore.h **** #else /* !__AVR_3_BYTE_PC__ */
+ 262:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 263:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 264:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 265:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 266:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 267:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 268:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 269:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 270:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 271:../../../os/common/ports/AVR/chcore.h **** }
+ 272:../../../os/common/ports/AVR/chcore.h **** #endif /* !__AVR_3_BYTE_PC__ */
+ 273:../../../os/common/ports/AVR/chcore.h **** 
+ 274:../../../os/common/ports/AVR/chcore.h **** /**
+ 275:../../../os/common/ports/AVR/chcore.h ****  * @brief   Computes the thread working area global size.
+ 276:../../../os/common/ports/AVR/chcore.h ****  * @note    There is no need to perform alignments in this macro.
+ 277:../../../os/common/ports/AVR/chcore.h ****  */
+ 278:../../../os/common/ports/AVR/chcore.h **** #define PORT_WA_SIZE(n) ((sizeof(struct port_intctx) - 1) +                \
+ 279:../../../os/common/ports/AVR/chcore.h ****                          (sizeof(struct port_extctx) - 1) +                \
+ 280:../../../os/common/ports/AVR/chcore.h ****                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
+ 281:../../../os/common/ports/AVR/chcore.h **** 
+ 282:../../../os/common/ports/AVR/chcore.h **** /**
+ 283:../../../os/common/ports/AVR/chcore.h ****  * @brief   Static working area allocation.
+ 284:../../../os/common/ports/AVR/chcore.h ****  * @details This macro is used to allocate a static thread working area
+ 285:../../../os/common/ports/AVR/chcore.h ****  *          aligned as both position and size.
+ 286:../../../os/common/ports/AVR/chcore.h ****  *
+ 287:../../../os/common/ports/AVR/chcore.h ****  * @param[in] s         the name to be assigned to the stack array
+ 288:../../../os/common/ports/AVR/chcore.h ****  * @param[in] n         the stack size to be assigned to the thread
+ 289:../../../os/common/ports/AVR/chcore.h ****  */
+ 290:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA(s, n)                                             \
+ 291:../../../os/common/ports/AVR/chcore.h ****   stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
+ 292:../../../os/common/ports/AVR/chcore.h **** 
+ 293:../../../os/common/ports/AVR/chcore.h **** /**
+ 294:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 295:../../../os/common/ports/AVR/chcore.h ****  */
+ 296:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_PRIORITY(n) false
+ 297:../../../os/common/ports/AVR/chcore.h **** 
+ 298:../../../os/common/ports/AVR/chcore.h **** /**
+ 299:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 300:../../../os/common/ports/AVR/chcore.h ****  */
+ 301:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_KERNEL_PRIORITY(n) false
+ 302:../../../os/common/ports/AVR/chcore.h **** 
+ 303:../../../os/common/ports/AVR/chcore.h **** /**
+ 304:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ prologue code.
+ 305:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the start of all IRQ handlers
+ 306:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 307:../../../os/common/ports/AVR/chcore.h ****  * @note    This code tricks the compiler to save all the specified registers
+ 308:../../../os/common/ports/AVR/chcore.h ****  *          by "touching" them.
+ 309:../../../os/common/ports/AVR/chcore.h ****  */
+ 310:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_PROLOGUE() {                                               \
+ 311:../../../os/common/ports/AVR/chcore.h ****   asm ("" : : : "r18", "r19", "r20", "r21", "r22", "r23", "r24",            \
+ 312:../../../os/common/ports/AVR/chcore.h ****                 "r25", "r26", "r27", "r30", "r31");                         \
+ 313:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 314:../../../os/common/ports/AVR/chcore.h **** }
+ 315:../../../os/common/ports/AVR/chcore.h **** 
+ 316:../../../os/common/ports/AVR/chcore.h **** /**
+ 317:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ epilogue code.
+ 318:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the end of all IRQ handlers
+ 319:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 320:../../../os/common/ports/AVR/chcore.h ****  */
+ 321:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_EPILOGUE() {                                               \
+ 322:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = false;                                                     \
+ 323:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_lock();                                                        \
+ 324:../../../os/common/ports/AVR/chcore.h ****   if (chSchIsPreemptionRequired())                                          \
+ 325:../../../os/common/ports/AVR/chcore.h ****     chSchDoReschedule();                                                    \
+ 326:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_unlock();                                                      \
+ 327:../../../os/common/ports/AVR/chcore.h **** }
+ 328:../../../os/common/ports/AVR/chcore.h **** 
+ 329:../../../os/common/ports/AVR/chcore.h **** /**
+ 330:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ handler function declaration.
+ 331:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 332:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 333:../../../os/common/ports/AVR/chcore.h ****  */
+ 334:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_HANDLER(id) ISR(id)
+ 335:../../../os/common/ports/AVR/chcore.h **** 
+ 336:../../../os/common/ports/AVR/chcore.h **** /**
+ 337:../../../os/common/ports/AVR/chcore.h ****  * @brief   Fast IRQ handler function declaration.
+ 338:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 339:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 340:../../../os/common/ports/AVR/chcore.h ****  */
+ 341:../../../os/common/ports/AVR/chcore.h **** #define PORT_FAST_IRQ_HANDLER(id) ISR(id)
+ 342:../../../os/common/ports/AVR/chcore.h **** 
+ 343:../../../os/common/ports/AVR/chcore.h **** /**
+ 344:../../../os/common/ports/AVR/chcore.h ****  * @brief   Performs a context switch between two threads.
+ 345:../../../os/common/ports/AVR/chcore.h ****  * @details This is the most critical code in any port, this function
+ 346:../../../os/common/ports/AVR/chcore.h ****  *          is responsible for the context switch between 2 threads.
+ 347:../../../os/common/ports/AVR/chcore.h ****  * @note    The implementation of this code affects <b>directly</b> the context
+ 348:../../../os/common/ports/AVR/chcore.h ****  *          switch performance so optimize here as much as you can.
+ 349:../../../os/common/ports/AVR/chcore.h ****  *
+ 350:../../../os/common/ports/AVR/chcore.h ****  * @param[in] ntp       the thread to be switched in
+ 351:../../../os/common/ports/AVR/chcore.h ****  * @param[in] otp       the thread to be switched out
+ 352:../../../os/common/ports/AVR/chcore.h ****  */
+ 353:../../../os/common/ports/AVR/chcore.h **** #define port_switch(ntp, otp) {                                             \
+ 354:../../../os/common/ports/AVR/chcore.h ****   _port_switch(ntp, otp);                                                   \
+ 355:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("" : : : "memory");                                         \
+ 356:../../../os/common/ports/AVR/chcore.h **** }
+ 357:../../../os/common/ports/AVR/chcore.h **** 
+ 358:../../../os/common/ports/AVR/chcore.h **** 
+ 359:../../../os/common/ports/AVR/chcore.h **** /**
+ 360:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-related initialization code.
+ 361:../../../os/common/ports/AVR/chcore.h ****  * @note    This function is empty in this port.
+ 362:../../../os/common/ports/AVR/chcore.h ****  */
+ 363:../../../os/common/ports/AVR/chcore.h **** #define port_init() {                                                       \
+ 364:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 365:../../../os/common/ports/AVR/chcore.h **** }
+ 366:../../../os/common/ports/AVR/chcore.h **** 
+ 367:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 368:../../../os/common/ports/AVR/chcore.h **** /* External declarations.                                                    */
+ 369:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 370:../../../os/common/ports/AVR/chcore.h **** 
+ 371:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 372:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 373:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 374:../../../os/common/ports/AVR/chcore.h **** 
+ 375:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 376:../../../os/common/ports/AVR/chcore.h **** extern "C" {
+ 377:../../../os/common/ports/AVR/chcore.h **** #endif
+ 378:../../../os/common/ports/AVR/chcore.h ****   void _port_switch(thread_t *ntp, thread_t *otp);
+ 379:../../../os/common/ports/AVR/chcore.h ****   void _port_thread_start(void);
+ 380:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 381:../../../os/common/ports/AVR/chcore.h **** }
+ 382:../../../os/common/ports/AVR/chcore.h **** #endif
+ 383:../../../os/common/ports/AVR/chcore.h **** 
+ 384:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 385:../../../os/common/ports/AVR/chcore.h **** 
+ 386:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 387:../../../os/common/ports/AVR/chcore.h **** /* Module inline functions.                                                  */
+ 388:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 389:../../../os/common/ports/AVR/chcore.h **** 
+ 390:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 391:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 392:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 393:../../../os/common/ports/AVR/chcore.h **** 
+ 394:../../../os/common/ports/AVR/chcore.h **** /**
+ 395:../../../os/common/ports/AVR/chcore.h ****  * @brief   Returns a word encoding the current interrupts status.
+ 396:../../../os/common/ports/AVR/chcore.h ****  *
+ 397:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupts status.
+ 398:../../../os/common/ports/AVR/chcore.h ****  */
+ 399:../../../os/common/ports/AVR/chcore.h **** static inline syssts_t port_get_irq_status(void) {
+ 400:../../../os/common/ports/AVR/chcore.h **** 
+ 401:../../../os/common/ports/AVR/chcore.h ****   return SREG;
+ 402:../../../os/common/ports/AVR/chcore.h **** }
+ 403:../../../os/common/ports/AVR/chcore.h **** 
+ 404:../../../os/common/ports/AVR/chcore.h **** /**
+ 405:../../../os/common/ports/AVR/chcore.h ****  * @brief   Checks the interrupt status.
+ 406:../../../os/common/ports/AVR/chcore.h ****  *
+ 407:../../../os/common/ports/AVR/chcore.h ****  * @param[in] sts       the interrupt status word
+ 408:../../../os/common/ports/AVR/chcore.h ****  *
+ 409:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupt status.
+ 410:../../../os/common/ports/AVR/chcore.h ****  * @retval false        the word specified a disabled interrupts status.
+ 411:../../../os/common/ports/AVR/chcore.h ****  * @retval true         the word specified an enabled interrupts status.
+ 412:../../../os/common/ports/AVR/chcore.h ****  */
+ 413:../../../os/common/ports/AVR/chcore.h **** static inline bool port_irq_enabled(syssts_t sts) {
+ 414:../../../os/common/ports/AVR/chcore.h **** 
+ 415:../../../os/common/ports/AVR/chcore.h ****   return (bool)((sts & 0x80) != 0);
+ 416:../../../os/common/ports/AVR/chcore.h **** }
+ 417:../../../os/common/ports/AVR/chcore.h **** 
+ 418:../../../os/common/ports/AVR/chcore.h **** /**
+ 419:../../../os/common/ports/AVR/chcore.h ****  * @brief   Determines the current execution context.
+ 420:../../../os/common/ports/AVR/chcore.h ****  *
+ 421:../../../os/common/ports/AVR/chcore.h ****  * @return              The execution context.
+ 422:../../../os/common/ports/AVR/chcore.h ****  * @retval false        not running in ISR mode.
+ 423:../../../os/common/ports/AVR/chcore.h ****  * @retval true         running in ISR mode.
+ 424:../../../os/common/ports/AVR/chcore.h ****  */
+ 425:../../../os/common/ports/AVR/chcore.h **** static inline bool port_is_isr_context(void) {
+ 426:../../../os/common/ports/AVR/chcore.h **** 
+ 427:../../../os/common/ports/AVR/chcore.h ****   return __avr_in_isr;
+ 428:../../../os/common/ports/AVR/chcore.h **** }
+ 429:../../../os/common/ports/AVR/chcore.h **** 
+ 430:../../../os/common/ports/AVR/chcore.h **** /**
+ 431:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-lock action.
+ 432:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just disables interrupts but may perform more
+ 433:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 434:../../../os/common/ports/AVR/chcore.h ****  */
+ 435:../../../os/common/ports/AVR/chcore.h **** static inline void port_lock(void) {
+ 436:../../../os/common/ports/AVR/chcore.h **** 
+ 437:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("cli" : : : "memory");
+ 438:../../../os/common/ports/AVR/chcore.h **** }
+ 439:../../../os/common/ports/AVR/chcore.h **** 
+ 440:../../../os/common/ports/AVR/chcore.h **** /**
+ 441:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-unlock action.
+ 442:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just enables interrupts but may perform more
+ 443:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 444:../../../os/common/ports/AVR/chcore.h ****  */
+ 445:../../../os/common/ports/AVR/chcore.h **** static inline void port_unlock(void) {
+ 446:../../../os/common/ports/AVR/chcore.h **** 
+ 447:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("sei" : : : "memory");
+ 234               		.loc 2 447 0
+ 235               	/* #APP */
+ 236               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 237 0000 7894      		sei
+ 238               	 ;  0 "" 2
+ 239               	/* #NOAPP */
+ 240               	.LBE11:
+ 241               	.LBE10:
+ 242               	.LBE9:
+ 243               	.LBE8:
+ 151:../../../os/common/ports/AVR/chcore.c **** 
+ 152:../../../os/common/ports/AVR/chcore.c ****   chSysUnlock();
+ 153:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r24, r4");
+ 244               		.loc 1 153 0
+ 245               	/* #APP */
+ 246               	 ;  153 "../../../os/common/ports/AVR/chcore.c" 1
+ 247 0002 C201      		movw    r24, r4
+ 248               	 ;  0 "" 2
+ 154:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("movw    r30, r2");
+ 249               		.loc 1 154 0
+ 250               	 ;  154 "../../../os/common/ports/AVR/chcore.c" 1
+ 251 0004 F101      		movw    r30, r2
+ 252               	 ;  0 "" 2
+ 155:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("icall");
+ 253               		.loc 1 155 0
+ 254               	 ;  155 "../../../os/common/ports/AVR/chcore.c" 1
+ 255 0006 0995      		icall
+ 256               	 ;  0 "" 2
+ 156:../../../os/common/ports/AVR/chcore.c **** #if defined(_CHIBIOS_RT_)
+ 157:../../../os/common/ports/AVR/chcore.c ****   asm volatile ("call    chThdExit");  /* Used for avr5 Architecture. */
+ 257               		.loc 1 157 0
+ 258               	 ;  157 "../../../os/common/ports/AVR/chcore.c" 1
+ 259 0008 0E94 0000 		call    chThdExit
+ 260               	 ;  0 "" 2
+ 261               	/* #NOAPP */
+ 262 000c 0895      		ret
+ 263               		.cfi_endproc
+ 264               	.LFE149:
+ 266               		.comm	__avr_in_isr,1,1
+ 267               		.text
+ 268               	.Letext0:
+ 269               		.file 3 "/usr/lib/avr/include/stdint.h"
+ 270               		.file 4 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+ 271               		.file 5 "../../../os/rt/include/chsystypes.h"
+ 272               		.file 6 "../../../os/rt/include/chschd.h"
+ 273               		.file 7 "../../../os/rt/include/chtime.h"
+ 274               		.file 8 "../../../os/rt/include/chsem.h"
+ 275               		.file 9 "../../../os/rt/include/chmtx.h"
+ 276               		.file 10 "../../../os/rt/include/chsys.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 chcore.c
+     /tmp/ccCGdpWR.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccCGdpWR.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccCGdpWR.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccCGdpWR.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccCGdpWR.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccCGdpWR.s:13     .text._port_switch:0000000000000000 _port_switch
+     /tmp/ccCGdpWR.s:221    .text._port_thread_start:0000000000000000 _port_thread_start
+                            *COM*:0000000000000001 __avr_in_isr
+
+UNDEFINED SYMBOLS
+chThdExit
+__do_clear_bss

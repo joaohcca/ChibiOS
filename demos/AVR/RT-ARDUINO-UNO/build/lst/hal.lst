@@ -1,0 +1,226 @@
+   1               		.file	"hal.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.halInit,"ax",@progbits
+  11               	.global	halInit
+  13               	halInit:
+  14               	.LFB180:
+  15               		.file 1 "../../../os/hal/src/hal.c"
+   1:../../../os/hal/src/hal.c **** /*
+   2:../../../os/hal/src/hal.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+   3:../../../os/hal/src/hal.c **** 
+   4:../../../os/hal/src/hal.c ****     Licensed under the Apache License, Version 2.0 (the "License");
+   5:../../../os/hal/src/hal.c ****     you may not use this file except in compliance with the License.
+   6:../../../os/hal/src/hal.c ****     You may obtain a copy of the License at
+   7:../../../os/hal/src/hal.c **** 
+   8:../../../os/hal/src/hal.c ****         http://www.apache.org/licenses/LICENSE-2.0
+   9:../../../os/hal/src/hal.c **** 
+  10:../../../os/hal/src/hal.c ****     Unless required by applicable law or agreed to in writing, software
+  11:../../../os/hal/src/hal.c ****     distributed under the License is distributed on an "AS IS" BASIS,
+  12:../../../os/hal/src/hal.c ****     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  13:../../../os/hal/src/hal.c ****     See the License for the specific language governing permissions and
+  14:../../../os/hal/src/hal.c ****     limitations under the License.
+  15:../../../os/hal/src/hal.c **** */
+  16:../../../os/hal/src/hal.c **** 
+  17:../../../os/hal/src/hal.c **** /**
+  18:../../../os/hal/src/hal.c ****  * @file    hal.c
+  19:../../../os/hal/src/hal.c ****  * @brief   HAL subsystem code.
+  20:../../../os/hal/src/hal.c ****  *
+  21:../../../os/hal/src/hal.c ****  * @addtogroup HAL
+  22:../../../os/hal/src/hal.c ****  * @{
+  23:../../../os/hal/src/hal.c ****  */
+  24:../../../os/hal/src/hal.c **** 
+  25:../../../os/hal/src/hal.c **** #include "hal.h"
+  26:../../../os/hal/src/hal.c **** 
+  27:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  28:../../../os/hal/src/hal.c **** /* Driver local definitions.                                                 */
+  29:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  30:../../../os/hal/src/hal.c **** 
+  31:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  32:../../../os/hal/src/hal.c **** /* Driver exported variables.                                                */
+  33:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  34:../../../os/hal/src/hal.c **** 
+  35:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  36:../../../os/hal/src/hal.c **** /* Driver local variables and types.                                         */
+  37:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  38:../../../os/hal/src/hal.c **** 
+  39:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  40:../../../os/hal/src/hal.c **** /* Driver local functions.                                                   */
+  41:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  42:../../../os/hal/src/hal.c **** 
+  43:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  44:../../../os/hal/src/hal.c **** /* Driver exported functions.                                                */
+  45:../../../os/hal/src/hal.c **** /*===========================================================================*/
+  46:../../../os/hal/src/hal.c **** 
+  47:../../../os/hal/src/hal.c **** /**
+  48:../../../os/hal/src/hal.c ****  * @brief   HAL initialization.
+  49:../../../os/hal/src/hal.c ****  * @details This function invokes the low level initialization code then
+  50:../../../os/hal/src/hal.c ****  *          initializes all the drivers enabled in the HAL. Finally the
+  51:../../../os/hal/src/hal.c ****  *          board-specific initialization is performed by invoking
+  52:../../../os/hal/src/hal.c ****  *          @p boardInit() (usually defined in @p board.c).
+  53:../../../os/hal/src/hal.c ****  *
+  54:../../../os/hal/src/hal.c ****  * @init
+  55:../../../os/hal/src/hal.c ****  */
+  56:../../../os/hal/src/hal.c **** void halInit(void) {
+  16               		.loc 1 56 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  57:../../../os/hal/src/hal.c **** 
+  58:../../../os/hal/src/hal.c ****   /* Initializes the OS Abstraction Layer.*/
+  59:../../../os/hal/src/hal.c ****   osalInit();
+  60:../../../os/hal/src/hal.c **** 
+  61:../../../os/hal/src/hal.c ****   /* Platform low level initializations.*/
+  62:../../../os/hal/src/hal.c ****   hal_lld_init();
+  22               		.loc 1 62 0
+  23 0000 0E94 0000 		call hal_lld_init
+  24               	.LVL0:
+  63:../../../os/hal/src/hal.c **** 
+  64:../../../os/hal/src/hal.c **** #if (HAL_USE_PAL == TRUE) || defined(__DOXYGEN__)
+  65:../../../os/hal/src/hal.c **** #if defined(PAL_NEW_INIT)
+  66:../../../os/hal/src/hal.c ****   palInit();
+  67:../../../os/hal/src/hal.c **** #else
+  68:../../../os/hal/src/hal.c ****   palInit(&pal_default_config);
+  25               		.loc 1 68 0
+  26 0004 80E0      		ldi r24,lo8(pal_default_config)
+  27 0006 90E0      		ldi r25,hi8(pal_default_config)
+  28 0008 0E94 0000 		call _pal_lld_init
+  29               	.LVL1:
+  69:../../../os/hal/src/hal.c **** #endif
+  70:../../../os/hal/src/hal.c **** #endif
+  71:../../../os/hal/src/hal.c **** #if (HAL_USE_ADC == TRUE) || defined(__DOXYGEN__)
+  72:../../../os/hal/src/hal.c ****   adcInit();
+  73:../../../os/hal/src/hal.c **** #endif
+  74:../../../os/hal/src/hal.c **** #if (HAL_USE_CAN == TRUE) || defined(__DOXYGEN__)
+  75:../../../os/hal/src/hal.c ****   canInit();
+  76:../../../os/hal/src/hal.c **** #endif
+  77:../../../os/hal/src/hal.c **** #if (HAL_USE_CRY == TRUE) || defined(__DOXYGEN__)
+  78:../../../os/hal/src/hal.c ****   cryInit();
+  79:../../../os/hal/src/hal.c **** #endif
+  80:../../../os/hal/src/hal.c **** #if (HAL_USE_DAC == TRUE) || defined(__DOXYGEN__)
+  81:../../../os/hal/src/hal.c ****   dacInit();
+  82:../../../os/hal/src/hal.c **** #endif
+  83:../../../os/hal/src/hal.c **** #if (HAL_USE_EXT == TRUE) || defined(__DOXYGEN__)
+  84:../../../os/hal/src/hal.c ****   extInit();
+  85:../../../os/hal/src/hal.c **** #endif
+  86:../../../os/hal/src/hal.c **** #if (HAL_USE_GPT == TRUE) || defined(__DOXYGEN__)
+  87:../../../os/hal/src/hal.c ****   gptInit();
+  88:../../../os/hal/src/hal.c **** #endif
+  89:../../../os/hal/src/hal.c **** #if (HAL_USE_I2C == TRUE) || defined(__DOXYGEN__)
+  90:../../../os/hal/src/hal.c ****   i2cInit();
+  30               		.loc 1 90 0
+  31 000c 0E94 0000 		call i2cInit
+  32               	.LVL2:
+  91:../../../os/hal/src/hal.c **** #endif
+  92:../../../os/hal/src/hal.c **** #if (HAL_USE_I2S == TRUE) || defined(__DOXYGEN__)
+  93:../../../os/hal/src/hal.c ****   i2sInit();
+  94:../../../os/hal/src/hal.c **** #endif
+  95:../../../os/hal/src/hal.c **** #if (HAL_USE_ICU == TRUE) || defined(__DOXYGEN__)
+  96:../../../os/hal/src/hal.c ****   icuInit();
+  97:../../../os/hal/src/hal.c **** #endif
+  98:../../../os/hal/src/hal.c **** #if (HAL_USE_MAC == TRUE) || defined(__DOXYGEN__)
+  99:../../../os/hal/src/hal.c ****   macInit();
+ 100:../../../os/hal/src/hal.c **** #endif
+ 101:../../../os/hal/src/hal.c **** #if (HAL_USE_PWM == TRUE) || defined(__DOXYGEN__)
+ 102:../../../os/hal/src/hal.c ****   pwmInit();
+ 103:../../../os/hal/src/hal.c **** #endif
+ 104:../../../os/hal/src/hal.c **** #if (HAL_USE_QSPI == TRUE) || defined(__DOXYGEN__)
+ 105:../../../os/hal/src/hal.c ****   qspiInit();
+ 106:../../../os/hal/src/hal.c **** #endif
+ 107:../../../os/hal/src/hal.c **** #if (HAL_USE_SERIAL == TRUE) || defined(__DOXYGEN__)
+ 108:../../../os/hal/src/hal.c ****   sdInit();
+  33               		.loc 1 108 0
+  34 0010 0E94 0000 		call sdInit
+  35               	.LVL3:
+ 109:../../../os/hal/src/hal.c **** #endif
+ 110:../../../os/hal/src/hal.c **** #if (HAL_USE_SDC == TRUE) || defined(__DOXYGEN__)
+ 111:../../../os/hal/src/hal.c ****   sdcInit();
+ 112:../../../os/hal/src/hal.c **** #endif
+ 113:../../../os/hal/src/hal.c **** #if (HAL_USE_SPI == TRUE) || defined(__DOXYGEN__)
+ 114:../../../os/hal/src/hal.c ****   spiInit();
+ 115:../../../os/hal/src/hal.c **** #endif
+ 116:../../../os/hal/src/hal.c **** #if (HAL_USE_UART == TRUE) || defined(__DOXYGEN__)
+ 117:../../../os/hal/src/hal.c ****   uartInit();
+ 118:../../../os/hal/src/hal.c **** #endif
+ 119:../../../os/hal/src/hal.c **** #if (HAL_USE_USB == TRUE) || defined(__DOXYGEN__)
+ 120:../../../os/hal/src/hal.c ****   usbInit();
+ 121:../../../os/hal/src/hal.c **** #endif
+ 122:../../../os/hal/src/hal.c **** #if (HAL_USE_MMC_SPI == TRUE) || defined(__DOXYGEN__)
+ 123:../../../os/hal/src/hal.c ****   mmcInit();
+ 124:../../../os/hal/src/hal.c **** #endif
+ 125:../../../os/hal/src/hal.c **** #if (HAL_USE_SERIAL_USB == TRUE) || defined(__DOXYGEN__)
+ 126:../../../os/hal/src/hal.c ****   sduInit();
+ 127:../../../os/hal/src/hal.c **** #endif
+ 128:../../../os/hal/src/hal.c **** #if (HAL_USE_RTC == TRUE) || defined(__DOXYGEN__)
+ 129:../../../os/hal/src/hal.c ****   rtcInit();
+ 130:../../../os/hal/src/hal.c **** #endif
+ 131:../../../os/hal/src/hal.c **** #if (HAL_USE_WDG == TRUE) || defined(__DOXYGEN__)
+ 132:../../../os/hal/src/hal.c ****   wdgInit();
+ 133:../../../os/hal/src/hal.c **** #endif
+ 134:../../../os/hal/src/hal.c **** 
+ 135:../../../os/hal/src/hal.c ****   /* Community driver overlay initialization.*/
+ 136:../../../os/hal/src/hal.c **** #if defined(HAL_USE_COMMUNITY) || defined(__DOXYGEN__)
+ 137:../../../os/hal/src/hal.c **** #if (HAL_USE_COMMUNITY == TRUE) || defined(__DOXYGEN__)
+ 138:../../../os/hal/src/hal.c ****   halCommunityInit();
+ 139:../../../os/hal/src/hal.c **** #endif
+ 140:../../../os/hal/src/hal.c **** #endif
+ 141:../../../os/hal/src/hal.c **** 
+ 142:../../../os/hal/src/hal.c ****   /* Board specific initialization.*/
+ 143:../../../os/hal/src/hal.c ****   boardInit();
+  36               		.loc 1 143 0
+  37 0014 0E94 0000 		call boardInit
+  38               	.LVL4:
+ 144:../../../os/hal/src/hal.c **** 
+ 145:../../../os/hal/src/hal.c **** /*
+ 146:../../../os/hal/src/hal.c ****  *  The ST driver is a special case, it is only initialized if the OSAL is
+ 147:../../../os/hal/src/hal.c ****  *  configured to require it.
+ 148:../../../os/hal/src/hal.c ****  */
+ 149:../../../os/hal/src/hal.c **** #if OSAL_ST_MODE != OSAL_ST_MODE_NONE
+ 150:../../../os/hal/src/hal.c ****   stInit();
+  39               		.loc 1 150 0
+  40 0018 0C94 0000 		jmp stInit
+  41               	.LVL5:
+  42               		.cfi_endproc
+  43               	.LFE180:
+  45               		.text
+  46               	.Letext0:
+  47               		.file 2 "/usr/lib/avr/include/stdint.h"
+  48               		.file 3 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+  49               		.file 4 "../../../os/rt/include/chsystypes.h"
+  50               		.file 5 "../../../os/rt/include/chschd.h"
+  51               		.file 6 "../../../os/rt/include/chtime.h"
+  52               		.file 7 "../../../os/common/ports/AVR/chcore.h"
+  53               		.file 8 "../../../os/rt/include/chsem.h"
+  54               		.file 9 "../../../os/rt/include/chmtx.h"
+  55               		.file 10 "../../../os/hal/ports/AVR/MEGA/LLD/GPIOv1/hal_pal_lld.h"
+  56               		.file 11 "../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.h"
+  57               		.file 12 "../../../os/hal/include/hal_i2c.h"
+  58               		.file 13 "../../../os/hal/include/hal_serial.h"
+  59               		.file 14 "../../../os/hal/boards/ARDUINO_UNO/board.h"
+  60               		.file 15 "../../../os/hal/include/hal_st.h"
+  61               		.file 16 "../../../os/hal/osal/rt/osal.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 hal.c
+     /tmp/ccgzPEx0.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccgzPEx0.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccgzPEx0.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccgzPEx0.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccgzPEx0.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccgzPEx0.s:13     .text.halInit:0000000000000000 halInit
+
+UNDEFINED SYMBOLS
+hal_lld_init
+pal_default_config
+_pal_lld_init
+i2cInit
+sdInit
+boardInit
+stInit

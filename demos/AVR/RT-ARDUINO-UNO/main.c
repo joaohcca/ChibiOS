@@ -16,7 +16,7 @@
 
 #include "ch.h"
 #include "hal.h"
-
+#include "hal_i2c.h"
 /*
  * LED blinker thread, times are in milliseconds.
  */
@@ -45,7 +45,7 @@ int main(void) {
    */
   halInit();
   chSysInit();
-
+  i2cInit();  
   /*
    * Activates the serial driver 1 using the driver default configuration.
    */

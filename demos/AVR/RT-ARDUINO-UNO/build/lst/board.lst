@@ -1,0 +1,107 @@
+   1               		.file	"board.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.boardInit,"ax",@progbits
+  11               	.global	boardInit
+  13               	boardInit:
+  14               	.LFB180:
+  15               		.file 1 "../../../os/hal/boards/ARDUINO_UNO/board.c"
+   1:../../../os/hal/boards/ARDUINO_UNO/board.c **** /*
+   2:../../../os/hal/boards/ARDUINO_UNO/board.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+   3:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+   4:../../../os/hal/boards/ARDUINO_UNO/board.c ****     Licensed under the Apache License, Version 2.0 (the "License");
+   5:../../../os/hal/boards/ARDUINO_UNO/board.c ****     you may not use this file except in compliance with the License.
+   6:../../../os/hal/boards/ARDUINO_UNO/board.c ****     You may obtain a copy of the License at
+   7:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+   8:../../../os/hal/boards/ARDUINO_UNO/board.c ****         http://www.apache.org/licenses/LICENSE-2.0
+   9:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+  10:../../../os/hal/boards/ARDUINO_UNO/board.c ****     Unless required by applicable law or agreed to in writing, software
+  11:../../../os/hal/boards/ARDUINO_UNO/board.c ****     distributed under the License is distributed on an "AS IS" BASIS,
+  12:../../../os/hal/boards/ARDUINO_UNO/board.c ****     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  13:../../../os/hal/boards/ARDUINO_UNO/board.c ****     See the License for the specific language governing permissions and
+  14:../../../os/hal/boards/ARDUINO_UNO/board.c ****     limitations under the License.
+  15:../../../os/hal/boards/ARDUINO_UNO/board.c **** */
+  16:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+  17:../../../os/hal/boards/ARDUINO_UNO/board.c **** #include "hal.h"
+  18:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+  19:../../../os/hal/boards/ARDUINO_UNO/board.c **** /**
+  20:../../../os/hal/boards/ARDUINO_UNO/board.c ****  * @brief   PAL setup.
+  21:../../../os/hal/boards/ARDUINO_UNO/board.c ****  * @details Digital I/O ports static configuration as defined in @p board.h.
+  22:../../../os/hal/boards/ARDUINO_UNO/board.c ****  *          This variable is used by the HAL when initializing the PAL driver.
+  23:../../../os/hal/boards/ARDUINO_UNO/board.c ****  */
+  24:../../../os/hal/boards/ARDUINO_UNO/board.c **** #if HAL_USE_PAL || defined(__DOXYGEN__)
+  25:../../../os/hal/boards/ARDUINO_UNO/board.c **** const PALConfig pal_default_config =
+  26:../../../os/hal/boards/ARDUINO_UNO/board.c **** {
+  27:../../../os/hal/boards/ARDUINO_UNO/board.c **** #if defined(PORTB)
+  28:../../../os/hal/boards/ARDUINO_UNO/board.c ****   {VAL_PORTB, VAL_DDRB},
+  29:../../../os/hal/boards/ARDUINO_UNO/board.c **** #endif
+  30:../../../os/hal/boards/ARDUINO_UNO/board.c **** #if defined(PORTC)
+  31:../../../os/hal/boards/ARDUINO_UNO/board.c ****   {VAL_PORTC, VAL_DDRC},
+  32:../../../os/hal/boards/ARDUINO_UNO/board.c **** #endif
+  33:../../../os/hal/boards/ARDUINO_UNO/board.c **** #if defined(PORTD)
+  34:../../../os/hal/boards/ARDUINO_UNO/board.c ****   {VAL_PORTD, VAL_DDRD},
+  35:../../../os/hal/boards/ARDUINO_UNO/board.c **** #endif
+  36:../../../os/hal/boards/ARDUINO_UNO/board.c **** };
+  37:../../../os/hal/boards/ARDUINO_UNO/board.c **** #endif /* HAL_USE_PAL */
+  38:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+  39:../../../os/hal/boards/ARDUINO_UNO/board.c **** /**
+  40:../../../os/hal/boards/ARDUINO_UNO/board.c ****  * Board-specific initialization code.
+  41:../../../os/hal/boards/ARDUINO_UNO/board.c ****  */
+  42:../../../os/hal/boards/ARDUINO_UNO/board.c **** void boardInit(void) {
+  16               		.loc 1 42 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  43:../../../os/hal/boards/ARDUINO_UNO/board.c **** 
+  44:../../../os/hal/boards/ARDUINO_UNO/board.c ****   /*
+  45:../../../os/hal/boards/ARDUINO_UNO/board.c ****    * External interrupts setup, all disabled initially.
+  46:../../../os/hal/boards/ARDUINO_UNO/board.c ****    */
+  47:../../../os/hal/boards/ARDUINO_UNO/board.c ****   EICRA  = 0x00;
+  22               		.loc 1 47 0
+  23 0000 1092 6900 		sts 105,__zero_reg__
+  48:../../../os/hal/boards/ARDUINO_UNO/board.c ****   EIMSK  = 0x00;
+  24               		.loc 1 48 0
+  25 0004 1DBA      		out 0x1d,__zero_reg__
+  26 0006 0895      		ret
+  27               		.cfi_endproc
+  28               	.LFE180:
+  30               	.global	pal_default_config
+  31               		.section	.rodata.pal_default_config,"a",@progbits
+  34               	pal_default_config:
+  35 0000 FF        		.byte	-1
+  36 0001 20        		.byte	32
+  37 0002 FF        		.byte	-1
+  38 0003 00        		.byte	0
+  39 0004 FF        		.byte	-1
+  40 0005 02        		.byte	2
+  41               		.text
+  42               	.Letext0:
+  43               		.file 2 "/usr/lib/avr/include/stdint.h"
+  44               		.file 3 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+  45               		.file 4 "../../../os/rt/include/chsystypes.h"
+  46               		.file 5 "../../../os/rt/include/chschd.h"
+  47               		.file 6 "../../../os/rt/include/chtime.h"
+  48               		.file 7 "../../../os/common/ports/AVR/chcore.h"
+  49               		.file 8 "../../../os/rt/include/chsem.h"
+  50               		.file 9 "../../../os/rt/include/chmtx.h"
+  51               		.file 10 "../../../os/hal/ports/AVR/MEGA/LLD/GPIOv1/hal_pal_lld.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 board.c
+     /tmp/ccsODvbY.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccsODvbY.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccsODvbY.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccsODvbY.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccsODvbY.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccsODvbY.s:13     .text.boardInit:0000000000000000 boardInit
+     /tmp/ccsODvbY.s:34     .rodata.pal_default_config:0000000000000000 pal_default_config
+
+UNDEFINED SYMBOLS
+__do_copy_data
