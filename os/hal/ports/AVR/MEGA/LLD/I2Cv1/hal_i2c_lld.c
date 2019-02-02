@@ -347,6 +347,31 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
+static void i2c_lld_setup_rx_transfer(I2CDriver *i2cp) {
+  uint32_t reload;
+  size_t n;
+  /* The unit can transfer 255 bytes maximum in a single operation (device constraint). */
+  n = i2cp->rxbytes;
+  if (n > 255U) {
+    n = 255U;
+    }
+  else {
+    reload = 0U;
+  }
+}
+
+static void i2c_lld_setup_tx_transfer(I2CDriver *i2cp) {
+  uint32_t reload;
+  size_t n;
+  /* The unit can transfer 255 bytes maximum in a single operation. */
+  n = i2cp->txbytes;            // Get transaction size from DMA or buffer as configured
+  if (n > 255U) {
+    n = 255U;  
+  }
+  else {
+    reload = 0U;
+  }
+}
 /*
 * brief Configure to respond to messages directed to the given i2cadr
 * @param[in] i2cp      pointer to the @p I2CDriver object
@@ -368,7 +393,7 @@ msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
     return I2C_NO_ERROR; 
     }
   else
-    return I2C_NO_ERROR;  /*find a ERROR*/
+    return i2c_lld_get_slaveErrors(i2cp);  /*find a ERROR*/
 }
 /*stop respond to certain addr*/
 
@@ -392,17 +417,29 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
 
 /*Usar as funcoes do mestre como referência e ver diferenças*/
 void  i2c_lld_slaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg){
-  i2cp->errors = I2C_NO_ERROR;
-  i2cp->rxidx = 0;
-i2c_lld_matchAddress(i2cp, i2cp->addr);
+  osalDbgCheck((rxMsg && rxMsg->size <= 0xffff));
+  i2cp->slaveNextRx = rxMsg;
+  if (rxMsg->body && rxMsg->size) {
+  /* We can receive now! */
+  i2cp->slaveRx = rxMsg;
+  i2cp->rxptr   = rxMsg->body;
+  i2cp->rxbytes = rxMsg->size;
+i2c_lld_setup_rx_transfer(i2cp);			        // Set up the transfer
+  }
 }
 
 void  i2c_lld_slaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg){
-  i2cp->errors = I2C_NO_ERROR; 
-  i2cp->txidx = 0;
-
-i2c_lld_matchAddress(i2cp, i2cp->addr);
-
+ osalDbgCheck((replyMsg && replyMsg->size <= 0xffff));
+  
+  i2cp->slaveNextReply = replyMsg;
+  if (replyMsg->body && replyMsg->size){
+    i2cp->slaveReply = replyMsg;
+    /* slave TX setup -- we can reply now! */  
+      /* Start transmission */
+      i2cp->txptr   = replyMsg->body;
+      i2cp->txbytes = replyMsg->size;
+      i2c_lld_setup_tx_transfer(i2cp);  
+  }
 }
 
 

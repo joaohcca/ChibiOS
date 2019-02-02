@@ -304,6 +304,14 @@ struct I2CDriver {
    * @note		This is used for a reply if no message received first
    */
   const I2CSlaveMsg         *slaveNextReply;
+  /**
+   * @brief     Pointer to the next RX buffer location.
+   */
+  uint8_t                   *rxptr;
+  /**
+   * @brief     Number of bytes in RX phase.
+   */
+  uint8_t                    *txptr;
 };
 
 /**
