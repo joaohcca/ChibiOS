@@ -31,7 +31,7 @@
 /* Driver constants.                                                        */
 /*==========================================================================*/
 
-/**MASTER DEF                                       *?
+/**MASTER DEF                                       */
 /** @brief   START transmitted.                     */
 #define TWI_START                  0x08
 /** @brief   Repeated START transmitted.            */
@@ -106,13 +106,6 @@
 
 /**@brief last DATA BYTE in TWDR has been transmitted, NACK returned*/
 #define TWI_SLAVE_TX_LAST_DATA_ACK					0xC8
-
-
-
-
-
-
-
 
 
 /*==========================================================================*/

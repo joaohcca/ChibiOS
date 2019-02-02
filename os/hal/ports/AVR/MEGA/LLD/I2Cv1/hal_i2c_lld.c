@@ -118,18 +118,18 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   /*review cases where state 0x60 should return nack (not initialize ?)
   same decision making on the 0x68 and 0x70)*/
     if (i2cp->rxidx ==(i2cp->rxbytes -1)){
-      TWCR = (1 << TWINT) | (1 << TWIE)
+      TWCR = (1 << TWINT) | (1 << TWIE);
     }
     else{
-      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE))
+      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE));
     }
   break;
   case TWI_SLAVE_RX_POST_ARB_LOST: /*ref $68*/
     if (i2cp->rxidx ==(i2cp->rxbytes -1)){
-      TWCR = (1 << TWINT) | (1 << TWIE)
+      TWCR = (1 << TWINT) | (1 << TWIE);
     }
     else{
-      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE))
+      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE));
     }
   case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
   /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
@@ -148,11 +148,11 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   i2cp->rxbuf[i2cp->rxidx++] = TWDR;
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA))
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
   break;
   case TWI_SLAVE_STOP:
   /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA))
+   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA));
 
   /*slave transmitt status*/
   case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
@@ -286,8 +286,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end. <b>After a
  *                      timeout the driver must be stopped and restarted
  *                      because the bus is in an uncertain state</b>.
- *
- /* Send START. */
+ */
 msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                      uint8_t *rxbuf, size_t rxbytes,
                                      systime_t timeout) {
@@ -308,7 +307,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
 /**
  * @brief   Transmits data via the I2C bus as master.
- *
+ *osalThreadSuspendTimeoutS
  * @param[in]   i2cp      pointer to the @p I2CDriver object
  * @param[in]   addr      slave device address
  * @param[in]   txbuf     pointer to the transmit buffer
@@ -349,7 +348,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 }
 
 /* Adding:  i2c_lld_matchAddress(), i2c_lld_unmatchAddress(), i2c_lld_unmatchAll(), i2c_lld_slaveReceive() e i2c_lld_slaveReply()
-/*@brief Configure to respond to messages directed to the given i2cadr
+*@brief Configure to respond to messages directed to the given i2cadr
 * @param[in] i2cp      pointer to the @p I2CDriver object
 *  @param[in] i2cadr    I2C bus address
 * @return              Length of message OR the type of event received
@@ -362,20 +361,20 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 * @api
 */
 msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
-  if (i2cadr != 0 ) 
+  if (i2cadr != 0 ){ 
     uint32_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
     i2cp->addr = adr;                                               /*Implement slave addr*/
-    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); /*set the nescessary flags whitout TWIE (?)*/
-    return I2C_OK
+    TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
+    return I2C_NO_ERROR; 
+    }
   else
-    return I2C_ERROR
-
+    return I2C_NO_ERROR;
 }
 /*stop respond to certain addr*/
 
 void i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   
-  if (i2cp->addr == i2cadr & i2cadr != 0)
+  if (i2cp->addr == i2cadr && i2cadr != 0)
   TWAR = 0; //unset previously configured slave addr
 }
 
@@ -392,29 +391,26 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
  */
 
 /*Usar as funcoes do mestre como referência e ver diferenças*/
-void i2c_lld_slaveReceive(I2CDriver *i2cp, const *rxbuf){
+void i2c_lld_slaveReceive(I2CDriver *i2cp, i2caddr_t addr, uint8_t *rxbuf, size_t rxbytes,
+                                     systime_t timeout){
  
   i2cp->errors = I2C_NO_ERROR;
   i2cp->addr = addr;
   i2cp->rxbuf = rxbuf;
   i2cp->rxbytes = rxbytes;
   i2cp->rxidx = 0;
-i2c_lld_matchAddress(i2cp, i2cp->addr)
-/*point to next FSM state*/
-TWSR = TWI_SLAVE_RX_ADDR_ACK
+i2c_lld_matchAddress(i2cp, i2cp->addr);
 }
 
-void i2c_lld_slaveReply(I2CDriver *i2cp, const *txbuf ){
+void i2c_lld_slaveReply(I2CDriver *i2cp,i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,                                   uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout ){
   
   i2cp->errors = I2C_NO_ERROR;
   i2cp->txbuf = txbuf;
   i2cp->txbytes = txbytes;
   i2cp->txidx = 0;
 
-i2c_lld_matchAddress(I2CDriver *i2cp, i2cp->addr);
-
-/*point to next FSM state*/
-TWSR = TWI_SLAVE_TX_ADDR_ACK
+i2c_lld_matchAddress(i2cp, i2cp->addr);
 
 }
 
