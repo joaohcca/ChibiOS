@@ -307,7 +307,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
 /**
  * @brief   Transmits data via the I2C bus as master.
- *osalThreadSuspendTimeoutS
+ *
  * @param[in]   i2cp      pointer to the @p I2CDriver object
  * @param[in]   addr      slave device address
  * @param[in]   txbuf     pointer to the transmit buffer
@@ -347,8 +347,8 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
-/* Adding:  i2c_lld_matchAddress(), i2c_lld_unmatchAddress(), i2c_lld_unmatchAll(), i2c_lld_slaveReceive() e i2c_lld_slaveReply()
-*@brief Configure to respond to messages directed to the given i2cadr
+/*
+* brief Configure to respond to messages directed to the given i2cadr
 * @param[in] i2cp      pointer to the @p I2CDriver object
 *  @param[in] i2cadr    I2C bus address
 * @return              Length of message OR the type of event received
@@ -368,7 +368,7 @@ msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
     return I2C_NO_ERROR; 
     }
   else
-    return I2C_NO_ERROR;
+    return I2C_NO_ERROR;  /*find a ERROR*/
 }
 /*stop respond to certain addr*/
 
@@ -391,23 +391,14 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
  */
 
 /*Usar as funcoes do mestre como referência e ver diferenças*/
-void i2c_lld_slaveReceive(I2CDriver *i2cp, i2caddr_t addr, uint8_t *rxbuf, size_t rxbytes,
-                                     systime_t timeout){
- 
+void  i2c_lld_slaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg){
   i2cp->errors = I2C_NO_ERROR;
-  i2cp->addr = addr;
-  i2cp->rxbuf = rxbuf;
-  i2cp->rxbytes = rxbytes;
   i2cp->rxidx = 0;
 i2c_lld_matchAddress(i2cp, i2cp->addr);
 }
 
-void i2c_lld_slaveReply(I2CDriver *i2cp,i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,                                   uint8_t *rxbuf, size_t rxbytes,
-                                      systime_t timeout ){
-  
-  i2cp->errors = I2C_NO_ERROR;
-  i2cp->txbuf = txbuf;
-  i2cp->txbytes = txbytes;
+void  i2c_lld_slaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg){
+  i2cp->errors = I2C_NO_ERROR; 
   i2cp->txidx = 0;
 
 i2c_lld_matchAddress(i2cp, i2cp->addr);
