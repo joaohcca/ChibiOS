@@ -1,0 +1,95 @@
+   1               		.file	"hal_lld.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.hal_lld_init,"ax",@progbits
+  11               	.global	hal_lld_init
+  13               	hal_lld_init:
+  14               	.LFB180:
+  15               		.file 1 "../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c"
+   1:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*
+   2:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+   3:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+   4:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     Licensed under the Apache License, Version 2.0 (the "License");
+   5:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     you may not use this file except in compliance with the License.
+   6:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     You may obtain a copy of the License at
+   7:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+   8:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****         http://www.apache.org/licenses/LICENSE-2.0
+   9:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  10:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     Unless required by applicable law or agreed to in writing, software
+  11:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     distributed under the License is distributed on an "AS IS" BASIS,
+  12:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  13:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     See the License for the specific language governing permissions and
+  14:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****     limitations under the License.
+  15:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** */
+  16:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  17:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /**
+  18:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @file    ATMEGAxx/hal_lld.c
+  19:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @brief   AVR HAL subsystem low level driver code.
+  20:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  *
+  21:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @addtogroup HAL
+  22:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @{
+  23:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  */
+  24:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  25:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** #include "hal.h"
+  26:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  27:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  28:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /* Driver exported variables.                                               */
+  29:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  30:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  31:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  32:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /* Driver local variables and types.                                        */
+  33:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  34:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  35:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  36:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /* Driver local functions.                                                  */
+  37:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  38:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  39:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  40:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /* Driver interrupt handlers.                                               */
+  41:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  42:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  43:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  44:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /* Driver exported functions.                                               */
+  45:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /*==========================================================================*/
+  46:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** 
+  47:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** /**
+  48:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @brief   Low level HAL driver initialization.
+  49:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  *
+  50:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  * @notapi
+  51:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c ****  */
+  52:../../../os/hal/ports/AVR/MEGA/ATMEGAxx/hal_lld.c **** void hal_lld_init(void) {
+  16               		.loc 1 52 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  22 0000 0895      		ret
+  23               		.cfi_endproc
+  24               	.LFE180:
+  26               		.text
+  27               	.Letext0:
+  28               		.file 2 "/usr/lib/avr/include/stdint.h"
+  29               		.file 3 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+  30               		.file 4 "../../../os/rt/include/chsystypes.h"
+  31               		.file 5 "../../../os/rt/include/chschd.h"
+  32               		.file 6 "../../../os/rt/include/chtime.h"
+  33               		.file 7 "../../../os/common/ports/AVR/chcore.h"
+  34               		.file 8 "../../../os/rt/include/chsem.h"
+  35               		.file 9 "../../../os/rt/include/chmtx.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 hal_lld.c
+     /tmp/ccQihwax.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccQihwax.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccQihwax.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccQihwax.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccQihwax.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccQihwax.s:13     .text.hal_lld_init:0000000000000000 hal_lld_init
+
+NO UNDEFINED SYMBOLS
