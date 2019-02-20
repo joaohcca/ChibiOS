@@ -17,9 +17,7 @@
 #include "ch.h"
 #include "hal.h"
 
-
 #include "/home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.c"
-//#include "/home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.h"
 
 #include <stdio.h>
 
@@ -36,23 +34,27 @@
 
 static THD_WORKING_AREA(waThread1, 32);
 static THD_FUNCTION(Thread1, arg) {
-  I2CDriver *MasterObj;
   i2caddr_t slaveaddr=5;
   size_t txbytes=5;
   size_t rxbytes=5;
-  uint8_t *rxbuf[rxbytes];
-  const uint8_t *txbuf[txbytes];
-  
+  uint8_t rxbuf[rxbytes];
+  uint8_t txbuffer[txbytes];
+  sysinterval_t TIMEOUT=1;
+  msg_t debug;
+  for (int n = 0; n < txbytes ;n++){
+    txbuffer[n]=n+1;
+  }
+
   (void)arg;
   chRegSetThreadName("MasterSendI2C");
   while (true) {
     palTogglePad(IOPORT2, PORTB_LED1);
-    chprintf((BaseSequentialStream *) &SD1, "iniciando processo de envio do master\r\n");
-    i2cObjectInit(MasterObj);    
+    chprintf((BaseSequentialStream *) &SD1, "iniciando processo de envio do master\r\n");  
     chThdSleepMilliseconds(500);
-    i2cMasterTransmit(MasterObj, slaveaddr, *txbuf, txbytes, *rxbuf, rxbytes);    
-    chThdSleepMilliseconds(2000);
-    chprintf((BaseSequentialStream *) &SD1, "final da execução da thread\r\n");
+    debug=i2cMasterTransmitTimeout(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);    
+    //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
+    chprintf((BaseSequentialStream *) &SD1, "debug = %s\r\n",debug);
+    chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
       }
 }
 
@@ -90,8 +92,7 @@ int main(void) {
   
 
 
-  chnWrite(&SD1, (const uint8_t *)"Ler configurações do I2C do teclado\r\n", 14);
-
+  chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C do teclado\r\n", 14);
 
   while (TRUE) {
     chThdSleepMilliseconds(1000);  
