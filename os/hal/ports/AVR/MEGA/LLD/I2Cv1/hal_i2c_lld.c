@@ -47,7 +47,7 @@ I2CDriver I2CD1;
 /*==========================================================================*/
 
 /*==========================================================================*/
-/* Driver interrupt handlers.                                               */
+/* Driver interrupt handlers.   TWI_MASTER_RX_DATA_ACK                                            */
 /*==========================================================================*/
 
 #if AVR_I2C_USE_I2C1 || defined(__DOXYGEN__)
@@ -62,8 +62,8 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   I2CDriver *i2cp = &I2CD1;
 
   switch (TWSR & 0xF8) {
-  case TWI_START:
-  case TWI_REPEAT_START:
+  case TWI_START: /*0x08*/
+  case TWI_REPEAT_START: /*0x10*/
     TWDR = (i2cp->addr << 1);
     if ((i2cp->txbuf == NULL) || (i2cp->txbytes == 0) || (i2cp->txidx == i2cp->txbytes)) {
       TWDR |= 0x01;
@@ -86,26 +86,26 @@ OSAL_IRQ_HANDLER(TWI_vect) {
       }
     }
     break;
-  case TWI_MASTER_RX_ADDR_ACK:
+  case TWI_MASTER_RX_ADDR_ACK: /*0x40*/
     if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
-      TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+      TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));/*se não puder receber mais va pro 0x58*/
     }
     else {
-      TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+      TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));/*se puder 0x50*/
     }
     break;
-  case TWI_MASTER_RX_DATA_ACK:
-    i2cp->rxbuf[i2cp->rxidx++] = TWDR;
-    if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
-      TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  case TWI_MASTER_RX_DATA_ACK: /*0x50*/
+    i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*atualiza TWDR*/
+    if (i2cp->rxidx == (i2cp->rxbytes - 1)) { 
+      TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE)); /* ir para 0x58*/
     }
     else {
-      TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+      TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE)); /*se puder receber envia ack e fica 0x50*/
     }
     break;
-  case TWI_MASTER_RX_DATA_NACK:
-    i2cp->rxbuf[i2cp->rxidx] = TWDR;
-    TWCR = ((1 << TWSTO) | (1 << TWINT) | (1 << TWEN));
+  case TWI_MASTER_RX_DATA_NACK: /*0x58*/
+    i2cp->rxbuf[i2cp->rxidx] = TWDR; /*atualiza TWDR*/
+    TWCR = ((1 << TWSTO) | (1 << TWINT) | (1 << TWEN)); /*ações no TWCR*/
     _i2c_wakeup_isr(i2cp);
   case TWI_MASTER_TX_ADDR_NACK:
   case TWI_MASTER_TX_DATA_NACK:
@@ -133,22 +133,23 @@ OSAL_IRQ_HANDLER(TWI_vect) {
     }
   case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
   /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
-  i2cp->rxbuf[i2cp->rxidx++] = TWDR;
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*STM32 buffer structure*/
   /*send nack master move to $88*/
   if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
     TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
-  /*can recieve more bytes stay in $80*/
+  /*buffer can recieve more bytes stay in $80*/
   else {
     i2cp->rxidx++;
     TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
   break;
   case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
-  i2cp->rxbuf[i2cp->rxidx++] = TWDR;
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*STM32 buffer structure*/
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
+   _i2c_wakeup_isr(i2cp); /*wake up thread*/
   break;
   case TWI_SLAVE_STOP:
   /*default to retain addr and not send start*/
@@ -158,7 +159,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
   /*load data from buffer to TWDR*/
   /*check if there's more data to transmmit*/
-    TWDR = i2cp->txbuf[i2cp->txidx];
+    TWDR = i2cp->txbuf[i2cp->txidx]; /*STM32 buffer structure*/
        if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = ((1 << TWINT) | (1 << TWIE));
   }
@@ -169,7 +170,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   break;
   case TWI_SLAVE_TX_POST_ARB_LOST:/*ref $B0*/
   /*load data and check for nack transmission*/
-    TWDR = i2cp->txbuf[i2cp->txidx];
+    TWDR = i2cp->txbuf[i2cp->txidx];/*STM32 buffer structure*/
   if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = (1 << TWINT | (1 << TWIE));
   }
@@ -178,7 +179,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   }
   break;
   case TWI_SLAVE_TX_DATA_ACK: /*ref $B8*/
-    TWDR = i2cp->txbuf[i2cp->txidx++];
+    TWDR = i2cp->txbuf[i2cp->txidx++]; /*STM32 buffer structure*/
   if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = (1 << TWINT | (1 << TWIE));
   }
@@ -301,7 +302,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
   i2cp->rxidx = 0;
 
   TWCR = ((1 << TWSTA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
-
+  /* a thread fica suspensa até conclusão do processo de recebimento de dados*/
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
@@ -343,35 +344,10 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
   i2cp->rxidx = 0;
 
   TWCR = ((1 << TWSTA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
-
+  /*A thread fica suspensa ate o final do processo de envio da mensagem*/
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
 }
 
-static void i2c_lld_setup_rx_transfer(I2CDriver *i2cp) {
-  uint32_t reload;
-  size_t n;
-  /* The unit can transfer 255 bytes maximum in a single operation (device constraint). */
-  n = i2cp->rxbytes;
-  if (n > 255U) {
-    n = 255U;
-    }
-  else {
-    reload = 0U;
-  }
-}
-
-static void i2c_lld_setup_tx_transfer(I2CDriver *i2cp) {
-  uint32_t reload;
-  size_t n;
-  /* The unit can transfer 255 bytes maximum in a single operation. */
-  n = i2cp->txbytes;            // Get transaction size from DMA or buffer as configured
-  if (n > 255U) {
-    n = 255U;  
-  }
-  else {
-    reload = 0U;
-  }
-}
 /*
 * brief Configure to respond to messages directed to the given i2cadr
 * @param[in] i2cp      pointer to the @p I2CDriver object
@@ -389,10 +365,9 @@ msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   if (i2cadr != 0 ){ 
     uint32_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
     i2cp->addr = adr;                                               /*Implement slave addr*/
-    TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
     return I2C_NO_ERROR; 
     }
-  else
+  elseSTM
     return i2c_lld_get_slaveErrors(i2cp);  /*find a ERROR*/
 }
 /*stop respond to certain addr*/
@@ -424,7 +399,10 @@ void  i2c_lld_slaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg){
   i2cp->slaveRx = rxMsg;
   i2cp->rxptr   = rxMsg->body;
   i2cp->rxbytes = rxMsg->size;
-i2c_lld_setup_rx_transfer(i2cp);			        // Set up the transfer
+  TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
+  //osal thread  suspend
+  osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
+  //acordar thread no final da maquina de estados (osal recapthread)
   }
 }
 
@@ -438,7 +416,8 @@ void  i2c_lld_slaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg){
       /* Start transmission */
       i2cp->txptr   = replyMsg->body;
       i2cp->txbytes = replyMsg->size;
-      i2c_lld_setup_tx_transfer(i2cp);  
+  TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA));
+  osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    
   }
 }
 

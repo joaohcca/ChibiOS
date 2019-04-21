@@ -200,8 +200,8 @@ typedef void I2CSlaveMsgCB(I2CDriver *i2cp);
 struct I2CSlaveMsg {
   size_t     size;     			/* sizeof(body) -- zero if master must wait */
   uint8_t   *body;     			/* message contents -- or NULL if master must wait */
-  I2CSlaveMsgCB *adrMatched;  	/* invoked when slave address matches */
-  I2CSlaveMsgCB *processMsg;  	/* invoked after message is transferred */
+  I2CSlaveMsgCB *adrMatched;  	/* invoked when slave address matches -> setar os comandos pro case do TWSR e TWCR*/
+  I2CSlaveMsgCB *processMsg;  	/* invoked after message is transferred -> (nescessário??)*/
   I2CSlaveMsgCB *exception;   	/* invoked if error or timeout during transfer */
 };
 
@@ -268,6 +268,7 @@ struct I2CDriver {
   size_t                    rxidx;
 
   /* additional fields to support I2C slave transactions */
+  
   /**
    * @brief     slave address of message being processed
    */
@@ -391,7 +392,7 @@ struct I2CDriver {
  * @brief   Get slave reply message descriptor from I2C driver.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
- *
+ * slave receive message descriptor from I2C driver.
  * @notapi
  */
 #define i2c_lld_get_slaveReply(i2cp) ((i2cp)->slaveNextReply)
