@@ -26,7 +26,7 @@
 
 
 #include "hal_i2c.h"
-#include "hal_i2cslave.h"
+#include <hal_i2cslave.h>
 /*
  * LED blinker thread, times are in milliseconds.
  */
@@ -40,26 +40,25 @@ static THD_FUNCTION(Thread1, arg) {
   uint8_t rxbuf[rxbytes];
   uint8_t txbuffer[txbytes];
   sysinterval_t TIMEOUT=500;
-  msg_t debug;
-  for (int n = 0; n < txbytes ;n++){
-    txbuffer[n]=n+1;
-  }
+  //msg_t debug;
 
   (void)arg;
-  chRegSetThreadName("MasterSendI2C");
+  chRegSetThreadName("SlaveRecieveI2C");
   while (true) {
     palTogglePad(IOPORT2, PORTB_LED1);
-    chprintf((BaseSequentialStream *) &SD1, "iniciando processo de envio do master\r\n");  
+    chprintf((BaseSequentialStream *) &SD1, "iniciando processo de recebimento do slave\r\n");  
     chThdSleepMilliseconds(500);
-    debug=i2cMasterTransmitTimeout(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);    
+    /*configurar endereço do slave e "encaixar" o matchaddress*/
+    i2cSlaveReceive(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
+    //i2cSlaveReply(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
+
     //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
-    chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
-    for (int n = 0; n < txbytes ;n++){
-    chprintf( (BaseSequentialStream *) &SD1, "buffer %d ",txbuffer[n]);
-      }
-    
-    //conversão do valor de debug
+  //  chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
+    //conversão do valor de debug‘i2cSlaveReceive’
     chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
+    for (int n = 0; n < txbytes ;n++){
+    chprintf( (BaseSequentialStream *) &SD1, "buffer %d ",rxbuf[n]);
+      }
       }
 }
 
@@ -97,7 +96,7 @@ int main(void) {
   
 
 
-  chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C do teclado\r\n", 14);
+  chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C salve [?]\r\n", 14);
 
   while (TRUE) {
     chThdSleepMilliseconds(1000);  

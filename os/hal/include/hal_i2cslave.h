@@ -320,7 +320,8 @@ void i2cSlaveConfigure(I2CDriver *i2cp,
  *
  * @api
  */
-void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg);
+void i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
 
 /**
  * @brief   return @p I2CSlaveMsg for processing received messages
@@ -351,7 +352,8 @@ static inline
  *
  * @api
  */
-void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg);
+void i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
 
 
 /**
@@ -383,10 +385,13 @@ static inline
  * @api
  */
 static inline void
-  i2cSlaveReceiveI(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
+  i2cSlaveReceiveI(I2CDriver *i2cp, i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout)
 {
-  osalDbgCheck(i2cp != NULL && rxMsg != NULL);
-  i2c_lld_slaveReceive(i2cp, rxMsg);
+  osalDbgCheck(i2cp != NULL);
+  i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
 }
 
 /**
@@ -400,7 +405,10 @@ static inline void
  * @api
  */
 static inline void
-  i2cSlaveReplyI(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
+  i2cSlaveReplyI(I2CDriver *i2cp, i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout)
 /*
   Prepare to reply to I2C read requests from bus masters
   according to the replyMsg configuration.
@@ -410,8 +418,8 @@ static inline void
       Does not affect the processing of any message reply being sent
 */
 {
-   osalDbgCheck(i2cp != NULL && replyMsg != NULL);
-   i2c_lld_slaveReply(i2cp, replyMsg);
+   osalDbgCheck(i2cp != NULL );
+   i2c_lld_slaveReply(i2cp,  addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
 }
 
 #ifdef __cplusplus

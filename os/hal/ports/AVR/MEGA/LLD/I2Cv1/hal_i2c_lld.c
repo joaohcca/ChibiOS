@@ -146,6 +146,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   break;
   case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*STM32 buffer structure*/
+
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
@@ -363,11 +364,11 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 */
 msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   if (i2cadr != 0 ){ 
-    uint32_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
+    uint8_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
     i2cp->addr = adr;                                               /*Implement slave addr*/
     return I2C_NO_ERROR; 
     }
-  elseSTM
+  else
     return i2c_lld_get_slaveErrors(i2cp);  /*find a ERROR*/
 }
 /*stop respond to certain addr*/
@@ -381,7 +382,7 @@ void i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
 void i2c_lld_unmatchAll(I2CDriver *i2cp){
   TWAR = 0; //force unset previously configured slave addr
 }
-/*@brief   Configure callbacks & buffers to receive messages
+/*@brief   Configure callbacksslaveRx & buffers to receive messages
  * @details             Call i2cMatchAddress() after this to start processing
  *     Enabling match addresses before installing handler callbacks can
  *     result in locking the I2C bus when a master accesses those
@@ -391,35 +392,55 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
  */
 
 /*Usar as funcoes do mestre como referência e ver diferenças*/
-void  i2c_lld_slaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg){
-  osalDbgCheck((rxMsg && rxMsg->size <= 0xffff));
-  i2cp->slaveNextRx = rxMsg;
-  if (rxMsg->body && rxMsg->size) {
-  /* We can receive now! */
-  i2cp->slaveRx = rxMsg;
-  i2cp->rxptr   = rxMsg->body;
-  i2cp->rxbytes = rxMsg->size;
-  TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
+msg_t  i2c_lld_slaveReceive(I2CDriver *i2cp,  i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout){
+  
+  
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->addr = addr;
+  i2cp->txbuf = NULL;
+  i2cp->txbytes = 0;
+  i2cp->txidx = 0;
+  i2cp->rxbuf = rxbuf;
+  i2cp->rxbytes = rxbytes;
+  i2cp->rxidx = 0;
+
+  TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
   //osal thread  suspend
-  osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
+ return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
   //acordar thread no final da maquina de estados (osal recapthread)
   }
-}
 
-void  i2c_lld_slaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg){
- osalDbgCheck((replyMsg && replyMsg->size <= 0xffff));
+
+msg_t  i2c_lld_slaveReply(I2CDriver *i2cp,  i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout){
+ 
+  i2cp->errors = I2C_NO_ERROR;
   
+  i2cp->txbuf = txbuf;
+  i2cp->txbytes = txbytes;
+  i2cp->txidx = 0;
+  i2cp->rxbuf = rxbuf;
+  i2cp->rxbytes = rxbytes;
+  i2cp->rxidx = 0;
+
+
+  /*
   i2cp->slaveNextReply = replyMsg;
   if (replyMsg->body && replyMsg->size){
     i2cp->slaveReply = replyMsg;
-    /* slave TX setup -- we can reply now! */  
-      /* Start transmission */
+     slave TX setup -- we can reply now!
+       Start transmission 
       i2cp->txptr   = replyMsg->body;
-      i2cp->txbytes = replyMsg->size;
+      i2cp->txbytes = replyMsg->size;*/
   TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA));
-  osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    
+  return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    
   }
-}
+
 
 
 /** @} */

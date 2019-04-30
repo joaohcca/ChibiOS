@@ -260,7 +260,7 @@ msg_t i2cMasterReceiveTimeout(I2CDriver *i2cp,
  * @retval I2C_ERROR    Cannot match address in addition of those already
  *
  * @details             MatchAddress calls are cumulative.
- *                      Specify address zero to match I2C "all call"
+ *                     	Specify address zero to match I2C "all call"
  *                      Does not support 10-bit addressing.
  *
  * @api
@@ -271,8 +271,9 @@ msg_t i2cMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
   chSysLock();
   msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
   chSysUnlock();
-  return result;/* I2C slave mode support */
+  return result;
 
+/* I2C slave mode support */
 /**
  * @brief   Reconfigure I2C channel to respond to indicated address
  *          in addition to those already matched
@@ -363,8 +364,8 @@ void i2cSlaveConfigure(I2CDriver *i2cp,
 {
   osalDbgCheck((i2cp != NULL));
   chSysLock();
-  i2c_lld_slaveReceive(i2cp, rxMsg);
-  i2c_lld_slaveReply(i2cp, replyMsg);
+  /*i2c_lld_slaveReceive(i2cp, rxMsg);
+  i2c_lld_slaveReply(i2cp, replyMsg);*/
   chSysUnlock();
 }
 
@@ -382,11 +383,30 @@ void i2cSlaveConfigure(I2CDriver *i2cp,
  *
  * @api
  */
-void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
+
+void i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
 {
-  osalDbgCheck((i2cp != NULL && rxMsg != NULL));
+  
+ msg_t rdymsg;
+
+  osalDbgCheck((i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
+               ( (rxbytes == 0U) || ( (rxbytes > 0U) && (rxbuf != NULL) ) ) &&
+               (timeout != TIME_IMMEDIATE) );
+
   chSysLock();
-  i2c_lld_slaveReceive(i2cp, rxMsg);
+  osalSysLock();
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->state = I2C_ACTIVE_RX;
+  rdymsg = i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes,timeout);
+    if (rdymsg == MSG_TIMEOUT) {
+    i2cp->state = I2C_LOCKED;
+  }
+  else {
+    i2cp->state = I2C_READY;
+  }
+  osalSysUnlock();
   chSysUnlock();
 }
 
@@ -404,13 +424,27 @@ void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
  *
  * @api
  */
-void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
+void i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
 {
-  osalDbgCheck((i2cp != NULL && replyMsg != NULL));
+   msg_t rdymsg;
+  //osalDbgCheck((i2cp != NULL && replyMsg != NULL));
+   osalDbgCheck( (i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
+  ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
+               (timeout != TIME_IMMEDIATE) );
   chSysLock();
-  i2c_lld_slaveReply(i2cp, replyMsg);
+  osalSysLock();
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->state = I2C_ACTIVE_TX;
+  rdymsg = i2c_lld_slaveReply(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout );
+  if (rdymsg == MSG_TIMEOUT) {
+    i2cp->state = I2C_LOCKED;
+  }
+  else {
+    i2cp->state = I2C_READY;
+  }
   chSysUnlock();
-}
+
 }
 
 
@@ -428,14 +462,14 @@ void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
  *
  * @api
  */
-void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
+/*void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
 {
   osalDbgCheck((i2cp != NULL));
   chSysLock();
   i2c_lld_unmatchAddress(i2cp, i2cadr);
   chSysUnlock();
 }
-
+*/
 
 /**
  * @brief   Reconfigure I2C channel to no longer match any address
@@ -448,13 +482,13 @@ void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
  *
  * @api
  **/
-void i2cUnmatchAll(I2CDriver *i2cp)
+/*void i2cUnmatchAll(I2CDriver *i2cp)
 {
   osalDbgCheck((i2cp != NULL));
   chSysLock();
   i2c_lld_unmatchAll(i2cp);
   chSysUnlock();
-}
+}*/
 
 
 /**
@@ -472,18 +506,18 @@ void i2cUnmatchAll(I2CDriver *i2cp)
  *
  * @api
  */
-void i2cSlaveConfigure(I2CDriver *i2cp,
-                   const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg)
+/*void i2cSlaveConfigure(I2CDriver *i2cp,i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes , sysinterval_t timeout)
 {
-  osalDbgCheck((i2cp != NULL));
+  //osalDbgCheck((i2cp != NULL));
   chSysLock();
-  i2c_lld_slaveReceive(i2cp, rxMsg);
-  i2c_lld_slaveReply(i2cp, replyMsg);
+  i2c_lld_slaveReceive(i2cp, addr, *txbuf, txbytes, *rxbuf, rxbytes, timeout);
+  i2c_lld_slaveReply(i2cp, addr, *txbuf, txbytes, *rxbuf, rxbytes, timeout);
   chSysUnlock();
-}
+}*/
 
 
-/**
+/*
  * @brief   Configure callbacks & buffers for query reply
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
@@ -496,16 +530,18 @@ void i2cSlaveConfigure(I2CDriver *i2cp,
  *
  * @api
  */
-void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
+/*
+void i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, systime_t timeout )
 {
   osalDbgCheck((i2cp != NULL && rxMsg != NULL));
   chSysLock();
-  i2c_lld_slaveReceive(i2cp, rxMsg);
+  i2c_lld_slaveReceive(i2cp, addr, *txbuf, txbytes, *rxbuf, rxbytes,timeout);
   chSysUnlock();
 }
+*/
 
-
-/**
+/*
  * @brief   Configure callbacks & buffers for query reply
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
@@ -518,14 +554,16 @@ void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
  *
  * @api
  */
-void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
+/*
+void i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, systime_t timeout)
 {
-  osalDbgCheck((i2cp != NULL && replyMsg != NULL));
+  
   chSysLock();
-  i2c_lld_slaveReply(i2cp, replyMsg);
+  i2c_lld_slaveReply(i2cp, addr, *txbuf, txbytes, *rxbuf, rxbytes, timeout);
   chSysUnlock();
 }
-
+*/
 #if (I2C_USE_MUTUAL_EXCLUSION == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   Gains exclusive access to the I2C bus.
@@ -563,5 +601,5 @@ void i2cReleaseBus(I2CDriver *i2cp) {
 #endif /* I2C_USE_MUTUAL_EXCLUSION == TRUE */
 
 #endif /* HAL_USE_I2C == TRUE */
-
+}
 /** @} */

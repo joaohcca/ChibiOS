@@ -423,8 +423,13 @@ extern "C" {
   msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr);
   void  i2c_lld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr);
   void  i2c_lld_unmatchAll(I2CDriver *i2cp);
-  void  i2c_lld_slaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg);
-  void  i2c_lld_slaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg);
+  msg_t  i2c_lld_slaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout);
+  msg_t  i2c_lld_slaveReply(I2CDriver *i2cp,  i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes,
+                                      systime_t timeout);
 #ifdef __cplusplus
 }
 #endif
