@@ -39,8 +39,9 @@ static THD_FUNCTION(Thread1, arg) {
   size_t rxbytes=5;
   uint8_t rxbuf[rxbytes];
   uint8_t txbuffer[txbytes];
-  sysinterval_t TIMEOUT=500;
+  sysinterval_t TIMEOUT=1000;
   msg_t debug;
+  int errors;
   for (int n = 0; n < txbytes ;n++){
     txbuffer[n]=n+1;
   }
@@ -51,11 +52,13 @@ static THD_FUNCTION(Thread1, arg) {
     palTogglePad(IOPORT2, PORTB_LED1);
     chprintf((BaseSequentialStream *) &SD1, "iniciando processo de envio do master\r\n");  
     chThdSleepMilliseconds(500);
-    debug=i2cMasterTransmitTimeout(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);    
+    debug=i2cMasterTransmitTimeout(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);  
+    i2cGetErrors(&I2CD1);  
+    chprintf((BaseSequentialStream *) &SD1, "errors = %d\r\n",errors);
     //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
     chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
     for (int n = 0; n < txbytes ;n++){
-    chprintf( (BaseSequentialStream *) &SD1, "buffer %d ",txbuffer[n]);
+    chprintf( (BaseSequentialStream *) &SD1, "buffer[%d] %d ",n,txbuffer[n]);
       }
     
     //conversão do valor de debug
@@ -97,7 +100,7 @@ int main(void) {
   
 
 
-  chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C do teclado\r\n", 14);
+  //chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C do teclado\r\n");
 
   while (TRUE) {
     chThdSleepMilliseconds(1000);  

@@ -41,7 +41,7 @@ static THD_FUNCTION(Thread1, arg) {
   uint8_t txbuffer[txbytes];
   sysinterval_t TIMEOUT=500;
   msg_t debug;
-
+  int errors;
   (void)arg;
   chRegSetThreadName("SlaveRecieveI2C");
   while (true) {
@@ -49,8 +49,11 @@ static THD_FUNCTION(Thread1, arg) {
     chprintf((BaseSequentialStream *) &SD1, "iniciando processo de recebimento do slave\r\n");  
     chThdSleepMilliseconds(500);
     /*configurar endereço do slave e "encaixar" o matchaddress*/
-    debug=i2cMatchAddress(&I2CD1, slaveaddr);    
+    debug = i2cMatchAddress(&I2CD1, slaveaddr);    
     chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
+    errors=i2cGetErrors(&I2CD1);  
+    chprintf((BaseSequentialStream *) &SD1, "errors = %d\r\n",errors);
+
     i2cSlaveReceive(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
     //i2cSlaveReply(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
     //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
