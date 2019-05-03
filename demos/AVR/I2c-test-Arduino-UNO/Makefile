@@ -101,7 +101,7 @@ CSRC =  $(KERNSRC)                      \
         $(PLATFORMSRC)                  \
         $(BOARDSRC)                     \
         $(CHIBIOS)/os/various/evtimer.c \
-		$(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+	$(CHIBIOS)/os/hal/lib/streams/chprintf.c \
         main.c
 
 # List C++ sources file here.
@@ -110,7 +110,7 @@ CPPSRC =
 INCDIR =  $(CHIBIOS)/os/license $(PORTINC) $(KERNINC)  \
           $(HALINC) $(OSALINC) $(PLATFORMINC)          \
           $(BOARDINC) $(CHIBIOS)/os/various \
-		  $(CHIBIOS)/os/hal/lib/streams
+	  $(CHIBIOS)/os/hal/lib/streams
 
 #
 # Project, sources and paths.

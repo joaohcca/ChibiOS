@@ -2933,20 +2933,20 @@
  1258               		.file 10 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chmtx.c
-     /tmp/ccYlu4PS.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccYlu4PS.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccYlu4PS.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccYlu4PS.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccYlu4PS.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccYlu4PS.s:13     .text.chMtxObjectInit:0000000000000000 chMtxObjectInit
-     /tmp/ccYlu4PS.s:47     .text.chMtxLockS:0000000000000000 chMtxLockS
-     /tmp/ccYlu4PS.s:395    .text.chMtxLock:0000000000000000 chMtxLock
-     /tmp/ccYlu4PS.s:441    .text.chMtxTryLock:0000000000000000 chMtxTryLock
-     /tmp/ccYlu4PS.s:546    .text.chMtxTryLockS:0000000000000000 chMtxTryLockS
-     /tmp/ccYlu4PS.s:601    .text.chMtxUnlock:0000000000000000 chMtxUnlock
-     /tmp/ccYlu4PS.s:793    .text.chMtxUnlockS:0000000000000000 chMtxUnlockS
-     /tmp/ccYlu4PS.s:939    .text.chMtxUnlockAllS:0000000000000000 chMtxUnlockAllS
-     /tmp/ccYlu4PS.s:1079   .text.chMtxUnlockAll:0000000000000000 chMtxUnlockAll
+     /tmp/cckPtnYl.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cckPtnYl.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cckPtnYl.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cckPtnYl.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cckPtnYl.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cckPtnYl.s:13     .text.chMtxObjectInit:0000000000000000 chMtxObjectInit
+     /tmp/cckPtnYl.s:47     .text.chMtxLockS:0000000000000000 chMtxLockS
+     /tmp/cckPtnYl.s:395    .text.chMtxLock:0000000000000000 chMtxLock
+     /tmp/cckPtnYl.s:441    .text.chMtxTryLock:0000000000000000 chMtxTryLock
+     /tmp/cckPtnYl.s:546    .text.chMtxTryLockS:0000000000000000 chMtxTryLockS
+     /tmp/cckPtnYl.s:601    .text.chMtxUnlock:0000000000000000 chMtxUnlock
+     /tmp/cckPtnYl.s:793    .text.chMtxUnlockS:0000000000000000 chMtxUnlockS
+     /tmp/cckPtnYl.s:939    .text.chMtxUnlockAllS:0000000000000000 chMtxUnlockAllS
+     /tmp/cckPtnYl.s:1079   .text.chMtxUnlockAll:0000000000000000 chMtxUnlockAll
 
 UNDEFINED SYMBOLS
 ch

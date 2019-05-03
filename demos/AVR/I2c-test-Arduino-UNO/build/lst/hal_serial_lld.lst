@@ -1774,7 +1774,7 @@
  469               	.LFE188:
  471               		.section	.rodata.default_config,"a",@progbits
  474               	default_config:
- 475 0000 3300      		.word	51
+ 475 0000 0100      		.word	1
  476 0002 03        		.byte	3
  477               		.comm	SD1,73,1
  478               		.text
@@ -1795,19 +1795,19 @@
  493               		.file 16 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 hal_serial_lld.c
-     /tmp/cc2hgFeS.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cc2hgFeS.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cc2hgFeS.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cc2hgFeS.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cc2hgFeS.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cc2hgFeS.s:12     .text.notify1:0000000000000000 notify1
-     /tmp/cc2hgFeS.s:36     .text.__vector_18:0000000000000000 __vector_18
+     /tmp/ccATiAET.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccATiAET.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccATiAET.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccATiAET.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccATiAET.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccATiAET.s:12     .text.notify1:0000000000000000 notify1
+     /tmp/ccATiAET.s:36     .text.__vector_18:0000000000000000 __vector_18
                             *COM*:0000000000000049 SD1
-     /tmp/cc2hgFeS.s:197    .text.__vector_19:0000000000000000 __vector_19
-     /tmp/cc2hgFeS.s:321    .text.sd_lld_init:0000000000000000 sd_lld_init
-     /tmp/cc2hgFeS.s:344    .text.sd_lld_start:0000000000000000 sd_lld_start
-     /tmp/cc2hgFeS.s:474    .rodata.default_config:0000000000000000 default_config
-     /tmp/cc2hgFeS.s:442    .text.sd_lld_stop:0000000000000000 sd_lld_stop
+     /tmp/ccATiAET.s:197    .text.__vector_19:0000000000000000 __vector_19
+     /tmp/ccATiAET.s:321    .text.sd_lld_init:0000000000000000 sd_lld_init
+     /tmp/ccATiAET.s:344    .text.sd_lld_start:0000000000000000 sd_lld_start
+     /tmp/ccATiAET.s:474    .rodata.default_config:0000000000000000 default_config
+     /tmp/ccATiAET.s:442    .text.sd_lld_stop:0000000000000000 sd_lld_stop
 
 UNDEFINED SYMBOLS
 __avr_in_isr

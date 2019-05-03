@@ -2412,24 +2412,24 @@
  956               		.file 11 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chschd.c
-     /tmp/cced3NUx.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cced3NUx.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cced3NUx.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cced3NUx.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cced3NUx.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cced3NUx.s:12     .text.wakeup:0000000000000000 wakeup
+     /tmp/cc5IftWW.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cc5IftWW.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cc5IftWW.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cc5IftWW.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cc5IftWW.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cc5IftWW.s:12     .text.wakeup:0000000000000000 wakeup
                             *COM*:0000000000000033 ch
-     /tmp/cced3NUx.s:172    .text._scheduler_init:0000000000000000 _scheduler_init
-     /tmp/cced3NUx.s:209    .text.chSchReadyI:0000000000000000 chSchReadyI
-     /tmp/cced3NUx.s:279    .text.chSchReadyAheadI:0000000000000000 chSchReadyAheadI
-     /tmp/cced3NUx.s:349    .text.chSchGoSleepS:0000000000000000 chSchGoSleepS
-     /tmp/cced3NUx.s:417    .text.chSchGoSleepTimeoutS:0000000000000000 chSchGoSleepTimeoutS
-     /tmp/cced3NUx.s:514    .text.chSchWakeupS:0000000000000000 chSchWakeupS
-     /tmp/cced3NUx.s:659    .text.chSchIsPreemptionRequired:0000000000000000 chSchIsPreemptionRequired
-     /tmp/cced3NUx.s:691    .text.chSchDoRescheduleBehind:0000000000000000 chSchDoRescheduleBehind
-     /tmp/cced3NUx.s:796    .text.chSchDoReschedule:0000000000000000 chSchDoReschedule
-     /tmp/cced3NUx.s:901    .text.chSchRescheduleS:0000000000000000 chSchRescheduleS
-     /tmp/cced3NUx.s:935    .text.chSchDoRescheduleAhead:0000000000000000 chSchDoRescheduleAhead
+     /tmp/cc5IftWW.s:172    .text._scheduler_init:0000000000000000 _scheduler_init
+     /tmp/cc5IftWW.s:209    .text.chSchReadyI:0000000000000000 chSchReadyI
+     /tmp/cc5IftWW.s:279    .text.chSchReadyAheadI:0000000000000000 chSchReadyAheadI
+     /tmp/cc5IftWW.s:349    .text.chSchGoSleepS:0000000000000000 chSchGoSleepS
+     /tmp/cc5IftWW.s:417    .text.chSchGoSleepTimeoutS:0000000000000000 chSchGoSleepTimeoutS
+     /tmp/cc5IftWW.s:514    .text.chSchWakeupS:0000000000000000 chSchWakeupS
+     /tmp/cc5IftWW.s:659    .text.chSchIsPreemptionRequired:0000000000000000 chSchIsPreemptionRequired
+     /tmp/cc5IftWW.s:691    .text.chSchDoRescheduleBehind:0000000000000000 chSchDoRescheduleBehind
+     /tmp/cc5IftWW.s:796    .text.chSchDoReschedule:0000000000000000 chSchDoReschedule
+     /tmp/cc5IftWW.s:901    .text.chSchRescheduleS:0000000000000000 chSchRescheduleS
+     /tmp/cc5IftWW.s:935    .text.chSchDoRescheduleAhead:0000000000000000 chSchDoRescheduleAhead
 
 UNDEFINED SYMBOLS
 _port_switch

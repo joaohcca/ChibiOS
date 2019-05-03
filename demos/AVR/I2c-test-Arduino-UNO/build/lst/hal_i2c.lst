@@ -116,8 +116,8 @@
   45 0006 1282      		std Z+2,__zero_reg__
   46 0008 1182      		std Z+1,__zero_reg__
   47               	.LVL2:
-  48               	.LBB112:
-  49               	.LBB113:
+  48               	.LBB102:
+  49               	.LBB103:
   50               		.file 2 "../../../os/hal/osal/rt/osal.h"
    1:../../../os/hal/osal/rt/osal.h **** /*
    2:../../../os/hal/osal/rt/osal.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
@@ -1098,34 +1098,58 @@
   53               	.LVL3:
   54 000c 0C94 0000 		jmp chMtxObjectInit
   55               	.LVL4:
-  56               	.LBE113:
-  57               	.LBE112:
+  56               	.LBE103:
+  57               	.LBE102:
   58               		.cfi_endproc
   59               	.LFE181:
   61               		.section	.text.i2cStart,"ax",@progbits
   62               	.global	i2cStart
   64               	i2cStart:
-  65               	.LFB182:
+  65               	.LFB184:
   75:../../../os/hal/src/hal_i2c.c **** 
   76:../../../os/hal/src/hal_i2c.c **** #if I2C_USE_MUTUAL_EXCLUSION == TRUE
   77:../../../os/hal/src/hal_i2c.c ****   osalMutexObjectInit(&i2cp->mutex);
-  78:../../../os/hal/src/hal_i2c.c **** #endif
+  78:../../../os/hal/src/hal_i2c.c ****  void i2cAcquireBus(I2CDriver *i2cp) {
   79:../../../os/hal/src/hal_i2c.c **** 
-  80:../../../os/hal/src/hal_i2c.c **** #if defined(I2C_DRIVER_EXT_INIT_HOOK)
-  81:../../../os/hal/src/hal_i2c.c ****   I2C_DRIVER_EXT_INIT_HOOK(i2cp);
-  82:../../../os/hal/src/hal_i2c.c **** #endif
+  80:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
+  81:../../../os/hal/src/hal_i2c.c **** 
+  82:../../../os/hal/src/hal_i2c.c ****   osalMutexLock(&i2cp->mutex);
   83:../../../os/hal/src/hal_i2c.c **** }
   84:../../../os/hal/src/hal_i2c.c **** 
   85:../../../os/hal/src/hal_i2c.c **** /**
-  86:../../../os/hal/src/hal_i2c.c ****  * @brief   Configures and activates the I2C peripheral.
-  87:../../../os/hal/src/hal_i2c.c ****  *
-  88:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
-  89:../../../os/hal/src/hal_i2c.c ****  * @param[in] config    pointer to the @p I2CConfig object
-  90:../../../os/hal/src/hal_i2c.c ****  *
-  91:../../../os/hal/src/hal_i2c.c ****  * @api
-  92:../../../os/hal/src/hal_i2c.c ****  */
-  93:../../../os/hal/src/hal_i2c.c **** void i2cStart(I2CDriver *i2cp, const I2CConfig *config) {
-  66               		.loc 1 93 0
+  86:../../../os/hal/src/hal_i2c.c ****  * @brief   Releases exclusive access to the I2C bus.
+  87:../../../os/hal/src/hal_i2c.c ****  * @pre     In order to use this function the option @p I2C_USE_MUTUAL_EXCLUSION
+  88:../../../os/hal/src/hal_i2c.c ****  *          must be enabled.
+  89:../../../os/hal/src/hal_i2c.c ****  *
+  90:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+  91:../../../os/hal/src/hal_i2c.c ****  *
+  92:../../../os/hal/src/hal_i2c.c ****  * @api
+  93:../../../os/hal/src/hal_i2c.c ****  */
+  94:../../../os/hal/src/hal_i2c.c ****  void i2cReleaseBus(I2CDriver *i2cp) {
+  95:../../../os/hal/src/hal_i2c.c **** 
+  96:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
+  97:../../../os/hal/src/hal_i2c.c **** 
+  98:../../../os/hal/src/hal_i2c.c ****   osalMutexUnlock(&i2cp->mutex);
+  99:../../../os/hal/src/hal_i2c.c ****  }
+ 100:../../../os/hal/src/hal_i2c.c **** #endif /* I2C_USE_MUTUAL_EXCLUSION == TRUE */
+ 101:../../../os/hal/src/hal_i2c.c **** 
+ 102:../../../os/hal/src/hal_i2c.c **** 
+ 103:../../../os/hal/src/hal_i2c.c **** 
+ 104:../../../os/hal/src/hal_i2c.c **** #if defined(I2C_DRIVER_EXT_INIT_HOOK)
+ 105:../../../os/hal/src/hal_i2c.c ****   I2C_DRIVER_EXT_INIT_HOOK(i2cp);
+ 106:../../../os/hal/src/hal_i2c.c **** #endif
+ 107:../../../os/hal/src/hal_i2c.c **** }
+ 108:../../../os/hal/src/hal_i2c.c **** 
+ 109:../../../os/hal/src/hal_i2c.c **** /**
+ 110:../../../os/hal/src/hal_i2c.c ****  * @brief   Configures and activates the I2C peripheral.
+ 111:../../../os/hal/src/hal_i2c.c ****  *
+ 112:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 113:../../../os/hal/src/hal_i2c.c ****  * @param[in] config    pointer to the @p I2CConfig object
+ 114:../../../os/hal/src/hal_i2c.c ****  *
+ 115:../../../os/hal/src/hal_i2c.c ****  * @api
+ 116:../../../os/hal/src/hal_i2c.c ****  */
+ 117:../../../os/hal/src/hal_i2c.c **** void i2cStart(I2CDriver *i2cp, const I2CConfig *config) {
+  66               		.loc 1 117 0
   67               		.cfi_startproc
   68               	.LVL5:
   69 0000 CF93      		push r28
@@ -1141,10 +1165,10 @@
   79               	/* stack size = 2 */
   80               	.L__stack_usage = 2
   81 0004 EC01      		movw r28,r24
-  82               	.LBB114:
-  83               	.LBB115:
-  84               	.LBB116:
-  85               	.LBB117:
+  82               	.LBB104:
+  83               	.LBB105:
+  84               	.LBB106:
+  85               	.LBB107:
   86               		.file 3 "../../../os/common/ports/AVR/chcore.h"
    1:../../../os/common/ports/AVR/chcore.h **** /*
    2:../../../os/common/ports/AVR/chcore.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
@@ -1589,33 +1613,33 @@
   90 0006 F894      		cli
   91               	 ;  0 "" 2
   92               	/* #NOAPP */
-  93               	.LBE117:
-  94               	.LBE116:
-  95               	.LBE115:
-  96               	.LBE114:
-  94:../../../os/hal/src/hal_i2c.c **** 
-  95:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) && (config != NULL));
-  96:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert((i2cp->state == I2C_STOP) || (i2cp->state == I2C_READY) ||
-  97:../../../os/hal/src/hal_i2c.c ****                 (i2cp->state == I2C_LOCKED), "invalid state");
-  98:../../../os/hal/src/hal_i2c.c **** 
-  99:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
- 100:../../../os/hal/src/hal_i2c.c ****   i2cp->config = config;
-  97               		.loc 1 100 0
+  93               	.LBE107:
+  94               	.LBE106:
+  95               	.LBE105:
+  96               	.LBE104:
+ 118:../../../os/hal/src/hal_i2c.c **** 
+ 119:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) && (config != NULL));
+ 120:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert((i2cp->state == I2C_STOP) || (i2cp->state == I2C_READY) ||
+ 121:../../../os/hal/src/hal_i2c.c ****                 (i2cp->state == I2C_LOCKED), "invalid state");
+ 122:../../../os/hal/src/hal_i2c.c **** 
+ 123:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 124:../../../os/hal/src/hal_i2c.c ****   i2cp->config = config;
+  97               		.loc 1 124 0
   98 0008 7A83      		std Y+2,r23
   99 000a 6983      		std Y+1,r22
- 101:../../../os/hal/src/hal_i2c.c ****   i2c_lld_start(i2cp);
- 100               		.loc 1 101 0
+ 125:../../../os/hal/src/hal_i2c.c ****   i2c_lld_start(i2cp);
+ 100               		.loc 1 125 0
  101 000c 0E94 0000 		call i2c_lld_start
  102               	.LVL6:
- 102:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_READY;
- 103               		.loc 1 102 0
+ 126:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_READY;
+ 103               		.loc 1 126 0
  104 0010 82E0      		ldi r24,lo8(2)
  105 0012 8883      		st Y,r24
- 106               	.LBB118:
- 107               	.LBB119:
- 108               	.LBB120:
- 109               	.LBB121:
- 110               	.LBB122:
+ 106               	.LBB108:
+ 107               	.LBB109:
+ 108               	.LBB110:
+ 109               	.LBB111:
+ 110               	.LBB112:
  438:../../../os/common/ports/AVR/chcore.h **** }
  439:../../../os/common/ports/AVR/chcore.h **** 
  440:../../../os/common/ports/AVR/chcore.h **** /**
@@ -1633,34 +1657,34 @@
  115               	 ;  0 "" 2
  116               	/* epilogue start */
  117               	/* #NOAPP */
- 118               	.LBE122:
- 119               	.LBE121:
- 120               	.LBE120:
- 121               	.LBE119:
- 122               	.LBE118:
- 103:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
- 104:../../../os/hal/src/hal_i2c.c **** }
- 123               		.loc 1 104 0
+ 118               	.LBE112:
+ 119               	.LBE111:
+ 120               	.LBE110:
+ 121               	.LBE109:
+ 122               	.LBE108:
+ 127:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 128:../../../os/hal/src/hal_i2c.c **** }
+ 123               		.loc 1 128 0
  124 0016 DF91      		pop r29
  125 0018 CF91      		pop r28
  126               	.LVL7:
  127 001a 0895      		ret
  128               		.cfi_endproc
- 129               	.LFE182:
+ 129               	.LFE184:
  131               		.section	.text.i2cStop,"ax",@progbits
  132               	.global	i2cStop
  134               	i2cStop:
- 135               	.LFB183:
- 105:../../../os/hal/src/hal_i2c.c **** 
- 106:../../../os/hal/src/hal_i2c.c **** /**
- 107:../../../os/hal/src/hal_i2c.c ****  * @brief   Deactivates the I2C peripheral.
- 108:../../../os/hal/src/hal_i2c.c ****  *
- 109:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 110:../../../os/hal/src/hal_i2c.c ****  *
- 111:../../../os/hal/src/hal_i2c.c ****  * @api
- 112:../../../os/hal/src/hal_i2c.c ****  */
- 113:../../../os/hal/src/hal_i2c.c **** void i2cStop(I2CDriver *i2cp) {
- 136               		.loc 1 113 0
+ 135               	.LFB185:
+ 129:../../../os/hal/src/hal_i2c.c **** 
+ 130:../../../os/hal/src/hal_i2c.c **** /**
+ 131:../../../os/hal/src/hal_i2c.c ****  * @brief   Deactivates the I2C peripheral.
+ 132:../../../os/hal/src/hal_i2c.c ****  *
+ 133:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 134:../../../os/hal/src/hal_i2c.c ****  *
+ 135:../../../os/hal/src/hal_i2c.c ****  * @api
+ 136:../../../os/hal/src/hal_i2c.c ****  */
+ 137:../../../os/hal/src/hal_i2c.c **** void i2cStop(I2CDriver *i2cp) {
+ 136               		.loc 1 137 0
  137               		.cfi_startproc
  138               	.LVL8:
  139 0000 CF93      		push r28
@@ -1676,10 +1700,10 @@
  149               	/* stack size = 2 */
  150               	.L__stack_usage = 2
  151 0004 EC01      		movw r28,r24
- 152               	.LBB123:
- 153               	.LBB124:
- 154               	.LBB125:
- 155               	.LBB126:
+ 152               	.LBB113:
+ 153               	.LBB114:
+ 154               	.LBB115:
+ 155               	.LBB116:
  437:../../../os/common/ports/AVR/chcore.h **** }
  156               		.loc 3 437 0
  157               	/* #APP */
@@ -1687,35 +1711,35 @@
  159 0006 F894      		cli
  160               	 ;  0 "" 2
  161               	/* #NOAPP */
- 162               	.LBE126:
- 163               	.LBE125:
- 164               	.LBE124:
- 165               	.LBE123:
- 114:../../../os/hal/src/hal_i2c.c **** 
- 115:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
- 116:../../../os/hal/src/hal_i2c.c **** 
- 117:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
- 118:../../../os/hal/src/hal_i2c.c **** 
- 119:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert((i2cp->state == I2C_STOP) || (i2cp->state == I2C_READY) ||
- 120:../../../os/hal/src/hal_i2c.c ****                 (i2cp->state == I2C_LOCKED), "invalid state");
- 121:../../../os/hal/src/hal_i2c.c **** 
- 122:../../../os/hal/src/hal_i2c.c ****   i2c_lld_stop(i2cp);
- 166               		.loc 1 122 0
+ 162               	.LBE116:
+ 163               	.LBE115:
+ 164               	.LBE114:
+ 165               	.LBE113:
+ 138:../../../os/hal/src/hal_i2c.c **** 
+ 139:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
+ 140:../../../os/hal/src/hal_i2c.c **** 
+ 141:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 142:../../../os/hal/src/hal_i2c.c **** 
+ 143:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert((i2cp->state == I2C_STOP) || (i2cp->state == I2C_READY) ||
+ 144:../../../os/hal/src/hal_i2c.c ****                 (i2cp->state == I2C_LOCKED), "invalid state");
+ 145:../../../os/hal/src/hal_i2c.c **** 
+ 146:../../../os/hal/src/hal_i2c.c ****   i2c_lld_stop(i2cp);
+ 166               		.loc 1 146 0
  167 0008 0E94 0000 		call i2c_lld_stop
  168               	.LVL9:
- 123:../../../os/hal/src/hal_i2c.c ****   i2cp->config = NULL;
- 169               		.loc 1 123 0
+ 147:../../../os/hal/src/hal_i2c.c ****   i2cp->config = NULL;
+ 169               		.loc 1 147 0
  170 000c 1A82      		std Y+2,__zero_reg__
  171 000e 1982      		std Y+1,__zero_reg__
- 124:../../../os/hal/src/hal_i2c.c ****   i2cp->state  = I2C_STOP;
- 172               		.loc 1 124 0
+ 148:../../../os/hal/src/hal_i2c.c ****   i2cp->state  = I2C_STOP;
+ 172               		.loc 1 148 0
  173 0010 81E0      		ldi r24,lo8(1)
  174 0012 8883      		st Y,r24
- 175               	.LBB127:
- 176               	.LBB128:
- 177               	.LBB129:
- 178               	.LBB130:
- 179               	.LBB131:
+ 175               	.LBB117:
+ 176               	.LBB118:
+ 177               	.LBB119:
+ 178               	.LBB120:
+ 179               	.LBB121:
  180               		.loc 3 447 0
  181               	/* #APP */
  182               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -1723,93 +1747,93 @@
  184               	 ;  0 "" 2
  185               	/* epilogue start */
  186               	/* #NOAPP */
- 187               	.LBE131:
- 188               	.LBE130:
- 189               	.LBE129:
- 190               	.LBE128:
- 191               	.LBE127:
- 125:../../../os/hal/src/hal_i2c.c **** 
- 126:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
- 127:../../../os/hal/src/hal_i2c.c **** }
- 192               		.loc 1 127 0
+ 187               	.LBE121:
+ 188               	.LBE120:
+ 189               	.LBE119:
+ 190               	.LBE118:
+ 191               	.LBE117:
+ 149:../../../os/hal/src/hal_i2c.c **** 
+ 150:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 151:../../../os/hal/src/hal_i2c.c **** }
+ 192               		.loc 1 151 0
  193 0016 DF91      		pop r29
  194 0018 CF91      		pop r28
  195               	.LVL10:
  196 001a 0895      		ret
  197               		.cfi_endproc
- 198               	.LFE183:
+ 198               	.LFE185:
  200               		.section	.text.i2cGetErrors,"ax",@progbits
  201               	.global	i2cGetErrors
  203               	i2cGetErrors:
- 204               	.LFB184:
- 128:../../../os/hal/src/hal_i2c.c **** 
- 129:../../../os/hal/src/hal_i2c.c **** /**
- 130:../../../os/hal/src/hal_i2c.c ****  * @brief   Returns the errors mask associated to the previous operation.
- 131:../../../os/hal/src/hal_i2c.c ****  *
- 132:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 133:../../../os/hal/src/hal_i2c.c ****  * @return              The errors mask.
- 134:../../../os/hal/src/hal_i2c.c ****  *
- 135:../../../os/hal/src/hal_i2c.c ****  * @api
- 136:../../../os/hal/src/hal_i2c.c ****  */
- 137:../../../os/hal/src/hal_i2c.c **** i2cflags_t i2cGetErrors(I2CDriver *i2cp) {
- 205               		.loc 1 137 0
+ 204               	.LFB186:
+ 152:../../../os/hal/src/hal_i2c.c **** 
+ 153:../../../os/hal/src/hal_i2c.c **** /**
+ 154:../../../os/hal/src/hal_i2c.c ****  * @brief   Returns the errors mask associated to the previous operation.
+ 155:../../../os/hal/src/hal_i2c.c ****  *
+ 156:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 157:../../../os/hal/src/hal_i2c.c ****  * @return              The errors mask.
+ 158:../../../os/hal/src/hal_i2c.c ****  *
+ 159:../../../os/hal/src/hal_i2c.c ****  * @api
+ 160:../../../os/hal/src/hal_i2c.c ****  */
+ 161:../../../os/hal/src/hal_i2c.c **** i2cflags_t i2cGetErrors(I2CDriver *i2cp) {
+ 205               		.loc 1 161 0
  206               		.cfi_startproc
  207               	.LVL11:
  208               	/* prologue: function */
  209               	/* frame size = 0 */
  210               	/* stack size = 0 */
  211               	.L__stack_usage = 0
- 138:../../../os/hal/src/hal_i2c.c **** 
- 139:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
- 140:../../../os/hal/src/hal_i2c.c **** 
- 141:../../../os/hal/src/hal_i2c.c ****   return i2c_lld_get_errors(i2cp);
- 142:../../../os/hal/src/hal_i2c.c **** }
- 212               		.loc 1 142 0
+ 162:../../../os/hal/src/hal_i2c.c **** 
+ 163:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
+ 164:../../../os/hal/src/hal_i2c.c **** 
+ 165:../../../os/hal/src/hal_i2c.c ****   return i2c_lld_get_errors(i2cp);
+ 166:../../../os/hal/src/hal_i2c.c **** }
+ 212               		.loc 1 166 0
  213 0000 FC01      		movw r30,r24
  214 0002 8381      		ldd r24,Z+3
  215               	.LVL12:
  216 0004 0895      		ret
  217               		.cfi_endproc
- 218               	.LFE184:
+ 218               	.LFE186:
  220               		.section	.text.i2cMasterTransmitTimeout,"ax",@progbits
  221               	.global	i2cMasterTransmitTimeout
  223               	i2cMasterTransmitTimeout:
- 224               	.LFB185:
- 143:../../../os/hal/src/hal_i2c.c **** 
- 144:../../../os/hal/src/hal_i2c.c **** /**
- 145:../../../os/hal/src/hal_i2c.c ****  * @brief   Sends data via the I2C bus.
- 146:../../../os/hal/src/hal_i2c.c ****  * @details Function designed to realize "read-through-write" transfer
- 147:../../../os/hal/src/hal_i2c.c ****  *          paradigm. If you want transmit data without any further read,
- 148:../../../os/hal/src/hal_i2c.c ****  *          than set @b rxbytes field to 0.
- 149:../../../os/hal/src/hal_i2c.c ****  *
- 150:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 151:../../../os/hal/src/hal_i2c.c ****  * @param[in] addr      slave device address (7 bits) without R/W bit
- 152:../../../os/hal/src/hal_i2c.c ****  * @param[in] txbuf     pointer to transmit buffer
- 153:../../../os/hal/src/hal_i2c.c ****  * @param[in] txbytes   number of bytes to be transmitted
- 154:../../../os/hal/src/hal_i2c.c ****  * @param[out] rxbuf    pointer to receive buffer
- 155:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxbytes   number of bytes to be received, set it to 0 if
- 156:../../../os/hal/src/hal_i2c.c ****  *                      you want transmit only
- 157:../../../os/hal/src/hal_i2c.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
- 158:../../../os/hal/src/hal_i2c.c ****  *                      the following special values are allowed:
- 159:../../../os/hal/src/hal_i2c.c ****  *                      - @a TIME_INFINITE no timeout.
- 160:../../../os/hal/src/hal_i2c.c ****  *                      .
- 161:../../../os/hal/src/hal_i2c.c ****  *
- 162:../../../os/hal/src/hal_i2c.c ****  * @return              The operation status.
- 163:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_OK       if the function succeeded.
- 164:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
- 165:../../../os/hal/src/hal_i2c.c ****  *                      be retrieved using @p i2cGetErrors().
- 166:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
- 167:../../../os/hal/src/hal_i2c.c ****  *
- 168:../../../os/hal/src/hal_i2c.c ****  * @api
- 169:../../../os/hal/src/hal_i2c.c ****  */
- 170:../../../os/hal/src/hal_i2c.c **** msg_t i2cMasterTransmitTimeout(I2CDriver *i2cp,
- 171:../../../os/hal/src/hal_i2c.c ****                                i2caddr_t addr,
- 172:../../../os/hal/src/hal_i2c.c ****                                const uint8_t *txbuf,
- 173:../../../os/hal/src/hal_i2c.c ****                                size_t txbytes,
- 174:../../../os/hal/src/hal_i2c.c ****                                uint8_t *rxbuf,
- 175:../../../os/hal/src/hal_i2c.c ****                                size_t rxbytes,
- 176:../../../os/hal/src/hal_i2c.c ****                                sysinterval_t timeout) {
- 225               		.loc 1 176 0
+ 224               	.LFB187:
+ 167:../../../os/hal/src/hal_i2c.c **** 
+ 168:../../../os/hal/src/hal_i2c.c **** /**
+ 169:../../../os/hal/src/hal_i2c.c ****  * @brief   Sends data via the I2C bus.
+ 170:../../../os/hal/src/hal_i2c.c ****  * @details Function designed to realize "read-through-write" transfer
+ 171:../../../os/hal/src/hal_i2c.c ****  *          paradigm. If you want transmit data without any further read,
+ 172:../../../os/hal/src/hal_i2c.c ****  *          than set @b rxbytes field to 0.
+ 173:../../../os/hal/src/hal_i2c.c ****  *
+ 174:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 175:../../../os/hal/src/hal_i2c.c ****  * @param[in] addr      slave device address (7 bits) without R/W bit
+ 176:../../../os/hal/src/hal_i2c.c ****  * @param[in] txbuf     pointer to transmit buffer
+ 177:../../../os/hal/src/hal_i2c.c ****  * @param[in] txbytes   number of bytes to be transmitted
+ 178:../../../os/hal/src/hal_i2c.c ****  * @param[out] rxbuf    pointer to receive buffer
+ 179:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxbytes   number of bytes to be received, set it to 0 if
+ 180:../../../os/hal/src/hal_i2c.c ****  *                      you want transmit only
+ 181:../../../os/hal/src/hal_i2c.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
+ 182:../../../os/hal/src/hal_i2c.c ****  *                      the following special values are allowed:
+ 183:../../../os/hal/src/hal_i2c.c ****  *                      - @a TIME_INFINITE no timeout.
+ 184:../../../os/hal/src/hal_i2c.c ****  *                      .
+ 185:../../../os/hal/src/hal_i2c.c ****  *
+ 186:../../../os/hal/src/hal_i2c.c ****  * @return              The operation status.
+ 187:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_OK       if the function succeeded.
+ 188:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
+ 189:../../../os/hal/src/hal_i2c.c ****  *                      be retrieved using @p i2cGetErrors().
+ 190:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ 191:../../../os/hal/src/hal_i2c.c ****  *
+ 192:../../../os/hal/src/hal_i2c.c ****  * @api
+ 193:../../../os/hal/src/hal_i2c.c ****  */
+ 194:../../../os/hal/src/hal_i2c.c **** msg_t i2cMasterTransmitTimeout(I2CDriver *i2cp,
+ 195:../../../os/hal/src/hal_i2c.c ****                                i2caddr_t addr,
+ 196:../../../os/hal/src/hal_i2c.c ****                                const uint8_t *txbuf,
+ 197:../../../os/hal/src/hal_i2c.c ****                                size_t txbytes,
+ 198:../../../os/hal/src/hal_i2c.c ****                                uint8_t *rxbuf,
+ 199:../../../os/hal/src/hal_i2c.c ****                                size_t rxbytes,
+ 200:../../../os/hal/src/hal_i2c.c ****                                sysinterval_t timeout) {
+ 225               		.loc 1 200 0
  226               		.cfi_startproc
  227               	.LVL13:
  228 0000 CF92      		push r12
@@ -1849,10 +1873,10 @@
  262               	/* stack size = 8 */
  263               	.L__stack_usage = 8
  264 0010 EC01      		movw r28,r24
- 265               	.LBB132:
- 266               	.LBB133:
- 267               	.LBB134:
- 268               	.LBB135:
+ 265               	.LBB122:
+ 266               	.LBB123:
+ 267               	.LBB124:
+ 268               	.LBB125:
  437:../../../os/common/ports/AVR/chcore.h **** }
  269               		.loc 3 437 0
  270               	/* #APP */
@@ -1860,53 +1884,53 @@
  272 0012 F894      		cli
  273               	 ;  0 "" 2
  274               	/* #NOAPP */
- 275               	.LBE135:
- 276               	.LBE134:
- 277               	.LBE133:
- 278               	.LBE132:
- 177:../../../os/hal/src/hal_i2c.c ****   msg_t rdymsg;
- 178:../../../os/hal/src/hal_i2c.c **** 
- 179:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) &&
- 180:../../../os/hal/src/hal_i2c.c ****                (txbytes > 0U) && (txbuf != NULL) &&
- 181:../../../os/hal/src/hal_i2c.c ****                ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
- 182:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE));
- 183:../../../os/hal/src/hal_i2c.c **** 
- 184:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert(i2cp->state == I2C_READY, "not ready");
- 185:../../../os/hal/src/hal_i2c.c **** 
- 186:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
- 187:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
- 279               		.loc 1 187 0
+ 275               	.LBE125:
+ 276               	.LBE124:
+ 277               	.LBE123:
+ 278               	.LBE122:
+ 201:../../../os/hal/src/hal_i2c.c ****   msg_t rdymsg;
+ 202:../../../os/hal/src/hal_i2c.c **** 
+ 203:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) &&
+ 204:../../../os/hal/src/hal_i2c.c ****                (txbytes > 0U) && (txbuf != NULL) &&
+ 205:../../../os/hal/src/hal_i2c.c ****                ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
+ 206:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE));
+ 207:../../../os/hal/src/hal_i2c.c **** 
+ 208:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert(i2cp->state == I2C_READY, "not ready");
+ 209:../../../os/hal/src/hal_i2c.c **** 
+ 210:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 211:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
+ 279               		.loc 1 211 0
  280 0014 1B82      		std Y+3,__zero_reg__
- 188:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_TX;
- 281               		.loc 1 188 0
+ 212:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_TX;
+ 281               		.loc 1 212 0
  282 0016 83E0      		ldi r24,lo8(3)
  283               	.LVL14:
  284 0018 8883      		st Y,r24
- 189:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_master_transmit_timeout(i2cp, addr, txbuf, txbytes,
- 285               		.loc 1 189 0
+ 213:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_master_transmit_timeout(i2cp, addr, txbuf, txbytes,
+ 285               		.loc 1 213 0
  286 001a CE01      		movw r24,r28
  287 001c 0E94 0000 		call i2c_lld_master_transmit_timeout
  288               	.LVL15:
- 190:../../../os/hal/src/hal_i2c.c ****                                            rxbuf, rxbytes, timeout);
- 191:../../../os/hal/src/hal_i2c.c ****   if (rdymsg == MSG_TIMEOUT) {
- 289               		.loc 1 191 0
+ 214:../../../os/hal/src/hal_i2c.c ****                                            rxbuf, rxbytes, timeout);
+ 215:../../../os/hal/src/hal_i2c.c ****   if (rdymsg == MSG_TIMEOUT) {
+ 289               		.loc 1 215 0
  290 0020 8F3F      		cpi r24,-1
  291 0022 2FEF      		ldi r18,-1
  292 0024 9207      		cpc r25,r18
  293 0026 01F0      		breq .L10
- 192:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
- 193:../../../os/hal/src/hal_i2c.c ****   }
- 194:../../../os/hal/src/hal_i2c.c ****   else {
- 195:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
- 294               		.loc 1 195 0
+ 216:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 217:../../../os/hal/src/hal_i2c.c ****   }
+ 218:../../../os/hal/src/hal_i2c.c ****   else {
+ 219:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
+ 294               		.loc 1 219 0
  295 0028 22E0      		ldi r18,lo8(2)
  296 002a 2883      		st Y,r18
  297               	.L8:
- 298               	.LBB136:
- 299               	.LBB137:
- 300               	.LBB138:
- 301               	.LBB139:
- 302               	.LBB140:
+ 298               	.LBB126:
+ 299               	.LBB127:
+ 300               	.LBB128:
+ 301               	.LBB129:
+ 302               	.LBB130:
  303               		.loc 3 447 0
  304               	/* #APP */
  305               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -1914,16 +1938,16 @@
  307               	 ;  0 "" 2
  308               	/* epilogue start */
  309               	/* #NOAPP */
- 310               	.LBE140:
- 311               	.LBE139:
- 312               	.LBE138:
- 313               	.LBE137:
- 314               	.LBE136:
- 196:../../../os/hal/src/hal_i2c.c ****   }
- 197:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
- 198:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
- 199:../../../os/hal/src/hal_i2c.c **** }
- 315               		.loc 1 199 0
+ 310               	.LBE130:
+ 311               	.LBE129:
+ 312               	.LBE128:
+ 313               	.LBE127:
+ 314               	.LBE126:
+ 220:../../../os/hal/src/hal_i2c.c ****   }
+ 221:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 222:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
+ 223:../../../os/hal/src/hal_i2c.c **** }
+ 315               		.loc 1 223 0
  316 002e DF91      		pop r29
  317 0030 CF91      		pop r28
  318               	.LVL16:
@@ -1939,44 +1963,44 @@
  328 003e 0895      		ret
  329               	.LVL20:
  330               	.L10:
- 192:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
- 331               		.loc 1 192 0
+ 216:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 331               		.loc 1 216 0
  332 0040 25E0      		ldi r18,lo8(5)
  333 0042 2883      		st Y,r18
  334 0044 00C0      		rjmp .L8
  335               		.cfi_endproc
- 336               	.LFE185:
+ 336               	.LFE187:
  338               		.section	.text.i2cMasterReceiveTimeout,"ax",@progbits
  339               	.global	i2cMasterReceiveTimeout
  341               	i2cMasterReceiveTimeout:
- 342               	.LFB186:
- 200:../../../os/hal/src/hal_i2c.c **** 
- 201:../../../os/hal/src/hal_i2c.c **** /**
- 202:../../../os/hal/src/hal_i2c.c ****  * @brief   Receives data from the I2C bus.
- 203:../../../os/hal/src/hal_i2c.c ****  *
- 204:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 205:../../../os/hal/src/hal_i2c.c ****  * @param[in] addr      slave device address (7 bits) without R/W bit
- 206:../../../os/hal/src/hal_i2c.c ****  * @param[out] rxbuf    pointer to receive buffer
- 207:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxbytes   number of bytes to be received
- 208:../../../os/hal/src/hal_i2c.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
- 209:../../../os/hal/src/hal_i2c.c ****  *                      the following special values are allowed:
- 210:../../../os/hal/src/hal_i2c.c ****  *                      - @a TIME_INFINITE no timeout.
- 211:../../../os/hal/src/hal_i2c.c ****  *                      .
- 212:../../../os/hal/src/hal_i2c.c ****  *
- 213:../../../os/hal/src/hal_i2c.c ****  * @return              The operation status.
- 214:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_OK       if the function succeeded.
- 215:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
- 216:../../../os/hal/src/hal_i2c.c ****  *                      be retrieved using @p i2cGetErrors().
- 217:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
- 218:../../../os/hal/src/hal_i2c.c ****  *
- 219:../../../os/hal/src/hal_i2c.c ****  * @api
- 220:../../../os/hal/src/hal_i2c.c ****  */
- 221:../../../os/hal/src/hal_i2c.c **** msg_t i2cMasterReceiveTimeout(I2CDriver *i2cp,
- 222:../../../os/hal/src/hal_i2c.c ****                               i2caddr_t addr,
- 223:../../../os/hal/src/hal_i2c.c ****                               uint8_t *rxbuf,
- 224:../../../os/hal/src/hal_i2c.c ****                               size_t rxbytes,
- 225:../../../os/hal/src/hal_i2c.c ****                               sysinterval_t timeout) {
- 343               		.loc 1 225 0
+ 342               	.LFB188:
+ 224:../../../os/hal/src/hal_i2c.c **** 
+ 225:../../../os/hal/src/hal_i2c.c **** /**
+ 226:../../../os/hal/src/hal_i2c.c ****  * @brief   Receives data from the I2C bus.
+ 227:../../../os/hal/src/hal_i2c.c ****  *
+ 228:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 229:../../../os/hal/src/hal_i2c.c ****  * @param[in] addr      slave device address (7 bits) without R/W bit
+ 230:../../../os/hal/src/hal_i2c.c ****  * @param[out] rxbuf    pointer to receive buffer
+ 231:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxbytes   number of bytes to be received
+ 232:../../../os/hal/src/hal_i2c.c ****  * @param[in] timeout   the number #if (HAL_USE_I2C == TRUE)of ticks before the operation timeouts,
+ 233:../../../os/hal/src/hal_i2c.c ****  *                      the following special values are allowed:
+ 234:../../../os/hal/src/hal_i2c.c ****  *                      - @a TIME_INFINITE no timeout.
+ 235:../../../os/hal/src/hal_i2c.c ****  *                      .
+ 236:../../../os/hal/src/hal_i2c.c ****  *
+ 237:../../../os/hal/src/hal_i2c.c ****  * @return              The operation status.
+ 238:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_OK       if the function succeeded.
+ 239:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
+ 240:../../../os/hal/src/hal_i2c.c ****  *                      be retrieved using @p i2cGetErrors().
+ 241:../../../os/hal/src/hal_i2c.c ****  * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ 242:../../../os/hal/src/hal_i2c.c ****  *
+ 243:../../../os/hal/src/hal_i2c.c ****  * @api
+ 244:../../../os/hal/src/hal_i2c.c ****  */
+ 245:../../../os/hal/src/hal_i2c.c **** msg_t i2cMasterReceiveTimeout(I2CDriver *i2cp,
+ 246:../../../os/hal/src/hal_i2c.c ****                               i2caddr_t addr,
+ 247:../../../os/hal/src/hal_i2c.c ****                               uint8_t *rxbuf,
+ 248:../../../os/hal/src/hal_i2c.c ****                               size_t rxbytes,
+ 249:../../../os/hal/src/hal_i2c.c ****                               sysinterval_t timeout) {
+ 343               		.loc 1 249 0
  344               		.cfi_startproc
  345               	.LVL21:
  346 0000 0F93      		push r16
@@ -2000,10 +2024,10 @@
  364               	/* stack size = 4 */
  365               	.L__stack_usage = 4
  366 0008 EC01      		movw r28,r24
- 367               	.LBB141:
- 368               	.LBB142:
- 369               	.LBB143:
- 370               	.LBB144:
+ 367               	.LBB131:
+ 368               	.LBB132:
+ 369               	.LBB133:
+ 370               	.LBB134:
  437:../../../os/common/ports/AVR/chcore.h **** }
  371               		.loc 3 437 0
  372               	/* #APP */
@@ -2011,51 +2035,51 @@
  374 000a F894      		cli
  375               	 ;  0 "" 2
  376               	/* #NOAPP */
- 377               	.LBE144:
- 378               	.LBE143:
- 379               	.LBE142:
- 380               	.LBE141:
- 226:../../../os/hal/src/hal_i2c.c **** 
- 227:../../../os/hal/src/hal_i2c.c ****   msg_t rdymsg;
- 228:../../../os/hal/src/hal_i2c.c **** 
- 229:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) && (addr != 0U) &&
- 230:../../../os/hal/src/hal_i2c.c ****                (rxbytes > 0U) && (rxbuf != NULL) &&
- 231:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE));
- 232:../../../os/hal/src/hal_i2c.c **** 
- 233:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert(i2cp->state == I2C_READY, "not ready");
- 234:../../../os/hal/src/hal_i2c.c **** 
- 235:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
- 236:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
- 381               		.loc 1 236 0
+ 377               	.LBE134:
+ 378               	.LBE133:
+ 379               	.LBE132:
+ 380               	.LBE131:
+ 250:../../../os/hal/src/hal_i2c.c **** 
+ 251:../../../os/hal/src/hal_i2c.c ****   msg_t rdymsg;
+ 252:../../../os/hal/src/hal_i2c.c **** 
+ 253:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) && (addr != 0U) &&
+ 254:../../../os/hal/src/hal_i2c.c ****                (rxbytes > 0U) && (rxbuf != NULL) &&
+ 255:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE));
+ 256:../../../os/hal/src/hal_i2c.c **** 
+ 257:../../../os/hal/src/hal_i2c.c ****   osalDbgAssert(i2cp->state == I2C_READY, "not ready");
+ 258:../../../os/hal/src/hal_i2c.c **** 
+ 259:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 260:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
+ 381               		.loc 1 260 0
  382 000c 1B82      		std Y+3,__zero_reg__
- 237:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_RX;
- 383               		.loc 1 237 0
+ 261:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_RX;
+ 383               		.loc 1 261 0
  384 000e 84E0      		ldi r24,lo8(4)
  385               	.LVL22:
  386 0010 8883      		st Y,r24
- 238:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_master_receive_timeout(i2cp, addr, rxbuf, rxbytes, timeout);
- 387               		.loc 1 238 0
+ 262:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_master_receive_timeout(i2cp, addr, rxbuf, rxbytes, timeout);
+ 387               		.loc 1 262 0
  388 0012 CE01      		movw r24,r28
  389 0014 0E94 0000 		call i2c_lld_master_receive_timeout
  390               	.LVL23:
- 239:../../../os/hal/src/hal_i2c.c ****   if (rdymsg == MSG_TIMEOUT) {
- 391               		.loc 1 239 0
+ 263:../../../os/hal/src/hal_i2c.c ****   if (rdymsg == MSG_TIMEOUT) {
+ 391               		.loc 1 263 0
  392 0018 8F3F      		cpi r24,-1
  393 001a 2FEF      		ldi r18,-1
  394 001c 9207      		cpc r25,r18
  395 001e 01F0      		breq .L14
- 240:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
- 241:../../../os/hal/src/hal_i2c.c ****   }
- 242:../../../os/hal/src/hal_i2c.c ****   else {
- 243:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
- 396               		.loc 1 243 0
+ 264:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 265:../../../os/hal/src/hal_i2c.c ****   }
+ 266:../../../os/hal/src/hal_i2c.c ****   else {
+ 267:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
+ 396               		.loc 1 267 0
  397 0020 22E0      		ldi r18,lo8(2)
  398 0022 2883      		st Y,r18
- 399               	.LBB145:
- 400               	.LBB146:
- 401               	.LBB147:
- 402               	.LBB148:
- 403               	.LBB149:
+ 399               	.LBB135:
+ 400               	.LBB136:
+ 401               	.LBB137:
+ 402               	.LBB138:
+ 403               	.LBB139:
  404               		.loc 3 447 0
  405               	/* #APP */
  406               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -2063,16 +2087,16 @@
  408               	 ;  0 "" 2
  409               	/* epilogue start */
  410               	/* #NOAPP */
- 411               	.LBE149:
- 412               	.LBE148:
- 413               	.LBE147:
- 414               	.LBE146:
- 415               	.LBE145:
- 244:../../../os/hal/src/hal_i2c.c ****   }
- 245:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
- 246:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
- 247:../../../os/hal/src/hal_i2c.c **** }
- 416               		.loc 1 247 0
+ 411               	.LBE139:
+ 412               	.LBE138:
+ 413               	.LBE137:
+ 414               	.LBE136:
+ 415               	.LBE135:
+ 268:../../../os/hal/src/hal_i2c.c ****   }
+ 269:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 270:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
+ 271:../../../os/hal/src/hal_i2c.c **** }
+ 416               		.loc 1 271 0
  417 0026 DF91      		pop r29
  418 0028 CF91      		pop r28
  419               	.LVL24:
@@ -2082,15 +2106,15 @@
  423 002e 0895      		ret
  424               	.LVL26:
  425               	.L14:
- 240:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
- 426               		.loc 1 240 0
+ 264:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 426               		.loc 1 264 0
  427 0030 25E0      		ldi r18,lo8(5)
  428 0032 2883      		st Y,r18
- 429               	.LBB154:
- 430               	.LBB153:
- 431               	.LBB152:
- 432               	.LBB151:
- 433               	.LBB150:
+ 429               	.LBB144:
+ 430               	.LBB143:
+ 431               	.LBB142:
+ 432               	.LBB141:
+ 433               	.LBB140:
  434               		.loc 3 447 0
  435               	/* #APP */
  436               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -2098,12 +2122,12 @@
  438               	 ;  0 "" 2
  439               	/* epilogue start */
  440               	/* #NOAPP */
- 441               	.LBE150:
- 442               	.LBE151:
- 443               	.LBE152:
- 444               	.LBE153:
- 445               	.LBE154:
- 446               		.loc 1 247 0
+ 441               	.LBE140:
+ 442               	.LBE141:
+ 443               	.LBE142:
+ 444               	.LBE143:
+ 445               	.LBE144:
+ 446               		.loc 1 271 0
  447 0036 DF91      		pop r29
  448 0038 CF91      		pop r28
  449               	.LVL27:
@@ -2112,43 +2136,47 @@
  452               	.LVL28:
  453 003e 0895      		ret
  454               		.cfi_endproc
- 455               	.LFE186:
+ 455               	.LFE188:
  457               		.section	.text.i2cMatchAddress,"ax",@progbits
  458               	.global	i2cMatchAddress
  460               	i2cMatchAddress:
- 461               	.LFB187:
- 248:../../../os/hal/src/hal_i2c.c **** 
- 249:../../../os/hal/src/hal_i2c.c **** /* I2C slave mode support */
- 250:../../../os/hal/src/hal_i2c.c **** 
- 251:../../../os/hal/src/hal_i2c.c **** /**
- 252:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to respond to indicated address
- 253:../../../os/hal/src/hal_i2c.c ****  *          in addition to those already matched
- 254:../../../os/hal/src/hal_i2c.c ****  *
- 255:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 256:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C network address
- 257:../../../os/hal/src/hal_i2c.c ****  *
- 258:../../../os/hal/src/hal_i2c.c ****  * @return              Length of message OR the type of event received
- 259:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_OK       Success
- 260:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_ERROR    Cannot match address in addition of those already
- 261:../../../os/hal/src/hal_i2c.c ****  *
- 262:../../../os/hal/src/hal_i2c.c ****  * @details             MatchAddress calls are cumulative.
- 263:../../../os/hal/src/hal_i2c.c ****  *                      Specify address zero to match I2C "all call"
- 264:../../../os/hal/src/hal_i2c.c ****  *                      Does not support 10-bit addressing.
- 265:../../../os/hal/src/hal_i2c.c ****  *
- 266:../../../os/hal/src/hal_i2c.c ****  * @api
- 267:../../../os/hal/src/hal_i2c.c ****  **/
- 268:../../../os/hal/src/hal_i2c.c **** msg_t i2cMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
- 269:../../../os/hal/src/hal_i2c.c **** {
- 462               		.loc 1 269 0
+ 461               	.LFB189:
+ 272:../../../os/hal/src/hal_i2c.c **** 
+ 273:../../../os/hal/src/hal_i2c.c **** /* I2C slave mode support */
+ 274:../../../os/hal/src/hal_i2c.c **** 
+ 275:../../../os/hal/src/hal_i2c.c **** /**
+ 276:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to respond to indicated address
+ 277:../../../os/hal/src/hal_i2c.c ****  *          in addition to those already matched
+ 278:../../../os/hal/src/hal_i2c.c ****  *
+ 279:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 280:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C network address
+ 281:../../../os/hal/src/hal_i2c.c ****  *
+ 282:../../../os/hal/src/hal_i2c.c ****  * @return              Length of message OR the type of event received
+ 283:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_OK       Success
+ 284:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_ERROR    Cannot match address in addition of those already
+ 285:../../../os/hal/src/hal_i2c.c ****  *
+ 286:../../../os/hal/src/hal_i2c.c ****  * @details             MatchAddress calls are cumulative.
+ 287:../../../os/hal/src/hal_i2c.c ****  *                     	Specify address zero to match I2C "all call"
+ 288:../../../os/hal/src/hal_i2c.c ****  *                      Does not support 10-bit addressing.
+ 289:../../../os/hal/src/hal_i2c.c ****  *
+ 290:../../../os/hal/src/hal_i2c.c ****  * @api
+ 291:../../../os/hal/src/hal_i2c.c ****  **/
+ 292:../../../os/hal/src/hal_i2c.c **** 
+ 293:../../../os/hal/src/hal_i2c.c **** 
+ 294:../../../os/hal/src/hal_i2c.c **** 
+ 295:../../../os/hal/src/hal_i2c.c **** 
+ 296:../../../os/hal/src/hal_i2c.c **** msg_t i2cMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
+ 297:../../../os/hal/src/hal_i2c.c **** {
+ 462               		.loc 1 297 0
  463               		.cfi_startproc
  464               	.LVL29:
  465               	/* prologue: function */
  466               	/* frame size = 0 */
  467               	/* stack size = 0 */
  468               	.L__stack_usage = 0
- 469               	.LBB155:
- 470               	.LBB156:
- 471               	.LBB157:
+ 469               	.LBB145:
+ 470               	.LBB146:
+ 471               	.LBB147:
  437:../../../os/common/ports/AVR/chcore.h **** }
  472               		.loc 3 437 0
  473               	/* #APP */
@@ -2156,207 +2184,67 @@
  475 0000 F894      		cli
  476               	 ;  0 "" 2
  477               	/* #NOAPP */
- 478               	.LBE157:
- 479               	.LBE156:
- 480               	.LBE155:
- 270:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 271:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 272:../../../os/hal/src/hal_i2c.c ****   msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
- 481               		.loc 1 272 0
+ 478               	.LBE147:
+ 479               	.LBE146:
+ 480               	.LBE145:
+ 298:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
+ 299:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 300:../../../os/hal/src/hal_i2c.c ****   msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
+ 481               		.loc 1 300 0
  482 0002 0E94 0000 		call i2c_lld_matchAddress
  483               	.LVL30:
- 484               	.LBB158:
- 485               	.LBB159:
- 486               	.LBB160:
- 487               	.LBB161:
+ 484               	.LBB148:
+ 485               	.LBB149:
+ 486               	.LBB150:
+ 487               	.LBB151:
  488               		.loc 3 447 0
  489               	/* #APP */
  490               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
  491 0006 7894      		sei
  492               	 ;  0 "" 2
  493               	/* #NOAPP */
- 494               	.LBE161:
- 495               	.LBE160:
- 496               	.LBE159:
- 497               	.LBE158:
- 273:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 274:../../../os/hal/src/hal_i2c.c ****   return result;/* I2C slave mode support */
- 275:../../../os/hal/src/hal_i2c.c **** 
- 276:../../../os/hal/src/hal_i2c.c **** /**
- 277:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to respond to indicated address
- 278:../../../os/hal/src/hal_i2c.c ****  *          in addition to those already matched
- 279:../../../os/hal/src/hal_i2c.c ****  *
- 280:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 281:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C network address
- 282:../../../os/hal/src/hal_i2c.c ****  *
- 283:../../../os/hal/src/hal_i2c.c ****  * @return              Length of message OR the type of event received
- 284:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_OK       Success
- 285:../../../os/hal/src/hal_i2c.c ****  * @retval I2C_ERROR    Cannot match address in addition of those already
- 286:../../../os/hal/src/hal_i2c.c ****  *
- 287:../../../os/hal/src/hal_i2c.c ****  * @details             MatchAddress calls are cumulative.
- 288:../../../os/hal/src/hal_i2c.c ****  *                      Specify address zero to match I2C "all call"
- 289:../../../os/hal/src/hal_i2c.c ****  *                      Does not support 10-bit addressing.
- 290:../../../os/hal/src/hal_i2c.c ****  *
- 291:../../../os/hal/src/hal_i2c.c ****  * @api
- 292:../../../os/hal/src/hal_i2c.c ****  **/
- 293:../../../os/hal/src/hal_i2c.c **** msg_t i2cMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
- 294:../../../os/hal/src/hal_i2c.c **** {
- 295:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 296:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 297:../../../os/hal/src/hal_i2c.c ****   msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
- 298:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 299:../../../os/hal/src/hal_i2c.c ****   return result;
- 300:../../../os/hal/src/hal_i2c.c **** }
- 301:../../../os/hal/src/hal_i2c.c **** 
- 302:../../../os/hal/src/hal_i2c.c **** 
- 303:../../../os/hal/src/hal_i2c.c **** /**
- 304:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure to ignore messages directed to the given i2cadr
- 305:../../../os/hal/src/hal_i2c.c ****  *
- 306:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 307:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C bus address
- 308:../../../os/hal/src/hal_i2c.c ****  *                      - @a 0 matches "all call"
- 309:../../../os/hal/src/hal_i2c.c ****  *                      .
- 310:../../../os/hal/src/hal_i2c.c ****  * @details A message being transferred that has already matched the
- 311:../../../os/hal/src/hal_i2c.c ****  *          specified address will continue being processed.
- 312:../../../os/hal/src/hal_i2c.c ****  *          Requests to unmatch an address that is not currently being matched
- 313:../../../os/hal/src/hal_i2c.c ****  *          are ignored.
- 314:../../../os/hal/src/hal_i2c.c ****  *
- 315:../../../os/hal/src/hal_i2c.c ****  * @api
- 316:../../../os/hal/src/hal_i2c.c ****  */
- 317:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
- 318:../../../os/hal/src/hal_i2c.c **** {
- 319:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 320:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 321:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAddress(i2cp, i2cadr);
- 322:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 323:../../../os/hal/src/hal_i2c.c **** }
- 324:../../../os/hal/src/hal_i2c.c **** 
- 325:../../../os/hal/src/hal_i2c.c **** 
- 326:../../../os/hal/src/hal_i2c.c **** /**
- 327:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to no longer match any address
- 328:../../../os/hal/src/hal_i2c.c ****  *
- 329:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 330:../../../os/hal/src/hal_i2c.c ****  *
- 331:../../../os/hal/src/hal_i2c.c ****  * @details   Causes all subsequent messages to be ignored.
- 332:../../../os/hal/src/hal_i2c.c ****  *            A message being transferred that has already matched a
- 333:../../../os/hal/src/hal_i2c.c ****  *            slave address will continue being processed.
- 334:../../../os/hal/src/hal_i2c.c ****  *
- 335:../../../os/hal/src/hal_i2c.c ****  * @api
- 336:../../../os/hal/src/hal_i2c.c ****  **/
- 337:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAll(I2CDriver *i2cp)
- 338:../../../os/hal/src/hal_i2c.c **** {
- 339:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 340:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 341:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAll(i2cp);
- 342:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 343:../../../os/hal/src/hal_i2c.c **** }
- 344:../../../os/hal/src/hal_i2c.c **** 
- 345:../../../os/hal/src/hal_i2c.c **** 
- 346:../../../os/hal/src/hal_i2c.c **** /**
- 347:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for message reception & query reply
- 348:../../../os/hal/src/hal_i2c.c ****  *
- 349:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 350:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- 351:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 352:../../../os/hal/src/hal_i2c.c ****  *
- 353:../../../os/hal/src/hal_i2c.c ****  * @details             Must be called from a thread
- 354:../../../os/hal/src/hal_i2c.c ****  *                      Call i2cMatchAddress() after this to start processing
- 355:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 356:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 357:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 358:../../../os/hal/src/hal_i2c.c ****  *
- 359:../../../os/hal/src/hal_i2c.c ****  * @api
- 360:../../../os/hal/src/hal_i2c.c ****  */
- 361:../../../os/hal/src/hal_i2c.c **** void i2cSlaveConfigure(I2CDriver *i2cp,
- 362:../../../os/hal/src/hal_i2c.c ****                    const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg)
- 363:../../../os/hal/src/hal_i2c.c **** {
- 364:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 365:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 366:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReceive(i2cp, rxMsg);
- 367:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReply(i2cp, replyMsg);
- 368:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 369:../../../os/hal/src/hal_i2c.c **** }
- 370:../../../os/hal/src/hal_i2c.c **** 
- 371:../../../os/hal/src/hal_i2c.c **** 
- 372:../../../os/hal/src/hal_i2c.c **** /**
- 373:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for query reply
- 374:../../../os/hal/src/hal_i2c.c ****  *
- 375:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 376:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 377:../../../os/hal/src/hal_i2c.c ****  *
- 378:../../../os/hal/src/hal_i2c.c ****  * @details             Call i2cMatchAddress() after this to start processing
- 379:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 380:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 381:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 382:../../../os/hal/src/hal_i2c.c ****  *
- 383:../../../os/hal/src/hal_i2c.c ****  * @api
- 384:../../../os/hal/src/hal_i2c.c ****  */
- 385:../../../os/hal/src/hal_i2c.c **** void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
- 386:../../../os/hal/src/hal_i2c.c **** {
- 387:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL && rxMsg != NULL));
- 388:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 389:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReceive(i2cp, rxMsg);
- 390:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 391:../../../os/hal/src/hal_i2c.c **** }
- 392:../../../os/hal/src/hal_i2c.c **** 
- 393:../../../os/hal/src/hal_i2c.c **** 
- 394:../../../os/hal/src/hal_i2c.c **** /**
- 395:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for query reply
- 396:../../../os/hal/src/hal_i2c.c ****  *
- 397:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 398:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 399:../../../os/hal/src/hal_i2c.c ****  *
- 400:../../../os/hal/src/hal_i2c.c ****  * @details             Call i2cMatchAddress() after this to start processing
- 401:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 402:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 403:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 404:../../../os/hal/src/hal_i2c.c ****  *
- 405:../../../os/hal/src/hal_i2c.c ****  * @api
- 406:../../../os/hal/src/hal_i2c.c ****  */
- 407:../../../os/hal/src/hal_i2c.c **** void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
- 408:../../../os/hal/src/hal_i2c.c **** {
- 409:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL && replyMsg != NULL));
- 410:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 411:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReply(i2cp, replyMsg);
- 412:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 413:../../../os/hal/src/hal_i2c.c **** }
- 414:../../../os/hal/src/hal_i2c.c **** }
- 498               		.loc 1 414 0
+ 494               	.LBE151:
+ 495               	.LBE150:
+ 496               	.LBE149:
+ 497               	.LBE148:
+ 301:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 302:../../../os/hal/src/hal_i2c.c ****   return result;
+ 303:../../../os/hal/src/hal_i2c.c **** }
+ 498               		.loc 1 303 0
  499 0008 0895      		ret
  500               		.cfi_endproc
- 501               	.LFE187:
+ 501               	.LFE189:
  503               		.section	.text.i2cUnmatchAddress,"ax",@progbits
  504               	.global	i2cUnmatchAddress
  506               	i2cUnmatchAddress:
- 507               	.LFB194:
- 415:../../../os/hal/src/hal_i2c.c **** 
- 416:../../../os/hal/src/hal_i2c.c **** 
- 417:../../../os/hal/src/hal_i2c.c **** /**
- 418:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure to ignore messages directed to the given i2cadr
- 419:../../../os/hal/src/hal_i2c.c ****  *
- 420:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 421:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C bus address
- 422:../../../os/hal/src/hal_i2c.c ****  *                      - @a 0 matches "all call"
- 423:../../../os/hal/src/hal_i2c.c ****  *                      .
- 424:../../../os/hal/src/hal_i2c.c ****  * @details A message being transferred that has already matched the
- 425:../../../os/hal/src/hal_i2c.c ****  *          specified address will continue being processed.
- 426:../../../os/hal/src/hal_i2c.c ****  *          Requests to unmatch an address that is not currently being matched
- 427:../../../os/hal/src/hal_i2c.c ****  *          are ignored.
- 428:../../../os/hal/src/hal_i2c.c ****  *
- 429:../../../os/hal/src/hal_i2c.c ****  * @api
- 430:../../../os/hal/src/hal_i2c.c ****  */
- 431:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
- 432:../../../os/hal/src/hal_i2c.c **** {
- 508               		.loc 1 432 0
+ 507               	.LFB190:
+ 304:../../../os/hal/src/hal_i2c.c **** 
+ 305:../../../os/hal/src/hal_i2c.c **** /**
+ 306:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure to ignore messages directed to the given i2cadr
+ 307:../../../os/hal/src/hal_i2c.c ****  *
+ 308:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 309:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cadr    I2C bus address
+ 310:../../../os/hal/src/hal_i2c.c ****  *                      - @a 0 matches "all call"
+ 311:../../../os/hal/src/hal_i2c.c ****  *                      .
+ 312:../../../os/hal/src/hal_i2c.c ****  * @details A message being transferred that has already matched the
+ 313:../../../os/hal/src/hal_i2c.c ****  *          specified address will continue being processed.
+ 314:../../../os/hal/src/hal_i2c.c ****  *          Requests to unmatch an address that is not currently being matched
+ 315:../../../os/hal/src/hal_i2c.c ****  *          are ignored.
+ 316:../../../os/hal/src/hal_i2c.c ****  *
+ 317:../../../os/hal/src/hal_i2c.c ****  * @api
+ 318:../../../os/hal/src/hal_i2c.c ****  */
+ 319:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
+ 320:../../../os/hal/src/hal_i2c.c **** {
+ 508               		.loc 1 320 0
  509               		.cfi_startproc
  510               	.LVL31:
  511               	/* prologue: function */
  512               	/* frame size = 0 */
  513               	/* stack size = 0 */
  514               	.L__stack_usage = 0
- 515               	.LBB162:
- 516               	.LBB163:
- 517               	.LBB164:
+ 515               	.LBB152:
+ 516               	.LBB153:
+ 517               	.LBB154:
  437:../../../os/common/ports/AVR/chcore.h **** }
  518               		.loc 3 437 0
  519               	/* #APP */
@@ -2364,19 +2252,19 @@
  521 0000 F894      		cli
  522               	 ;  0 "" 2
  523               	/* #NOAPP */
- 524               	.LBE164:
- 525               	.LBE163:
- 526               	.LBE162:
- 433:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 434:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 435:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAddress(i2cp, i2cadr);
- 527               		.loc 1 435 0
+ 524               	.LBE154:
+ 525               	.LBE153:
+ 526               	.LBE152:
+ 321:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
+ 322:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 323:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAddress(i2cp, i2cadr);
+ 527               		.loc 1 323 0
  528 0002 0E94 0000 		call i2c_lld_unmatchAddress
  529               	.LVL32:
- 530               	.LBB165:
- 531               	.LBB166:
- 532               	.LBB167:
- 533               	.LBB168:
+ 530               	.LBB155:
+ 531               	.LBB156:
+ 532               	.LBB157:
+ 533               	.LBB158:
  534               		.loc 3 447 0
  535               	/* #APP */
  536               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -2384,43 +2272,43 @@
  538               	 ;  0 "" 2
  539               	/* #NOAPP */
  540 0008 0895      		ret
- 541               	.LBE168:
- 542               	.LBE167:
- 543               	.LBE166:
- 544               	.LBE165:
+ 541               	.LBE158:
+ 542               	.LBE157:
+ 543               	.LBE156:
+ 544               	.LBE155:
  545               		.cfi_endproc
- 546               	.LFE194:
+ 546               	.LFE190:
  548               		.section	.text.i2cUnmatchAll,"ax",@progbits
  549               	.global	i2cUnmatchAll
  551               	i2cUnmatchAll:
- 552               	.LFB195:
- 436:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 437:../../../os/hal/src/hal_i2c.c **** }
- 438:../../../os/hal/src/hal_i2c.c **** 
- 439:../../../os/hal/src/hal_i2c.c **** 
- 440:../../../os/hal/src/hal_i2c.c **** /**
- 441:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to no longer match any address
- 442:../../../os/hal/src/hal_i2c.c ****  *
- 443:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 444:../../../os/hal/src/hal_i2c.c ****  *
- 445:../../../os/hal/src/hal_i2c.c ****  * @details   Causes all subsequent messages to be ignored.
- 446:../../../os/hal/src/hal_i2c.c ****  *            A message being transferred that has already matched a
- 447:../../../os/hal/src/hal_i2c.c ****  *            slave address will continue being processed.
- 448:../../../os/hal/src/hal_i2c.c ****  *
- 449:../../../os/hal/src/hal_i2c.c ****  * @api
- 450:../../../os/hal/src/hal_i2c.c ****  **/
- 451:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAll(I2CDriver *i2cp)
- 452:../../../os/hal/src/hal_i2c.c **** {
- 553               		.loc 1 452 0
+ 552               	.LFB191:
+ 324:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 325:../../../os/hal/src/hal_i2c.c **** }
+ 326:../../../os/hal/src/hal_i2c.c **** 
+ 327:../../../os/hal/src/hal_i2c.c **** 
+ 328:../../../os/hal/src/hal_i2c.c **** /**
+ 329:../../../os/hal/src/hal_i2c.c ****  * @brief   Reconfigure I2C channel to no longer match any address
+ 330:../../../os/hal/src/hal_i2c.c ****  *
+ 331:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 332:../../../os/hal/src/hal_i2c.c ****  *
+ 333:../../../os/hal/src/hal_i2c.c ****  * @details   Causes all subsequent messages to be ignored.
+ 334:../../../os/hal/src/hal_i2c.c ****  *            A message being transferred that has already matched a
+ 335:../../../os/hal/src/hal_i2c.c ****  *            slave address will continue being processed.
+ 336:../../../os/hal/src/hal_i2c.c ****  *
+ 337:../../../os/hal/src/hal_i2c.c ****  * @api
+ 338:../../../os/hal/src/hal_i2c.c ****  **/
+ 339:../../../os/hal/src/hal_i2c.c **** void i2cUnmatchAll(I2CDriver *i2cp)
+ 340:../../../os/hal/src/hal_i2c.c **** {
+ 553               		.loc 1 340 0
  554               		.cfi_startproc
  555               	.LVL33:
  556               	/* prologue: function */
  557               	/* frame size = 0 */
  558               	/* stack size = 0 */
  559               	.L__stack_usage = 0
- 560               	.LBB169:
- 561               	.LBB170:
- 562               	.LBB171:
+ 560               	.LBB159:
+ 561               	.LBB160:
+ 562               	.LBB161:
  437:../../../os/common/ports/AVR/chcore.h **** }
  563               		.loc 3 437 0
  564               	/* #APP */
@@ -2428,19 +2316,19 @@
  566 0000 F894      		cli
  567               	 ;  0 "" 2
  568               	/* #NOAPP */
- 569               	.LBE171:
- 570               	.LBE170:
- 571               	.LBE169:
- 453:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 454:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 455:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAll(i2cp);
- 572               		.loc 1 455 0
+ 569               	.LBE161:
+ 570               	.LBE160:
+ 571               	.LBE159:
+ 341:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
+ 342:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 343:../../../os/hal/src/hal_i2c.c ****   i2c_lld_unmatchAll(i2cp);
+ 572               		.loc 1 343 0
  573 0002 0E94 0000 		call i2c_lld_unmatchAll
  574               	.LVL34:
- 575               	.LBB172:
- 576               	.LBB173:
- 577               	.LBB174:
- 578               	.LBB175:
+ 575               	.LBB162:
+ 576               	.LBB163:
+ 577               	.LBB164:
+ 578               	.LBB165:
  579               		.loc 3 447 0
  580               	/* #APP */
  581               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
@@ -2448,400 +2336,353 @@
  583               	 ;  0 "" 2
  584               	/* #NOAPP */
  585 0008 0895      		ret
- 586               	.LBE175:
- 587               	.LBE174:
- 588               	.LBE173:
- 589               	.LBE172:
+ 586               	.LBE165:
+ 587               	.LBE164:
+ 588               	.LBE163:
+ 589               	.LBE162:
  590               		.cfi_endproc
- 591               	.LFE195:
- 593               		.section	.text.i2cSlaveConfigure,"ax",@progbits
- 594               	.global	i2cSlaveConfigure
- 596               	i2cSlaveConfigure:
- 597               	.LFB196:
- 456:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 457:../../../os/hal/src/hal_i2c.c **** }
- 458:../../../os/hal/src/hal_i2c.c **** 
- 459:../../../os/hal/src/hal_i2c.c **** 
- 460:../../../os/hal/src/hal_i2c.c **** /**
- 461:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for message reception & query reply
- 462:../../../os/hal/src/hal_i2c.c ****  *
- 463:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 464:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- 465:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 466:../../../os/hal/src/hal_i2c.c ****  *
- 467:../../../os/hal/src/hal_i2c.c ****  * @details             Must be called from a thread
- 468:../../../os/hal/src/hal_i2c.c ****  *                      Call i2cMatchAddress() after this to start processing
- 469:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 470:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 471:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 472:../../../os/hal/src/hal_i2c.c ****  *
- 473:../../../os/hal/src/hal_i2c.c ****  * @api
- 474:../../../os/hal/src/hal_i2c.c ****  */
- 475:../../../os/hal/src/hal_i2c.c **** void i2cSlaveConfigure(I2CDriver *i2cp,
- 476:../../../os/hal/src/hal_i2c.c ****                    const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg)
- 477:../../../os/hal/src/hal_i2c.c **** {
- 598               		.loc 1 477 0
+ 591               	.LFE191:
+ 593               		.section	.text.i2cSlaveReceive,"ax",@progbits
+ 594               	.global	i2cSlaveReceive
+ 596               	i2cSlaveReceive:
+ 597               	.LFB192:
+ 344:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 345:../../../os/hal/src/hal_i2c.c **** }
+ 346:../../../os/hal/src/hal_i2c.c **** 
+ 347:../../../os/hal/src/hal_i2c.c **** 
+ 348:../../../os/hal/src/hal_i2c.c **** /**
+ 349:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for message reception & query reply
+ 350:../../../os/hal/src/hal_i2c.c ****  *
+ 351:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
+ 352:../../../os/hal/src/hal_i2c.c ****  * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
+ 353:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
+ 354:../../../os/hal/src/hal_i2c.c ****  *
+ 355:../../../os/hal/src/hal_i2c.c ****  * @details             Must be called from a thread
+ 356:../../../os/hal/src/hal_i2c.c ****  *                      Call i2cMatchAddress() after this to start processing
+ 357:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
+ 358:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
+ 359:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
+ 360:../../../os/hal/src/hal_i2c.c ****  *
+ 361:../../../os/hal/src/hal_i2c.c ****  * @api
+ 362:../../../os/hal/src/hal_i2c.c ****  */
+ 363:../../../os/hal/src/hal_i2c.c **** /*void i2cSlaveConfigure(I2CDriver *i2cp,
+ 364:../../../os/hal/src/hal_i2c.c ****                    const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg)
+ 365:../../../os/hal/src/hal_i2c.c **** {
+ 366:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
+ 367:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 368:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReceive(i2cp, rxMsg);
+ 369:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReply(i2cp, replyMsg);
+ 370:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 371:../../../os/hal/src/hal_i2c.c **** }*/
+ 372:../../../os/hal/src/hal_i2c.c **** 
+ 373:../../../os/hal/src/hal_i2c.c **** 
+ 374:../../../os/hal/src/hal_i2c.c **** 
+ 375:../../../os/hal/src/hal_i2c.c **** 
+ 376:../../../os/hal/src/hal_i2c.c **** msg_t i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr,
+ 377:../../../os/hal/src/hal_i2c.c ****                                       const uint8_t *txbuf, size_t txbytes,
+ 378:../../../os/hal/src/hal_i2c.c ****                                       uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
+ 379:../../../os/hal/src/hal_i2c.c **** {
+ 598               		.loc 1 379 0
  599               		.cfi_startproc
  600               	.LVL35:
- 601 0000 0F93      		push r16
+ 601 0000 CF92      		push r12
  602               	.LCFI16:
  603               		.cfi_def_cfa_offset 3
- 604               		.cfi_offset 16, -2
- 605 0002 1F93      		push r17
+ 604               		.cfi_offset 12, -2
+ 605 0002 DF92      		push r13
  606               	.LCFI17:
  607               		.cfi_def_cfa_offset 4
- 608               		.cfi_offset 17, -3
- 609 0004 CF93      		push r28
+ 608               		.cfi_offset 13, -3
+ 609 0004 EF92      		push r14
  610               	.LCFI18:
  611               		.cfi_def_cfa_offset 5
- 612               		.cfi_offset 28, -4
- 613 0006 DF93      		push r29
+ 612               		.cfi_offset 14, -4
+ 613 0006 FF92      		push r15
  614               	.LCFI19:
  615               		.cfi_def_cfa_offset 6
- 616               		.cfi_offset 29, -5
- 617               	/* prologue: function */
- 618               	/* frame size = 0 */
- 619               	/* stack size = 4 */
- 620               	.L__stack_usage = 4
- 621 0008 EC01      		movw r28,r24
- 622 000a 8A01      		movw r16,r20
- 623               	.LBB176:
- 624               	.LBB177:
- 625               	.LBB178:
+ 616               		.cfi_offset 15, -5
+ 617 0008 0F93      		push r16
+ 618               	.LCFI20:
+ 619               		.cfi_def_cfa_offset 7
+ 620               		.cfi_offset 16, -6
+ 621 000a 1F93      		push r17
+ 622               	.LCFI21:
+ 623               		.cfi_def_cfa_offset 8
+ 624               		.cfi_offset 17, -7
+ 625 000c CF93      		push r28
+ 626               	.LCFI22:
+ 627               		.cfi_def_cfa_offset 9
+ 628               		.cfi_offset 28, -8
+ 629 000e DF93      		push r29
+ 630               	.LCFI23:
+ 631               		.cfi_def_cfa_offset 10
+ 632               		.cfi_offset 29, -9
+ 633               	/* prologue: function */
+ 634               	/* frame size = 0 */
+ 635               	/* stack size = 8 */
+ 636               	.L__stack_usage = 8
+ 637 0010 EC01      		movw r28,r24
+ 638               	.LBB166:
+ 639               	.LBB167:
+ 640               	.LBB168:
  437:../../../os/common/ports/AVR/chcore.h **** }
- 626               		.loc 3 437 0
- 627               	/* #APP */
- 628               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
- 629 000c F894      		cli
- 630               	 ;  0 "" 2
- 631               	/* #NOAPP */
- 632               	.LBE178:
- 633               	.LBE177:
- 634               	.LBE176:
- 478:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL));
- 479:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 480:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReceive(i2cp, rxMsg);
- 635               		.loc 1 480 0
- 636 000e 0E94 0000 		call i2c_lld_slaveReceive
- 637               	.LVL36:
- 481:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReply(i2cp, replyMsg);
- 638               		.loc 1 481 0
- 639 0012 B801      		movw r22,r16
- 640 0014 CE01      		movw r24,r28
- 641 0016 0E94 0000 		call i2c_lld_slaveReply
- 642               	.LVL37:
- 643               	.LBB179:
- 644               	.LBB180:
- 645               	.LBB181:
- 646               	.LBB182:
- 647               		.loc 3 447 0
- 648               	/* #APP */
- 649               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
- 650 001a 7894      		sei
- 651               	 ;  0 "" 2
- 652               	/* epilogue start */
- 653               	/* #NOAPP */
- 654               	.LBE182:
- 655               	.LBE181:
- 656               	.LBE180:
- 657               	.LBE179:
- 482:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 483:../../../os/hal/src/hal_i2c.c **** }
- 658               		.loc 1 483 0
- 659 001c DF91      		pop r29
- 660 001e CF91      		pop r28
- 661               	.LVL38:
- 662 0020 1F91      		pop r17
- 663 0022 0F91      		pop r16
- 664               	.LVL39:
- 665 0024 0895      		ret
- 666               		.cfi_endproc
- 667               	.LFE196:
- 669               		.section	.text.i2cSlaveReceive,"ax",@progbits
- 670               	.global	i2cSlaveReceive
- 672               	i2cSlaveReceive:
- 673               	.LFB197:
- 484:../../../os/hal/src/hal_i2c.c **** 
- 485:../../../os/hal/src/hal_i2c.c **** 
- 486:../../../os/hal/src/hal_i2c.c **** /**
- 487:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for query reply
- 488:../../../os/hal/src/hal_i2c.c ****  *
- 489:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 490:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 491:../../../os/hal/src/hal_i2c.c ****  *
- 492:../../../os/hal/src/hal_i2c.c ****  * @details             Call i2cMatchAddress() after this to start processing
- 493:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 494:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 495:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 496:../../../os/hal/src/hal_i2c.c ****  *
- 497:../../../os/hal/src/hal_i2c.c ****  * @api
- 498:../../../os/hal/src/hal_i2c.c ****  */
- 499:../../../os/hal/src/hal_i2c.c **** void i2cSlaveReceive(I2CDriver *i2cp, const I2CSlaveMsg *rxMsg)
- 500:../../../os/hal/src/hal_i2c.c **** {
- 674               		.loc 1 500 0
- 675               		.cfi_startproc
- 676               	.LVL40:
- 677               	/* prologue: function */
- 678               	/* frame size = 0 */
- 679               	/* stack size = 0 */
- 680               	.L__stack_usage = 0
- 681               	.LBB183:
- 682               	.LBB184:
- 683               	.LBB185:
- 437:../../../os/common/ports/AVR/chcore.h **** }
- 684               		.loc 3 437 0
- 685               	/* #APP */
- 686               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
- 687 0000 F894      		cli
- 688               	 ;  0 "" 2
- 689               	/* #NOAPP */
- 690               	.LBE185:
- 691               	.LBE184:
- 692               	.LBE183:
- 501:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL && rxMsg != NULL));
- 502:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 503:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReceive(i2cp, rxMsg);
- 693               		.loc 1 503 0
- 694 0002 0E94 0000 		call i2c_lld_slaveReceive
+ 641               		.loc 3 437 0
+ 642               	/* #APP */
+ 643               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 644 0012 F894      		cli
+ 645               	 ;  0 "" 2
+ 646               	/* #NOAPP */
+ 647               	.LBE168:
+ 648               	.LBE167:
+ 649               	.LBE166:
+ 650               	.LBB169:
+ 651               	.LBB170:
+ 652               	.LBB171:
+ 653               	.LBB172:
+ 654               	/* #APP */
+ 655               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 656 0014 F894      		cli
+ 657               	 ;  0 "" 2
+ 658               	/* #NOAPP */
+ 659               	.LBE172:
+ 660               	.LBE171:
+ 661               	.LBE170:
+ 662               	.LBE169:
+ 380:../../../os/hal/src/hal_i2c.c ****   
+ 381:../../../os/hal/src/hal_i2c.c ****  msg_t rdymsg;
+ 382:../../../os/hal/src/hal_i2c.c **** 
+ 383:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
+ 384:../../../os/hal/src/hal_i2c.c ****                ( (rxbytes == 0U) || ( (rxbytes > 0U) && (rxbuf != NULL) ) ) &&
+ 385:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE) );
+ 386:../../../os/hal/src/hal_i2c.c **** 
+ 387:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 388:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 389:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
+ 663               		.loc 1 389 0
+ 664 0016 1B82      		std Y+3,__zero_reg__
+ 390:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_RX;
+ 665               		.loc 1 390 0
+ 666 0018 84E0      		ldi r24,lo8(4)
+ 667               	.LVL36:
+ 668 001a 8883      		st Y,r24
+ 391:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes,timeout);
+ 669               		.loc 1 391 0
+ 670 001c CE01      		movw r24,r28
+ 671 001e 0E94 0000 		call i2c_lld_slaveReceive
+ 672               	.LVL37:
+ 392:../../../os/hal/src/hal_i2c.c ****     if (rdymsg == MSG_TIMEOUT) {
+ 673               		.loc 1 392 0
+ 674 0022 8F3F      		cpi r24,-1
+ 675 0024 2FEF      		ldi r18,-1
+ 676 0026 9207      		cpc r25,r18
+ 677 0028 01F0      		breq .L21
+ 393:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 394:../../../os/hal/src/hal_i2c.c ****   }
+ 395:../../../os/hal/src/hal_i2c.c ****   else {
+ 396:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
+ 678               		.loc 1 396 0
+ 679 002a 22E0      		ldi r18,lo8(2)
+ 680 002c 2883      		st Y,r18
+ 681               	.L20:
+ 682               	/* epilogue start */
+ 397:../../../os/hal/src/hal_i2c.c ****   }
+ 398:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
+ 399:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 400:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 401:../../../os/hal/src/hal_i2c.c ****   
+ 402:../../../os/hal/src/hal_i2c.c **** }
+ 683               		.loc 1 402 0
+ 684 002e DF91      		pop r29
+ 685 0030 CF91      		pop r28
+ 686               	.LVL38:
+ 687 0032 1F91      		pop r17
+ 688 0034 0F91      		pop r16
+ 689               	.LVL39:
+ 690 0036 FF90      		pop r15
+ 691 0038 EF90      		pop r14
+ 692               	.LVL40:
+ 693 003a DF90      		pop r13
+ 694 003c CF90      		pop r12
  695               	.LVL41:
- 696               	.LBB186:
- 697               	.LBB187:
- 698               	.LBB188:
- 699               	.LBB189:
- 700               		.loc 3 447 0
- 701               	/* #APP */
- 702               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
- 703 0006 7894      		sei
- 704               	 ;  0 "" 2
- 705               	/* #NOAPP */
- 706 0008 0895      		ret
- 707               	.LBE189:
- 708               	.LBE188:
- 709               	.LBE187:
- 710               	.LBE186:
- 711               		.cfi_endproc
- 712               	.LFE197:
- 714               		.section	.text.i2cSlaveReply,"ax",@progbits
- 715               	.global	i2cSlaveReply
- 717               	i2cSlaveReply:
- 718               	.LFB198:
- 504:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 505:../../../os/hal/src/hal_i2c.c **** }
- 506:../../../os/hal/src/hal_i2c.c **** 
- 507:../../../os/hal/src/hal_i2c.c **** 
- 508:../../../os/hal/src/hal_i2c.c **** /**
- 509:../../../os/hal/src/hal_i2c.c ****  * @brief   Configure callbacks & buffers for query reply
- 510:../../../os/hal/src/hal_i2c.c ****  *
- 511:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 512:../../../os/hal/src/hal_i2c.c ****  * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- 513:../../../os/hal/src/hal_i2c.c ****  *
- 514:../../../os/hal/src/hal_i2c.c ****  * @details             Call i2cMatchAddress() after this to start processing
- 515:../../../os/hal/src/hal_i2c.c ****  *     Enabling match addresses before installing handler callbacks can
- 516:../../../os/hal/src/hal_i2c.c ****  *     result in locking the I2C bus when a master accesses those
- 517:../../../os/hal/src/hal_i2c.c ****  *     unconfigured slave addresses
- 518:../../../os/hal/src/hal_i2c.c ****  *
- 519:../../../os/hal/src/hal_i2c.c ****  * @api
- 520:../../../os/hal/src/hal_i2c.c ****  */
- 521:../../../os/hal/src/hal_i2c.c **** void i2cSlaveReply(I2CDriver *i2cp, const I2CSlaveMsg *replyMsg)
- 522:../../../os/hal/src/hal_i2c.c **** {
- 719               		.loc 1 522 0
- 720               		.cfi_startproc
- 721               	.LVL42:
- 722               	/* prologue: function */
- 723               	/* frame size = 0 */
- 724               	/* stack size = 0 */
- 725               	.L__stack_usage = 0
- 726               	.LBB190:
- 727               	.LBB191:
- 728               	.LBB192:
+ 696 003e 0895      		ret
+ 697               	.LVL42:
+ 698               	.L21:
+ 393:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 699               		.loc 1 393 0
+ 700 0040 25E0      		ldi r18,lo8(5)
+ 701 0042 2883      		st Y,r18
+ 702 0044 00C0      		rjmp .L20
+ 703               		.cfi_endproc
+ 704               	.LFE192:
+ 706               		.section	.text.i2cSlaveReply,"ax",@progbits
+ 707               	.global	i2cSlaveReply
+ 709               	i2cSlaveReply:
+ 710               	.LFB193:
+ 403:../../../os/hal/src/hal_i2c.c **** 
+ 404:../../../os/hal/src/hal_i2c.c **** msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+ 405:../../../os/hal/src/hal_i2c.c ****                                       uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
+ 406:../../../os/hal/src/hal_i2c.c **** {
+ 711               		.loc 1 406 0
+ 712               		.cfi_startproc
+ 713               	.LVL43:
+ 714 0000 CF92      		push r12
+ 715               	.LCFI24:
+ 716               		.cfi_def_cfa_offset 3
+ 717               		.cfi_offset 12, -2
+ 718 0002 DF92      		push r13
+ 719               	.LCFI25:
+ 720               		.cfi_def_cfa_offset 4
+ 721               		.cfi_offset 13, -3
+ 722 0004 EF92      		push r14
+ 723               	.LCFI26:
+ 724               		.cfi_def_cfa_offset 5
+ 725               		.cfi_offset 14, -4
+ 726 0006 FF92      		push r15
+ 727               	.LCFI27:
+ 728               		.cfi_def_cfa_offset 6
+ 729               		.cfi_offset 15, -5
+ 730 0008 0F93      		push r16
+ 731               	.LCFI28:
+ 732               		.cfi_def_cfa_offset 7
+ 733               		.cfi_offset 16, -6
+ 734 000a 1F93      		push r17
+ 735               	.LCFI29:
+ 736               		.cfi_def_cfa_offset 8
+ 737               		.cfi_offset 17, -7
+ 738 000c CF93      		push r28
+ 739               	.LCFI30:
+ 740               		.cfi_def_cfa_offset 9
+ 741               		.cfi_offset 28, -8
+ 742 000e DF93      		push r29
+ 743               	.LCFI31:
+ 744               		.cfi_def_cfa_offset 10
+ 745               		.cfi_offset 29, -9
+ 746               	/* prologue: function */
+ 747               	/* frame size = 0 */
+ 748               	/* stack size = 8 */
+ 749               	.L__stack_usage = 8
+ 750 0010 EC01      		movw r28,r24
+ 751               	.LBB173:
+ 752               	.LBB174:
+ 753               	.LBB175:
  437:../../../os/common/ports/AVR/chcore.h **** }
- 729               		.loc 3 437 0
- 730               	/* #APP */
- 731               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
- 732 0000 F894      		cli
- 733               	 ;  0 "" 2
- 734               	/* #NOAPP */
- 735               	.LBE192:
- 736               	.LBE191:
- 737               	.LBE190:
- 523:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck((i2cp != NULL && replyMsg != NULL));
- 524:../../../os/hal/src/hal_i2c.c ****   chSysLock();
- 525:../../../os/hal/src/hal_i2c.c ****   i2c_lld_slaveReply(i2cp, replyMsg);
- 738               		.loc 1 525 0
- 739 0002 0E94 0000 		call i2c_lld_slaveReply
- 740               	.LVL43:
- 741               	.LBB193:
- 742               	.LBB194:
- 743               	.LBB195:
- 744               	.LBB196:
- 745               		.loc 3 447 0
- 746               	/* #APP */
- 747               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
- 748 0006 7894      		sei
- 749               	 ;  0 "" 2
- 750               	/* #NOAPP */
- 751 0008 0895      		ret
- 752               	.LBE196:
- 753               	.LBE195:
- 754               	.LBE194:
- 755               	.LBE193:
- 756               		.cfi_endproc
- 757               	.LFE198:
- 759               		.section	.text.i2cAcquireBus,"ax",@progbits
- 760               	.global	i2cAcquireBus
- 762               	i2cAcquireBus:
- 763               	.LFB199:
- 526:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
- 527:../../../os/hal/src/hal_i2c.c **** }
- 528:../../../os/hal/src/hal_i2c.c **** 
- 529:../../../os/hal/src/hal_i2c.c **** #if (I2C_USE_MUTUAL_EXCLUSION == TRUE) || defined(__DOXYGEN__)
- 530:../../../os/hal/src/hal_i2c.c **** /**
- 531:../../../os/hal/src/hal_i2c.c ****  * @brief   Gains exclusive access to the I2C bus.
- 532:../../../os/hal/src/hal_i2c.c ****  * @details This function tries to gain ownership to the I2C bus, if the bus
- 533:../../../os/hal/src/hal_i2c.c ****  *          is already being used then the invoking thread is queued.
- 534:../../../os/hal/src/hal_i2c.c ****  * @pre     In order to use this function the option @p I2C_USE_MUTUAL_EXCLUSION
- 535:../../../os/hal/src/hal_i2c.c ****  *          must be enabled.
- 536:../../../os/hal/src/hal_i2c.c ****  *
- 537:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 538:../../../os/hal/src/hal_i2c.c ****  *
- 539:../../../os/hal/src/hal_i2c.c ****  * @api
- 540:../../../os/hal/src/hal_i2c.c ****  */
- 541:../../../os/hal/src/hal_i2c.c **** void i2cAcquireBus(I2CDriver *i2cp) {
- 764               		.loc 1 541 0
- 765               		.cfi_startproc
- 766               	.LVL44:
- 767               	/* prologue: function */
- 768               	/* frame size = 0 */
- 769               	/* stack size = 0 */
- 770               	.L__stack_usage = 0
- 771               	.LBB197:
- 772               	.LBB198:
- 975:../../../os/hal/osal/rt/osal.h **** #elif CH_CFG_USE_SEMAPHORES
- 976:../../../os/hal/osal/rt/osal.h ****   chSemObjectInit((semaphore_t *)mp, 1);
- 977:../../../os/hal/osal/rt/osal.h **** #else
- 978:../../../os/hal/osal/rt/osal.h ****  *mp = 0;
- 979:../../../os/hal/osal/rt/osal.h **** #endif
- 980:../../../os/hal/osal/rt/osal.h **** }
- 981:../../../os/hal/osal/rt/osal.h **** 
- 982:../../../os/hal/osal/rt/osal.h **** /**
- 983:../../../os/hal/osal/rt/osal.h ****  * @brief   Locks the specified mutex.
- 984:../../../os/hal/osal/rt/osal.h ****  * @post    The mutex is locked and inserted in the per-thread stack of owned
- 985:../../../os/hal/osal/rt/osal.h ****  *          mutexes.
- 986:../../../os/hal/osal/rt/osal.h ****  *
- 987:../../../os/hal/osal/rt/osal.h ****  * @param[in,out] mp    pointer to the @p mutex_t object
- 988:../../../os/hal/osal/rt/osal.h ****  *
- 989:../../../os/hal/osal/rt/osal.h ****  * @api
- 990:../../../os/hal/osal/rt/osal.h ****  */
- 991:../../../os/hal/osal/rt/osal.h **** static inline void osalMutexLock(mutex_t *mp) {
- 992:../../../os/hal/osal/rt/osal.h **** 
- 993:../../../os/hal/osal/rt/osal.h **** #if CH_CFG_USE_MUTEXES
- 994:../../../os/hal/osal/rt/osal.h ****   chMtxLock(mp);
- 773               		.loc 2 994 0
- 774 0000 0496      		adiw r24,4
- 775               	.LVL45:
- 776 0002 0C94 0000 		jmp chMtxLock
- 777               	.LVL46:
- 778               	.LBE198:
- 779               	.LBE197:
- 780               		.cfi_endproc
- 781               	.LFE199:
- 783               		.section	.text.i2cReleaseBus,"ax",@progbits
- 784               	.global	i2cReleaseBus
- 786               	i2cReleaseBus:
- 787               	.LFB200:
- 542:../../../os/hal/src/hal_i2c.c **** 
- 543:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck(i2cp != NULL);
- 544:../../../os/hal/src/hal_i2c.c **** 
- 545:../../../os/hal/src/hal_i2c.c ****   osalMutexLock(&i2cp->mutex);
- 546:../../../os/hal/src/hal_i2c.c **** }
- 547:../../../os/hal/src/hal_i2c.c **** 
- 548:../../../os/hal/src/hal_i2c.c **** /**
- 549:../../../os/hal/src/hal_i2c.c ****  * @brief   Releases exclusive access to the I2C bus.
- 550:../../../os/hal/src/hal_i2c.c ****  * @pre     In order to use this function the option @p I2C_USE_MUTUAL_EXCLUSION
- 551:../../../os/hal/src/hal_i2c.c ****  *          must be enabled.
- 552:../../../os/hal/src/hal_i2c.c ****  *
- 553:../../../os/hal/src/hal_i2c.c ****  * @param[in] i2cp      pointer to the @p I2CDriver object
- 554:../../../os/hal/src/hal_i2c.c ****  *
- 555:../../../os/hal/src/hal_i2c.c ****  * @api
- 556:../../../os/hal/src/hal_i2c.c ****  */
- 557:../../../os/hal/src/hal_i2c.c **** void i2cReleaseBus(I2CDriver *i2cp) {
- 788               		.loc 1 557 0
- 789               		.cfi_startproc
- 790               	.LVL47:
- 791               	/* prologue: function */
- 792               	/* frame size = 0 */
- 793               	/* stack size = 0 */
- 794               	.L__stack_usage = 0
- 795               	.LBB199:
- 796               	.LBB200:
- 995:../../../os/hal/osal/rt/osal.h **** #elif CH_CFG_USE_SEMAPHORES
- 996:../../../os/hal/osal/rt/osal.h ****   chSemWait((semaphore_t *)mp);
- 997:../../../os/hal/osal/rt/osal.h **** #else
- 998:../../../os/hal/osal/rt/osal.h ****   *mp = 1;
- 999:../../../os/hal/osal/rt/osal.h **** #endif
-1000:../../../os/hal/osal/rt/osal.h **** }
-1001:../../../os/hal/osal/rt/osal.h **** 
-1002:../../../os/hal/osal/rt/osal.h **** /**
-1003:../../../os/hal/osal/rt/osal.h ****  * @brief   Unlocks the specified mutex.
-1004:../../../os/hal/osal/rt/osal.h ****  * @note    The HAL guarantees to release mutex in reverse lock order. The
-1005:../../../os/hal/osal/rt/osal.h ****  *          mutex being unlocked is guaranteed to be the last locked mutex
-1006:../../../os/hal/osal/rt/osal.h ****  *          by the invoking thread.
-1007:../../../os/hal/osal/rt/osal.h ****  *          The implementation can rely on this behavior and eventually
-1008:../../../os/hal/osal/rt/osal.h ****  *          ignore the @p mp parameter which is supplied in order to support
-1009:../../../os/hal/osal/rt/osal.h ****  *          those OSes not supporting a stack of the owned mutexes.
-1010:../../../os/hal/osal/rt/osal.h ****  *
-1011:../../../os/hal/osal/rt/osal.h ****  * @param[in,out] mp    pointer to the @p mutex_t object
-1012:../../../os/hal/osal/rt/osal.h ****  *
-1013:../../../os/hal/osal/rt/osal.h ****  * @api
-1014:../../../os/hal/osal/rt/osal.h ****  */
-1015:../../../os/hal/osal/rt/osal.h **** static inline void osalMutexUnlock(mutex_t *mp) {
-1016:../../../os/hal/osal/rt/osal.h **** 
-1017:../../../os/hal/osal/rt/osal.h **** #if CH_CFG_USE_MUTEXES
-1018:../../../os/hal/osal/rt/osal.h ****   chMtxUnlock(mp);
- 797               		.loc 2 1018 0
- 798 0000 0496      		adiw r24,4
- 799               	.LVL48:
- 800 0002 0C94 0000 		jmp chMtxUnlock
- 801               	.LVL49:
- 802               	.LBE200:
- 803               	.LBE199:
- 804               		.cfi_endproc
- 805               	.LFE200:
- 807               		.text
- 808               	.Letext0:
- 809               		.file 4 "/usr/lib/gcc/avr/5.4.0/include/stddef.h"
- 810               		.file 5 "/usr/lib/avr/include/stdint.h"
- 811               		.file 6 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
- 812               		.file 7 "../../../os/rt/include/chsystypes.h"
- 813               		.file 8 "../../../os/rt/include/chschd.h"
- 814               		.file 9 "../../../os/rt/include/chtime.h"
- 815               		.file 10 "../../../os/rt/include/chsem.h"
- 816               		.file 11 "../../../os/rt/include/chmtx.h"
- 817               		.file 12 "../../../os/hal/include/hal_i2c.h"
- 818               		.file 13 "../../../os/hal/ports/AVR/MEGA/LLD/I2Cv1/hal_i2c_lld.h"
- 819               		.file 14 "../../../os/rt/include/chsys.h"
+ 754               		.loc 3 437 0
+ 755               	/* #APP */
+ 756               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 757 0012 F894      		cli
+ 758               	 ;  0 "" 2
+ 759               	/* #NOAPP */
+ 760               	.LBE175:
+ 761               	.LBE174:
+ 762               	.LBE173:
+ 763               	.LBB176:
+ 764               	.LBB177:
+ 765               	.LBB178:
+ 766               	.LBB179:
+ 767               	/* #APP */
+ 768               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 769 0014 F894      		cli
+ 770               	 ;  0 "" 2
+ 771               	/* #NOAPP */
+ 772               	.LBE179:
+ 773               	.LBE178:
+ 774               	.LBE177:
+ 775               	.LBE176:
+ 407:../../../os/hal/src/hal_i2c.c ****    msg_t rdymsg;
+ 408:../../../os/hal/src/hal_i2c.c ****   osalDbgCheck( (i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
+ 409:../../../os/hal/src/hal_i2c.c ****   ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
+ 410:../../../os/hal/src/hal_i2c.c ****                (timeout != TIME_IMMEDIATE) );
+ 411:../../../os/hal/src/hal_i2c.c ****   chSysLock();
+ 412:../../../os/hal/src/hal_i2c.c ****   osalSysLock();
+ 413:../../../os/hal/src/hal_i2c.c ****   i2cp->errors = I2C_NO_ERROR;
+ 776               		.loc 1 413 0
+ 777 0016 1B82      		std Y+3,__zero_reg__
+ 414:../../../os/hal/src/hal_i2c.c ****   i2cp->state = I2C_ACTIVE_TX;
+ 778               		.loc 1 414 0
+ 779 0018 83E0      		ldi r24,lo8(3)
+ 780               	.LVL44:
+ 781 001a 8883      		st Y,r24
+ 415:../../../os/hal/src/hal_i2c.c ****   rdymsg = i2c_lld_slaveReply(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout );
+ 782               		.loc 1 415 0
+ 783 001c CE01      		movw r24,r28
+ 784 001e 0E94 0000 		call i2c_lld_slaveReply
+ 785               	.LVL45:
+ 416:../../../os/hal/src/hal_i2c.c ****   if (rdymsg == MSG_TIMEOUT) {
+ 786               		.loc 1 416 0
+ 787 0022 8F3F      		cpi r24,-1
+ 788 0024 2FEF      		ldi r18,-1
+ 789 0026 9207      		cpc r25,r18
+ 790 0028 01F0      		breq .L25
+ 417:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 418:../../../os/hal/src/hal_i2c.c ****   }
+ 419:../../../os/hal/src/hal_i2c.c ****   else {
+ 420:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_READY;
+ 791               		.loc 1 420 0
+ 792 002a 22E0      		ldi r18,lo8(2)
+ 793 002c 2883      		st Y,r18
+ 794               	.L24:
+ 795               	/* epilogue start */
+ 421:../../../os/hal/src/hal_i2c.c ****   }
+ 422:../../../os/hal/src/hal_i2c.c ****   return rdymsg;
+ 423:../../../os/hal/src/hal_i2c.c ****   chSysUnlock();
+ 424:../../../os/hal/src/hal_i2c.c ****   osalSysUnlock();
+ 425:../../../os/hal/src/hal_i2c.c **** 
+ 426:../../../os/hal/src/hal_i2c.c **** }
+ 796               		.loc 1 426 0
+ 797 002e DF91      		pop r29
+ 798 0030 CF91      		pop r28
+ 799               	.LVL46:
+ 800 0032 1F91      		pop r17
+ 801 0034 0F91      		pop r16
+ 802               	.LVL47:
+ 803 0036 FF90      		pop r15
+ 804 0038 EF90      		pop r14
+ 805               	.LVL48:
+ 806 003a DF90      		pop r13
+ 807 003c CF90      		pop r12
+ 808               	.LVL49:
+ 809 003e 0895      		ret
+ 810               	.LVL50:
+ 811               	.L25:
+ 417:../../../os/hal/src/hal_i2c.c ****     i2cp->state = I2C_LOCKED;
+ 812               		.loc 1 417 0
+ 813 0040 25E0      		ldi r18,lo8(5)
+ 814 0042 2883      		st Y,r18
+ 815 0044 00C0      		rjmp .L24
+ 816               		.cfi_endproc
+ 817               	.LFE193:
+ 819               		.text
+ 820               	.Letext0:
+ 821               		.file 4 "/usr/lib/gcc/avr/5.4.0/include/stddef.h"
+ 822               		.file 5 "/usr/lib/avr/include/stdint.h"
+ 823               		.file 6 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+ 824               		.file 7 "../../../os/rt/include/chsystypes.h"
+ 825               		.file 8 "../../../os/rt/include/chschd.h"
+ 826               		.file 9 "../../../os/rt/include/chtime.h"
+ 827               		.file 10 "../../../os/rt/include/chsem.h"
+ 828               		.file 11 "../../../os/rt/include/chmtx.h"
+ 829               		.file 12 "../../../os/hal/include/hal_i2c.h"
+ 830               		.file 13 "../../../os/hal/ports/AVR/MEGA/LLD/I2Cv1/hal_i2c_lld.h"
+ 831               		.file 14 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 hal_i2c.c
-     /tmp/cciRAdXc.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cciRAdXc.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cciRAdXc.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cciRAdXc.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cciRAdXc.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cciRAdXc.s:13     .text.i2cInit:0000000000000000 i2cInit
-     /tmp/cciRAdXc.s:31     .text.i2cObjectInit:0000000000000000 i2cObjectInit
-     /tmp/cciRAdXc.s:64     .text.i2cStart:0000000000000000 i2cStart
-     /tmp/cciRAdXc.s:134    .text.i2cStop:0000000000000000 i2cStop
-     /tmp/cciRAdXc.s:203    .text.i2cGetErrors:0000000000000000 i2cGetErrors
-     /tmp/cciRAdXc.s:223    .text.i2cMasterTransmitTimeout:0000000000000000 i2cMasterTransmitTimeout
-     /tmp/cciRAdXc.s:341    .text.i2cMasterReceiveTimeout:0000000000000000 i2cMasterReceiveTimeout
-     /tmp/cciRAdXc.s:460    .text.i2cMatchAddress:0000000000000000 i2cMatchAddress
-     /tmp/cciRAdXc.s:506    .text.i2cUnmatchAddress:0000000000000000 i2cUnmatchAddress
-     /tmp/cciRAdXc.s:551    .text.i2cUnmatchAll:0000000000000000 i2cUnmatchAll
-     /tmp/cciRAdXc.s:596    .text.i2cSlaveConfigure:0000000000000000 i2cSlaveConfigure
-     /tmp/cciRAdXc.s:672    .text.i2cSlaveReceive:0000000000000000 i2cSlaveReceive
-     /tmp/cciRAdXc.s:717    .text.i2cSlaveReply:0000000000000000 i2cSlaveReply
-     /tmp/cciRAdXc.s:762    .text.i2cAcquireBus:0000000000000000 i2cAcquireBus
-     /tmp/cciRAdXc.s:786    .text.i2cReleaseBus:0000000000000000 i2cReleaseBus
+     /tmp/ccCSOhNx.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccCSOhNx.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccCSOhNx.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccCSOhNx.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccCSOhNx.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccCSOhNx.s:13     .text.i2cInit:0000000000000000 i2cInit
+     /tmp/ccCSOhNx.s:31     .text.i2cObjectInit:0000000000000000 i2cObjectInit
+     /tmp/ccCSOhNx.s:64     .text.i2cStart:0000000000000000 i2cStart
+     /tmp/ccCSOhNx.s:134    .text.i2cStop:0000000000000000 i2cStop
+     /tmp/ccCSOhNx.s:203    .text.i2cGetErrors:0000000000000000 i2cGetErrors
+     /tmp/ccCSOhNx.s:223    .text.i2cMasterTransmitTimeout:0000000000000000 i2cMasterTransmitTimeout
+     /tmp/ccCSOhNx.s:341    .text.i2cMasterReceiveTimeout:0000000000000000 i2cMasterReceiveTimeout
+     /tmp/ccCSOhNx.s:460    .text.i2cMatchAddress:0000000000000000 i2cMatchAddress
+     /tmp/ccCSOhNx.s:506    .text.i2cUnmatchAddress:0000000000000000 i2cUnmatchAddress
+     /tmp/ccCSOhNx.s:551    .text.i2cUnmatchAll:0000000000000000 i2cUnmatchAll
+     /tmp/ccCSOhNx.s:596    .text.i2cSlaveReceive:0000000000000000 i2cSlaveReceive
+     /tmp/ccCSOhNx.s:709    .text.i2cSlaveReply:0000000000000000 i2cSlaveReply
 
 UNDEFINED SYMBOLS
 i2c_lld_init
@@ -2855,5 +2696,3 @@ i2c_lld_unmatchAddress
 i2c_lld_unmatchAll
 i2c_lld_slaveReceive
 i2c_lld_slaveReply
-chMtxLock
-chMtxUnlock

@@ -150,10 +150,12 @@ extern "C" {
                                 i2caddr_t addr,
                                 uint8_t *rxbuf, size_t rxbytes,
                                 sysinterval_t timeout);
+ 
 #if I2C_USE_MUTUAL_EXCLUSION == TRUE
   void i2cAcquireBus(I2CDriver *i2cp);
   void i2cReleaseBus(I2CDriver *i2cp);
 #endif
+
 
 #ifdef __cplusplus
 }

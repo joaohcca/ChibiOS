@@ -2766,19 +2766,19 @@
  721               		.file 19 "../../../os/hal/include/hal_st.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chsys.c
-     /tmp/cceQsWNh.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cceQsWNh.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cceQsWNh.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cceQsWNh.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cceQsWNh.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cceQsWNh.s:12     .text._idle_thread:0000000000000000 _idle_thread
-     /tmp/cceQsWNh.s:30     .text.chSysInit:0000000000000000 chSysInit
-     /tmp/cceQsWNh.s:699    .rodata.idle_descriptor.2784:0000000000000000 idle_descriptor.2784
-     /tmp/cceQsWNh.s:92     .text.chSysHalt:0000000000000000 chSysHalt
-     /tmp/cceQsWNh.s:122    .text.chSysIntegrityCheckI:0000000000000000 chSysIntegrityCheckI
-     /tmp/cceQsWNh.s:378    .text.chSysTimerHandlerI:0000000000000000 chSysTimerHandlerI
-     /tmp/cceQsWNh.s:607    .text.chSysGetStatusAndLockX:0000000000000000 chSysGetStatusAndLockX
-     /tmp/cceQsWNh.s:651    .text.chSysRestoreStatusX:0000000000000000 chSysRestoreStatusX
+     /tmp/cclndlDI.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cclndlDI.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cclndlDI.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cclndlDI.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cclndlDI.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cclndlDI.s:12     .text._idle_thread:0000000000000000 _idle_thread
+     /tmp/cclndlDI.s:30     .text.chSysInit:0000000000000000 chSysInit
+     /tmp/cclndlDI.s:699    .rodata.idle_descriptor.2784:0000000000000000 idle_descriptor.2784
+     /tmp/cclndlDI.s:92     .text.chSysHalt:0000000000000000 chSysHalt
+     /tmp/cclndlDI.s:122    .text.chSysIntegrityCheckI:0000000000000000 chSysIntegrityCheckI
+     /tmp/cclndlDI.s:378    .text.chSysTimerHandlerI:0000000000000000 chSysTimerHandlerI
+     /tmp/cclndlDI.s:607    .text.chSysGetStatusAndLockX:0000000000000000 chSysGetStatusAndLockX
+     /tmp/cclndlDI.s:651    .text.chSysRestoreStatusX:0000000000000000 chSysRestoreStatusX
                             *COM*:0000000000000069 ch_idle_thread_wa
 
 UNDEFINED SYMBOLS

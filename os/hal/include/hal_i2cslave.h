@@ -320,7 +320,7 @@ void i2cSlaveConfigure(I2CDriver *i2cp,
  *
  * @api
  */
-void i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+msg_t i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
                                       uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
 
 /**
@@ -352,7 +352,7 @@ static inline
  *
  * @api
  */
-void i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
                                       uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
 
 

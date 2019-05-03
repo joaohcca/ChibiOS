@@ -1291,17 +1291,17 @@
  871               		.file 12 "../../../os/common/oslib/include/chheap.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chheap.c
-     /tmp/ccQA5N3w.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccQA5N3w.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccQA5N3w.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccQA5N3w.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccQA5N3w.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccQA5N3w.s:13     .text._heap_init:0000000000000000 _heap_init
-     /tmp/ccQA5N3w.s:857    .bss.default_heap:0000000000000000 default_heap
-     /tmp/ccQA5N3w.s:46     .text.chHeapObjectInit:0000000000000000 chHeapObjectInit
-     /tmp/ccQA5N3w.s:105    .text.chHeapAllocAligned:0000000000000000 chHeapAllocAligned
-     /tmp/ccQA5N3w.s:506    .text.chHeapFree:0000000000000000 chHeapFree
-     /tmp/ccQA5N3w.s:701    .text.chHeapStatus:0000000000000000 chHeapStatus
+     /tmp/ccvbOOTJ.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccvbOOTJ.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccvbOOTJ.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccvbOOTJ.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccvbOOTJ.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccvbOOTJ.s:13     .text._heap_init:0000000000000000 _heap_init
+     /tmp/ccvbOOTJ.s:857    .bss.default_heap:0000000000000000 default_heap
+     /tmp/ccvbOOTJ.s:46     .text.chHeapObjectInit:0000000000000000 chHeapObjectInit
+     /tmp/ccvbOOTJ.s:105    .text.chHeapAllocAligned:0000000000000000 chHeapAllocAligned
+     /tmp/ccvbOOTJ.s:506    .text.chHeapFree:0000000000000000 chHeapFree
+     /tmp/ccvbOOTJ.s:701    .text.chHeapStatus:0000000000000000 chHeapStatus
 
 UNDEFINED SYMBOLS
 chCoreAllocAlignedWithOffset

@@ -1505,14 +1505,14 @@
  512               		.file 13 "../../../os/hal/include/hal_st.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chvt.c
-     /tmp/cc4EOqRt.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cc4EOqRt.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cc4EOqRt.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cc4EOqRt.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cc4EOqRt.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cc4EOqRt.s:13     .text._vt_init:0000000000000000 _vt_init
-     /tmp/cc4EOqRt.s:47     .text.chVTDoSetI:0000000000000000 chVTDoSetI
-     /tmp/cc4EOqRt.s:322    .text.chVTDoResetI:0000000000000000 chVTDoResetI
+     /tmp/cceZ4G0R.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cceZ4G0R.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cceZ4G0R.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cceZ4G0R.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cceZ4G0R.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cceZ4G0R.s:13     .text._vt_init:0000000000000000 _vt_init
+     /tmp/cceZ4G0R.s:47     .text.chVTDoSetI:0000000000000000 chVTDoSetI
+     /tmp/cceZ4G0R.s:322    .text.chVTDoResetI:0000000000000000 chVTDoResetI
 
 UNDEFINED SYMBOLS
 ch

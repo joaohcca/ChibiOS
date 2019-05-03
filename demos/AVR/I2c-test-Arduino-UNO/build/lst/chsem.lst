@@ -2658,22 +2658,22 @@
  1133               		.file 10 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chsem.c
-     /tmp/ccM4IrGN.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccM4IrGN.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccM4IrGN.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccM4IrGN.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccM4IrGN.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccM4IrGN.s:13     .text.chSemObjectInit:0000000000000000 chSemObjectInit
-     /tmp/ccM4IrGN.s:46     .text.chSemResetI:0000000000000000 chSemResetI
-     /tmp/ccM4IrGN.s:141    .text.chSemReset:0000000000000000 chSemReset
-     /tmp/ccM4IrGN.s:190    .text.chSemWait:0000000000000000 chSemWait
-     /tmp/ccM4IrGN.s:330    .text.chSemWaitS:0000000000000000 chSemWaitS
-     /tmp/ccM4IrGN.s:421    .text.chSemWaitTimeout:0000000000000000 chSemWaitTimeout
-     /tmp/ccM4IrGN.s:574    .text.chSemWaitTimeoutS:0000000000000000 chSemWaitTimeoutS
-     /tmp/ccM4IrGN.s:675    .text.chSemSignal:0000000000000000 chSemSignal
-     /tmp/ccM4IrGN.s:782    .text.chSemSignalI:0000000000000000 chSemSignalI
-     /tmp/ccM4IrGN.s:853    .text.chSemAddCounterI:0000000000000000 chSemAddCounterI
-     /tmp/ccM4IrGN.s:942    .text.chSemSignalWait:0000000000000000 chSemSignalWait
+     /tmp/ccGR1tpf.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccGR1tpf.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccGR1tpf.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccGR1tpf.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccGR1tpf.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccGR1tpf.s:13     .text.chSemObjectInit:0000000000000000 chSemObjectInit
+     /tmp/ccGR1tpf.s:46     .text.chSemResetI:0000000000000000 chSemResetI
+     /tmp/ccGR1tpf.s:141    .text.chSemReset:0000000000000000 chSemReset
+     /tmp/ccGR1tpf.s:190    .text.chSemWait:0000000000000000 chSemWait
+     /tmp/ccGR1tpf.s:330    .text.chSemWaitS:0000000000000000 chSemWaitS
+     /tmp/ccGR1tpf.s:421    .text.chSemWaitTimeout:0000000000000000 chSemWaitTimeout
+     /tmp/ccGR1tpf.s:574    .text.chSemWaitTimeoutS:0000000000000000 chSemWaitTimeoutS
+     /tmp/ccGR1tpf.s:675    .text.chSemSignal:0000000000000000 chSemSignal
+     /tmp/ccGR1tpf.s:782    .text.chSemSignalI:0000000000000000 chSemSignalI
+     /tmp/ccGR1tpf.s:853    .text.chSemAddCounterI:0000000000000000 chSemAddCounterI
+     /tmp/ccGR1tpf.s:942    .text.chSemSignalWait:0000000000000000 chSemSignalWait
 
 UNDEFINED SYMBOLS
 chSchReadyI

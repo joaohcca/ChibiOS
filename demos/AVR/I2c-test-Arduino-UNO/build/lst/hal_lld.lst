@@ -85,11 +85,11 @@
   35               		.file 9 "../../../os/rt/include/chmtx.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 hal_lld.c
-     /tmp/ccQihwax.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccQihwax.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccQihwax.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccQihwax.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccQihwax.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccQihwax.s:13     .text.hal_lld_init:0000000000000000 hal_lld_init
+     /tmp/cchSXuYK.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cchSXuYK.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cchSXuYK.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cchSXuYK.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cchSXuYK.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cchSXuYK.s:13     .text.hal_lld_init:0000000000000000 hal_lld_init
 
 NO UNDEFINED SYMBOLS

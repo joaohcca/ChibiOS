@@ -896,17 +896,17 @@
  275               		.file 12 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chmemcore.c
-     /tmp/ccRLJkor.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccRLJkor.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccRLJkor.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccRLJkor.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccRLJkor.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccRLJkor.s:13     .text._core_init:0000000000000000 _core_init
+     /tmp/cceABRhH.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cceABRhH.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cceABRhH.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cceABRhH.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cceABRhH.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cceABRhH.s:13     .text._core_init:0000000000000000 _core_init
                             *COM*:0000000000000004 ch_memcore
-     /tmp/ccRLJkor.s:261    .bss.static_heap.2780:0000000000000000 static_heap.2780
-     /tmp/ccRLJkor.s:41     .text.chCoreAllocAlignedWithOffsetI:0000000000000000 chCoreAllocAlignedWithOffsetI
-     /tmp/ccRLJkor.s:114    .text.chCoreAllocAlignedWithOffset:0000000000000000 chCoreAllocAlignedWithOffset
-     /tmp/ccRLJkor.s:236    .text.chCoreGetStatusX:0000000000000000 chCoreGetStatusX
+     /tmp/cceABRhH.s:261    .bss.static_heap.2780:0000000000000000 static_heap.2780
+     /tmp/cceABRhH.s:41     .text.chCoreAllocAlignedWithOffsetI:0000000000000000 chCoreAllocAlignedWithOffsetI
+     /tmp/cceABRhH.s:114    .text.chCoreAllocAlignedWithOffset:0000000000000000 chCoreAllocAlignedWithOffset
+     /tmp/cceABRhH.s:236    .text.chCoreGetStatusX:0000000000000000 chCoreGetStatusX
 
 UNDEFINED SYMBOLS
 __do_clear_bss

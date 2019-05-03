@@ -876,13 +876,13 @@
  276               		.file 10 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chcore.c
-     /tmp/cc3z7EUJ.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/cc3z7EUJ.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/cc3z7EUJ.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/cc3z7EUJ.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cc3z7EUJ.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/cc3z7EUJ.s:13     .text._port_switch:0000000000000000 _port_switch
-     /tmp/cc3z7EUJ.s:221    .text._port_thread_start:0000000000000000 _port_thread_start
+     /tmp/cckWiGzW.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cckWiGzW.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cckWiGzW.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cckWiGzW.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cckWiGzW.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cckWiGzW.s:13     .text._port_switch:0000000000000000 _port_switch
+     /tmp/cckWiGzW.s:221    .text._port_thread_start:0000000000000000 _port_thread_start
                             *COM*:0000000000000001 __avr_in_isr
 
 UNDEFINED SYMBOLS

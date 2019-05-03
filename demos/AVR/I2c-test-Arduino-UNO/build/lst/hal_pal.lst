@@ -252,14 +252,14 @@
  141               		.file 11 "../../../os/hal/include/hal_pal.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 hal_pal.c
-     /tmp/ccYn8kbm.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccYn8kbm.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccYn8kbm.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccYn8kbm.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccYn8kbm.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccYn8kbm.s:13     .text.palReadBus:0000000000000000 palReadBus
-     /tmp/ccYn8kbm.s:48     .text.palWriteBus:0000000000000000 palWriteBus
-     /tmp/ccYn8kbm.s:98     .text.palSetBusMode:0000000000000000 palSetBusMode
+     /tmp/cce3ecVB.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cce3ecVB.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cce3ecVB.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cce3ecVB.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cce3ecVB.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cce3ecVB.s:13     .text.palReadBus:0000000000000000 palReadBus
+     /tmp/cce3ecVB.s:48     .text.palWriteBus:0000000000000000 palWriteBus
+     /tmp/cce3ecVB.s:98     .text.palSetBusMode:0000000000000000 palSetBusMode
 
 UNDEFINED SYMBOLS
 _pal_lld_setgroupmode

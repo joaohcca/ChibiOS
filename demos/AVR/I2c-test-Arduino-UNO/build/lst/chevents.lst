@@ -2755,29 +2755,29 @@
  1427               		.file 11 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chevents.c
-     /tmp/ccs32Ff9.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccs32Ff9.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccs32Ff9.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccs32Ff9.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccs32Ff9.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccs32Ff9.s:13     .text.chEvtRegisterMaskWithFlags:0000000000000000 chEvtRegisterMaskWithFlags
-     /tmp/ccs32Ff9.s:81     .text.chEvtUnregister:0000000000000000 chEvtUnregister
-     /tmp/ccs32Ff9.s:164    .text.chEvtGetAndClearEventsI:0000000000000000 chEvtGetAndClearEventsI
-     /tmp/ccs32Ff9.s:193    .text.chEvtGetAndClearEvents:0000000000000000 chEvtGetAndClearEvents
-     /tmp/ccs32Ff9.s:254    .text.chEvtAddEvents:0000000000000000 chEvtAddEvents
-     /tmp/ccs32Ff9.s:311    .text.chEvtGetAndClearFlags:0000000000000000 chEvtGetAndClearFlags
-     /tmp/ccs32Ff9.s:364    .text.chEvtSignalI:0000000000000000 chEvtSignalI
-     /tmp/ccs32Ff9.s:416    .text.chEvtBroadcastFlagsI:0000000000000000 chEvtBroadcastFlagsI
-     /tmp/ccs32Ff9.s:504    .text.chEvtSignal:0000000000000000 chEvtSignal
-     /tmp/ccs32Ff9.s:552    .text.chEvtBroadcastFlags:0000000000000000 chEvtBroadcastFlags
-     /tmp/ccs32Ff9.s:600    .text.chEvtGetAndClearFlagsI:0000000000000000 chEvtGetAndClearFlagsI
-     /tmp/ccs32Ff9.s:627    .text.chEvtDispatch:0000000000000000 chEvtDispatch
-     /tmp/ccs32Ff9.s:765    .text.chEvtWaitOne:0000000000000000 chEvtWaitOne
-     /tmp/ccs32Ff9.s:860    .text.chEvtWaitAny:0000000000000000 chEvtWaitAny
-     /tmp/ccs32Ff9.s:952    .text.chEvtWaitAll:0000000000000000 chEvtWaitAll
-     /tmp/ccs32Ff9.s:1042   .text.chEvtWaitOneTimeout:0000000000000000 chEvtWaitOneTimeout
-     /tmp/ccs32Ff9.s:1170   .text.chEvtWaitAnyTimeout:0000000000000000 chEvtWaitAnyTimeout
-     /tmp/ccs32Ff9.s:1295   .text.chEvtWaitAllTimeout:0000000000000000 chEvtWaitAllTimeout
+     /tmp/ccjSZF3x.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccjSZF3x.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccjSZF3x.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccjSZF3x.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccjSZF3x.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccjSZF3x.s:13     .text.chEvtRegisterMaskWithFlags:0000000000000000 chEvtRegisterMaskWithFlags
+     /tmp/ccjSZF3x.s:81     .text.chEvtUnregister:0000000000000000 chEvtUnregister
+     /tmp/ccjSZF3x.s:164    .text.chEvtGetAndClearEventsI:0000000000000000 chEvtGetAndClearEventsI
+     /tmp/ccjSZF3x.s:193    .text.chEvtGetAndClearEvents:0000000000000000 chEvtGetAndClearEvents
+     /tmp/ccjSZF3x.s:254    .text.chEvtAddEvents:0000000000000000 chEvtAddEvents
+     /tmp/ccjSZF3x.s:311    .text.chEvtGetAndClearFlags:0000000000000000 chEvtGetAndClearFlags
+     /tmp/ccjSZF3x.s:364    .text.chEvtSignalI:0000000000000000 chEvtSignalI
+     /tmp/ccjSZF3x.s:416    .text.chEvtBroadcastFlagsI:0000000000000000 chEvtBroadcastFlagsI
+     /tmp/ccjSZF3x.s:504    .text.chEvtSignal:0000000000000000 chEvtSignal
+     /tmp/ccjSZF3x.s:552    .text.chEvtBroadcastFlags:0000000000000000 chEvtBroadcastFlags
+     /tmp/ccjSZF3x.s:600    .text.chEvtGetAndClearFlagsI:0000000000000000 chEvtGetAndClearFlagsI
+     /tmp/ccjSZF3x.s:627    .text.chEvtDispatch:0000000000000000 chEvtDispatch
+     /tmp/ccjSZF3x.s:765    .text.chEvtWaitOne:0000000000000000 chEvtWaitOne
+     /tmp/ccjSZF3x.s:860    .text.chEvtWaitAny:0000000000000000 chEvtWaitAny
+     /tmp/ccjSZF3x.s:952    .text.chEvtWaitAll:0000000000000000 chEvtWaitAll
+     /tmp/ccjSZF3x.s:1042   .text.chEvtWaitOneTimeout:0000000000000000 chEvtWaitOneTimeout
+     /tmp/ccjSZF3x.s:1170   .text.chEvtWaitAnyTimeout:0000000000000000 chEvtWaitAnyTimeout
+     /tmp/ccjSZF3x.s:1295   .text.chEvtWaitAllTimeout:0000000000000000 chEvtWaitAllTimeout
 
 UNDEFINED SYMBOLS
 ch

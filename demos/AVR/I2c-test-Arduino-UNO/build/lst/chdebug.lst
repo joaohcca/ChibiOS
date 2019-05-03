@@ -18,10 +18,10 @@
   18               		.file 8 "../../../os/rt/include/chmtx.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chdebug.c
-     /tmp/ccfq7ERo.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccfq7ERo.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccfq7ERo.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccfq7ERo.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccfq7ERo.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cc1EDRSL.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cc1EDRSL.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cc1EDRSL.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cc1EDRSL.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cc1EDRSL.s:6      *ABS*:0000000000000001 __zero_reg__
 
 NO UNDEFINED SYMBOLS

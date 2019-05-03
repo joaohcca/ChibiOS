@@ -1601,14 +1601,14 @@
  286               		.file 11 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chmsg.c
-     /tmp/ccfAX9Gf.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccfAX9Gf.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccfAX9Gf.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccfAX9Gf.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccfAX9Gf.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccfAX9Gf.s:13     .text.chMsgSend:0000000000000000 chMsgSend
-     /tmp/ccfAX9Gf.s:123    .text.chMsgWait:0000000000000000 chMsgWait
-     /tmp/ccfAX9Gf.s:231    .text.chMsgRelease:0000000000000000 chMsgRelease
+     /tmp/ccMnxKmG.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccMnxKmG.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccMnxKmG.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccMnxKmG.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccMnxKmG.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccMnxKmG.s:13     .text.chMsgSend:0000000000000000 chMsgSend
+     /tmp/ccMnxKmG.s:123    .text.chMsgWait:0000000000000000 chMsgWait
+     /tmp/ccMnxKmG.s:231    .text.chMsgRelease:0000000000000000 chMsgRelease
 
 UNDEFINED SYMBOLS
 ch

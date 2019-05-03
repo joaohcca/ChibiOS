@@ -1896,22 +1896,22 @@
  797               		.file 13 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chmempools.c
-     /tmp/ccxKt3MB.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccxKt3MB.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccxKt3MB.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccxKt3MB.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccxKt3MB.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccxKt3MB.s:13     .text.chPoolObjectInitAligned:0000000000000000 chPoolObjectInitAligned
-     /tmp/ccxKt3MB.s:43     .text.chPoolLoadArray:0000000000000000 chPoolLoadArray
-     /tmp/ccxKt3MB.s:131    .text.chPoolAllocI:0000000000000000 chPoolAllocI
-     /tmp/ccxKt3MB.s:198    .text.chPoolAlloc:0000000000000000 chPoolAlloc
-     /tmp/ccxKt3MB.s:319    .text.chPoolFreeI:0000000000000000 chPoolFreeI
-     /tmp/ccxKt3MB.s:346    .text.chPoolFree:0000000000000000 chPoolFree
-     /tmp/ccxKt3MB.s:405    .text.chGuardedPoolObjectInitAligned:0000000000000000 chGuardedPoolObjectInitAligned
-     /tmp/ccxKt3MB.s:443    .text.chGuardedPoolLoadArray:0000000000000000 chGuardedPoolLoadArray
-     /tmp/ccxKt3MB.s:577    .text.chGuardedPoolAllocTimeoutS:0000000000000000 chGuardedPoolAllocTimeoutS
-     /tmp/ccxKt3MB.s:674    .text.chGuardedPoolAllocTimeout:0000000000000000 chGuardedPoolAllocTimeout
-     /tmp/ccxKt3MB.s:720    .text.chGuardedPoolFree:0000000000000000 chGuardedPoolFree
+     /tmp/ccSDJpVR.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccSDJpVR.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccSDJpVR.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccSDJpVR.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccSDJpVR.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccSDJpVR.s:13     .text.chPoolObjectInitAligned:0000000000000000 chPoolObjectInitAligned
+     /tmp/ccSDJpVR.s:43     .text.chPoolLoadArray:0000000000000000 chPoolLoadArray
+     /tmp/ccSDJpVR.s:131    .text.chPoolAllocI:0000000000000000 chPoolAllocI
+     /tmp/ccSDJpVR.s:198    .text.chPoolAlloc:0000000000000000 chPoolAlloc
+     /tmp/ccSDJpVR.s:319    .text.chPoolFreeI:0000000000000000 chPoolFreeI
+     /tmp/ccSDJpVR.s:346    .text.chPoolFree:0000000000000000 chPoolFree
+     /tmp/ccSDJpVR.s:405    .text.chGuardedPoolObjectInitAligned:0000000000000000 chGuardedPoolObjectInitAligned
+     /tmp/ccSDJpVR.s:443    .text.chGuardedPoolLoadArray:0000000000000000 chGuardedPoolLoadArray
+     /tmp/ccSDJpVR.s:577    .text.chGuardedPoolAllocTimeoutS:0000000000000000 chGuardedPoolAllocTimeoutS
+     /tmp/ccSDJpVR.s:674    .text.chGuardedPoolAllocTimeout:0000000000000000 chGuardedPoolAllocTimeout
+     /tmp/ccSDJpVR.s:720    .text.chGuardedPoolFree:0000000000000000 chGuardedPoolFree
 
 UNDEFINED SYMBOLS
 chSemObjectInit

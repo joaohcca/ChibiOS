@@ -117,7 +117,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   case TWI_SLAVE_RX_ADDR_ACK: /*ref $60*/
   /*review cases where state 0x60 should return nack (not initialize ?)
   same decision making on the 0x68 and 0x70)*/
-    if (i2cp->rxidx ==(i2cp->rxbytes -1)){
+    if (i2cp->rxidx == (i2cp->rxbytes -1)){
       TWCR = (1 << TWINT) | (1 << TWIE);
     }
     else{
@@ -133,7 +133,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
     }
   case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
   /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
-  i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*STM32 buffer structure*/
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
   /*send nack master move to $88*/
   if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
     TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
@@ -145,23 +145,24 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   }
   break;
   case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
-  i2cp->rxbuf[i2cp->rxidx++] = TWDR; /*STM32 buffer structure*/
+  i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
 
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
    _i2c_wakeup_isr(i2cp); /*wake up thread*/
   break;
-  case TWI_SLAVE_STOP:
+  case TWI_SLAVE_STOP: /*ref A0*/
   /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA));
-
-  /*slave transmitt status*/
+  _i2c_wakeup_isr(i2cp); /*wake up thread*/
+  break;
+  //slave transmitt status
   case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
   /*load data from buffer to TWDR*/
   /*check if there's more data to transmmit*/
-    TWDR = i2cp->txbuf[i2cp->txidx]; /*STM32 buffer structure*/
-       if (i2cp->txidx ==(i2cp->txbytes -1)){
+   TWDR = i2cp->txbuf[i2cp->txidx]; 
+  if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = ((1 << TWINT) | (1 << TWIE));
   }
   else{
@@ -171,20 +172,22 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   break;
   case TWI_SLAVE_TX_POST_ARB_LOST:/*ref $B0*/
   /*load data and check for nack transmission*/
-    TWDR = i2cp->txbuf[i2cp->txidx];/*STM32 buffer structure*/
+    TWDR = i2cp->txbuf[i2cp->txidx];
   if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = (1 << TWINT | (1 << TWIE));
   }
   else{
+    i2cp->txidx++;
     TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
   }
   break;
   case TWI_SLAVE_TX_DATA_ACK: /*ref $B8*/
-    TWDR = i2cp->txbuf[i2cp->txidx++]; /*STM32 buffer structure*/
+    TWDR = i2cp->txbuf[i2cp->txidx]; 
   if (i2cp->txidx ==(i2cp->txbytes -1)){
     TWCR = (1 << TWINT | (1 << TWIE));
   }
   else{
+    i2cp->txidx++;
     TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
   }
   break;
@@ -399,7 +402,6 @@ msg_t  i2c_lld_slaveReceive(I2CDriver *i2cp,  i2caddr_t addr,
   
   
   i2cp->errors = I2C_NO_ERROR;
-  i2cp->addr = addr;
   i2cp->txbuf = NULL;
   i2cp->txbytes = 0;
   i2cp->txidx = 0;
@@ -420,23 +422,12 @@ msg_t  i2c_lld_slaveReply(I2CDriver *i2cp,  i2caddr_t addr,
                                       systime_t timeout){
  
   i2cp->errors = I2C_NO_ERROR;
-  
   i2cp->txbuf = txbuf;
   i2cp->txbytes = txbytes;
   i2cp->txidx = 0;
   i2cp->rxbuf = rxbuf;
   i2cp->rxbytes = rxbytes;
   i2cp->rxidx = 0;
-
-
-  /*
-  i2cp->slaveNextReply = replyMsg;
-  if (replyMsg->body && replyMsg->size){
-    i2cp->slaveReply = replyMsg;
-     slave TX setup -- we can reply now!
-       Start transmission 
-      i2cp->txptr   = replyMsg->body;
-      i2cp->txbytes = replyMsg->size;*/
   TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA));
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    
   }

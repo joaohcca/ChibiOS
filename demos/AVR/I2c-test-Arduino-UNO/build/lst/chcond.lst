@@ -2341,20 +2341,20 @@
  798               		.file 12 "../../../os/rt/include/chthreads.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 chcond.c
-     /tmp/ccq2qZO0.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccq2qZO0.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccq2qZO0.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccq2qZO0.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccq2qZO0.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccq2qZO0.s:13     .text.chCondObjectInit:0000000000000000 chCondObjectInit
-     /tmp/ccq2qZO0.s:43     .text.chCondSignal:0000000000000000 chCondSignal
-     /tmp/ccq2qZO0.s:135    .text.chCondSignalI:0000000000000000 chCondSignalI
-     /tmp/ccq2qZO0.s:209    .text.chCondBroadcast:0000000000000000 chCondBroadcast
-     /tmp/ccq2qZO0.s:334    .text.chCondBroadcastI:0000000000000000 chCondBroadcastI
-     /tmp/ccq2qZO0.s:426    .text.chCondWaitS:0000000000000000 chCondWaitS
-     /tmp/ccq2qZO0.s:553    .text.chCondWait:0000000000000000 chCondWait
-     /tmp/ccq2qZO0.s:599    .text.chCondWaitTimeoutS:0000000000000000 chCondWaitTimeoutS
-     /tmp/ccq2qZO0.s:746    .text.chCondWaitTimeout:0000000000000000 chCondWaitTimeout
+     /tmp/ccLtj3tt.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccLtj3tt.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccLtj3tt.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccLtj3tt.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccLtj3tt.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccLtj3tt.s:13     .text.chCondObjectInit:0000000000000000 chCondObjectInit
+     /tmp/ccLtj3tt.s:43     .text.chCondSignal:0000000000000000 chCondSignal
+     /tmp/ccLtj3tt.s:135    .text.chCondSignalI:0000000000000000 chCondSignalI
+     /tmp/ccLtj3tt.s:209    .text.chCondBroadcast:0000000000000000 chCondBroadcast
+     /tmp/ccLtj3tt.s:334    .text.chCondBroadcastI:0000000000000000 chCondBroadcastI
+     /tmp/ccLtj3tt.s:426    .text.chCondWaitS:0000000000000000 chCondWaitS
+     /tmp/ccLtj3tt.s:553    .text.chCondWait:0000000000000000 chCondWait
+     /tmp/ccLtj3tt.s:599    .text.chCondWaitTimeoutS:0000000000000000 chCondWaitTimeoutS
+     /tmp/ccLtj3tt.s:746    .text.chCondWaitTimeout:0000000000000000 chCondWaitTimeout
 
 UNDEFINED SYMBOLS
 chSchWakeupS

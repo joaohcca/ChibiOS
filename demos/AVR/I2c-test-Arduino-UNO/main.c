@@ -26,7 +26,7 @@
 
 
 #include "hal_i2c.h"
-#include "hal_i2cslave.h"
+//#include "hal_i2cslave.h"
 /*
  * LED blinker thread, times are in milliseconds.
  */

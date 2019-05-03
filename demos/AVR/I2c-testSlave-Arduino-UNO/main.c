@@ -28,7 +28,7 @@
 #include "hal_i2c.h"
 #include <hal_i2cslave.h>
 /*
- * LED blinker thread, times are in milliseconds.
+ * Ithread, times are in milliseconds.
  */
 
 
@@ -40,7 +40,7 @@ static THD_FUNCTION(Thread1, arg) {
   uint8_t rxbuf[rxbytes];
   uint8_t txbuffer[txbytes];
   sysinterval_t TIMEOUT=500;
-  //msg_t debug;
+  msg_t debug;
 
   (void)arg;
   chRegSetThreadName("SlaveRecieveI2C");
@@ -49,17 +49,18 @@ static THD_FUNCTION(Thread1, arg) {
     chprintf((BaseSequentialStream *) &SD1, "iniciando processo de recebimento do slave\r\n");  
     chThdSleepMilliseconds(500);
     /*configurar endereço do slave e "encaixar" o matchaddress*/
+    debug=i2cMatchAddress(&I2CD1, slaveaddr);    
+    chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
     i2cSlaveReceive(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
     //i2cSlaveReply(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT); 
-
     //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
-  //  chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
+    // chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
     //conversão do valor de debug‘i2cSlaveReceive’
-    chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
-    for (int n = 0; n < txbytes ;n++){
-    chprintf( (BaseSequentialStream *) &SD1, "buffer %d ",rxbuf[n]);
-      }
-      }
+      chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
+      for (int n = 0; n < txbytes ;n++){
+        chprintf( (BaseSequentialStream *) &SD1, "buffer[%n]=%d ",n,rxbuf[n]);
+        }
+    }
 }
 
 
@@ -96,7 +97,7 @@ int main(void) {
   
 
 
-  chnWrite(&SD1, (const uint8_t *)"Ler configuracoes do I2C salve [?]\r\n", 14);
+  chnWrite(&SD1, (const uint8_t *)"Debug program I2Cv2 slave\r\n", 14);
 
   while (TRUE) {
     chThdSleepMilliseconds(1000);  

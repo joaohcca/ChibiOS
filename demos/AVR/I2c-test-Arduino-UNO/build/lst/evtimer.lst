@@ -1324,14 +1324,14 @@
  213               		.file 13 "../../../os/rt/include/chsys.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 evtimer.c
-     /tmp/ccS26CTR.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccS26CTR.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccS26CTR.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccS26CTR.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccS26CTR.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccS26CTR.s:12     .text.tmrcb:0000000000000000 tmrcb
-     /tmp/ccS26CTR.s:64     .text.evtObjectInit:0000000000000000 evtObjectInit
-     /tmp/ccS26CTR.s:104    .text.evtStart:0000000000000000 evtStart
+     /tmp/cc2Nmld1.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cc2Nmld1.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cc2Nmld1.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cc2Nmld1.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cc2Nmld1.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cc2Nmld1.s:12     .text.tmrcb:0000000000000000 tmrcb
+     /tmp/cc2Nmld1.s:64     .text.evtObjectInit:0000000000000000 evtObjectInit
+     /tmp/cc2Nmld1.s:104    .text.evtStart:0000000000000000 evtStart
 
 UNDEFINED SYMBOLS
 chEvtBroadcastFlagsI

@@ -50,10 +50,7 @@ build/obj/main.o: main.c ../../../os/rt/include/ch.h chconf.h \
  ../../../os/hal/include/hal_wdg.h ../../../os/hal/include/hal_st.h \
  ../../../os/hal/include/hal_mmc_spi.h \
  ../../../os/hal/include/hal_serial_usb.h \
- /home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.c \
- /home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.h \
- /home/joao/work/ChibiOS/os/hal/lib/streams/memstreams.h \
- ../../../os/hal/include/hal_i2c.h ../../../os/hal/include/hal_i2cslave.h
+ ../../../os/hal/lib/streams/chprintf.h ../../../os/hal/include/hal_i2c.h
 
 ../../../os/rt/include/ch.h:
 
@@ -209,12 +206,6 @@ mcuconf.h:
 
 ../../../os/hal/include/hal_serial_usb.h:
 
-/home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.c:
-
-/home/joao/work/ChibiOS/os/hal/lib/streams/chprintf.h:
-
-/home/joao/work/ChibiOS/os/hal/lib/streams/memstreams.h:
+../../../os/hal/lib/streams/chprintf.h:
 
 ../../../os/hal/include/hal_i2c.h:
-
-../../../os/hal/include/hal_i2cslave.h:

@@ -1,0 +1,1920 @@
+   1               		.file	"chmempools.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.chPoolObjectInitAligned,"ax",@progbits
+  11               	.global	chPoolObjectInitAligned
+  13               	chPoolObjectInitAligned:
+  14               	.LFB148:
+  15               		.file 1 "../../../os/common/oslib/src/chmempools.c"
+   1:../../../os/common/oslib/src/chmempools.c **** /*
+   2:../../../os/common/oslib/src/chmempools.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/oslib/src/chmempools.c **** 
+   4:../../../os/common/oslib/src/chmempools.c ****     This file is part of ChibiOS.
+   5:../../../os/common/oslib/src/chmempools.c **** 
+   6:../../../os/common/oslib/src/chmempools.c ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/oslib/src/chmempools.c ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/oslib/src/chmempools.c ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/oslib/src/chmempools.c ****     (at your option) any later version.
+  10:../../../os/common/oslib/src/chmempools.c **** 
+  11:../../../os/common/oslib/src/chmempools.c ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/oslib/src/chmempools.c ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/oslib/src/chmempools.c ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/oslib/src/chmempools.c ****     GNU General Public License for more details.
+  15:../../../os/common/oslib/src/chmempools.c **** 
+  16:../../../os/common/oslib/src/chmempools.c ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/oslib/src/chmempools.c ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/oslib/src/chmempools.c **** */
+  19:../../../os/common/oslib/src/chmempools.c **** 
+  20:../../../os/common/oslib/src/chmempools.c **** /**
+  21:../../../os/common/oslib/src/chmempools.c ****  * @file    chmempools.c
+  22:../../../os/common/oslib/src/chmempools.c ****  * @brief   Memory Pools code.
+  23:../../../os/common/oslib/src/chmempools.c ****  *
+  24:../../../os/common/oslib/src/chmempools.c ****  * @addtogroup pools
+  25:../../../os/common/oslib/src/chmempools.c ****  * @details Memory Pools related APIs and services.
+  26:../../../os/common/oslib/src/chmempools.c ****  *          <h2>Operation mode</h2>
+  27:../../../os/common/oslib/src/chmempools.c ****  *          The Memory Pools APIs allow to allocate/free fixed size objects in
+  28:../../../os/common/oslib/src/chmempools.c ****  *          <b>constant time</b> and reliably without memory fragmentation
+  29:../../../os/common/oslib/src/chmempools.c ****  *          problems.<br>
+  30:../../../os/common/oslib/src/chmempools.c ****  *          Memory Pools do not enforce any alignment constraint on the
+  31:../../../os/common/oslib/src/chmempools.c ****  *          contained object however the objects must be properly aligned
+  32:../../../os/common/oslib/src/chmempools.c ****  *          to contain a pointer to void.
+  33:../../../os/common/oslib/src/chmempools.c ****  * @pre     In order to use the memory pools APIs the @p CH_CFG_USE_MEMPOOLS option
+  34:../../../os/common/oslib/src/chmempools.c ****  *          must be enabled in @p chconf.h.
+  35:../../../os/common/oslib/src/chmempools.c ****  * @note    Compatible with RT and NIL.
+  36:../../../os/common/oslib/src/chmempools.c ****  * @{
+  37:../../../os/common/oslib/src/chmempools.c ****  */
+  38:../../../os/common/oslib/src/chmempools.c **** 
+  39:../../../os/common/oslib/src/chmempools.c **** #include "ch.h"
+  40:../../../os/common/oslib/src/chmempools.c **** 
+  41:../../../os/common/oslib/src/chmempools.c **** #if (CH_CFG_USE_MEMPOOLS == TRUE) || defined(__DOXYGEN__)
+  42:../../../os/common/oslib/src/chmempools.c **** 
+  43:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  44:../../../os/common/oslib/src/chmempools.c **** /* Module exported variables.                                                */
+  45:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  46:../../../os/common/oslib/src/chmempools.c **** 
+  47:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  48:../../../os/common/oslib/src/chmempools.c **** /* Module local types.                                                       */
+  49:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  50:../../../os/common/oslib/src/chmempools.c **** 
+  51:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  52:../../../os/common/oslib/src/chmempools.c **** /* Module local variables.                                                   */
+  53:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  54:../../../os/common/oslib/src/chmempools.c **** 
+  55:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  56:../../../os/common/oslib/src/chmempools.c **** /* Module local functions.                                                   */
+  57:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  58:../../../os/common/oslib/src/chmempools.c **** 
+  59:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  60:../../../os/common/oslib/src/chmempools.c **** /* Module exported functions.                                                */
+  61:../../../os/common/oslib/src/chmempools.c **** /*===========================================================================*/
+  62:../../../os/common/oslib/src/chmempools.c **** 
+  63:../../../os/common/oslib/src/chmempools.c **** /**
+  64:../../../os/common/oslib/src/chmempools.c ****  * @brief   Initializes an empty memory pool.
+  65:../../../os/common/oslib/src/chmempools.c ****  *
+  66:../../../os/common/oslib/src/chmempools.c ****  * @param[out] mp       pointer to a @p memory_pool_t structure
+  67:../../../os/common/oslib/src/chmempools.c ****  * @param[in] size      the size of the objects contained in this memory pool,
+  68:../../../os/common/oslib/src/chmempools.c ****  *                      the minimum accepted size is the size of a pointer to
+  69:../../../os/common/oslib/src/chmempools.c ****  *                      void.
+  70:../../../os/common/oslib/src/chmempools.c ****  * @param[in] align     required memory alignment
+  71:../../../os/common/oslib/src/chmempools.c ****  * @param[in] provider  memory provider function for the memory pool or
+  72:../../../os/common/oslib/src/chmempools.c ****  *                      @p NULL if the pool is not allowed to grow
+  73:../../../os/common/oslib/src/chmempools.c ****  *                      automatically
+  74:../../../os/common/oslib/src/chmempools.c ****  *
+  75:../../../os/common/oslib/src/chmempools.c ****  * @init
+  76:../../../os/common/oslib/src/chmempools.c ****  */
+  77:../../../os/common/oslib/src/chmempools.c **** void chPoolObjectInitAligned(memory_pool_t *mp, size_t size,
+  78:../../../os/common/oslib/src/chmempools.c ****                              unsigned align, memgetfunc_t provider) {
+  16               		.loc 1 78 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: function */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  23 0000 FC01      		movw r30,r24
+  79:../../../os/common/oslib/src/chmempools.c **** 
+  80:../../../os/common/oslib/src/chmempools.c ****   chDbgCheck((mp != NULL) && (size >= sizeof(void *)));
+  81:../../../os/common/oslib/src/chmempools.c **** 
+  82:../../../os/common/oslib/src/chmempools.c ****   mp->next = NULL;
+  24               		.loc 1 82 0
+  25 0002 1182      		std Z+1,__zero_reg__
+  26 0004 1082      		st Z,__zero_reg__
+  83:../../../os/common/oslib/src/chmempools.c ****   mp->object_size = size;
+  27               		.loc 1 83 0
+  28 0006 7383      		std Z+3,r23
+  29 0008 6283      		std Z+2,r22
+  84:../../../os/common/oslib/src/chmempools.c ****   mp->align = align;
+  30               		.loc 1 84 0
+  31 000a 5583      		std Z+5,r21
+  32 000c 4483      		std Z+4,r20
+  85:../../../os/common/oslib/src/chmempools.c ****   mp->provider = provider;
+  33               		.loc 1 85 0
+  34 000e 3783      		std Z+7,r19
+  35 0010 2683      		std Z+6,r18
+  36 0012 0895      		ret
+  37               		.cfi_endproc
+  38               	.LFE148:
+  40               		.section	.text.chPoolLoadArray,"ax",@progbits
+  41               	.global	chPoolLoadArray
+  43               	chPoolLoadArray:
+  44               	.LFB149:
+  86:../../../os/common/oslib/src/chmempools.c **** }
+  87:../../../os/common/oslib/src/chmempools.c **** 
+  88:../../../os/common/oslib/src/chmempools.c **** /**
+  89:../../../os/common/oslib/src/chmempools.c ****  * @brief   Loads a memory pool with an array of static objects.
+  90:../../../os/common/oslib/src/chmempools.c ****  * @pre     The memory pool must already be initialized.
+  91:../../../os/common/oslib/src/chmempools.c ****  * @pre     The array elements must be of the right size for the specified
+  92:../../../os/common/oslib/src/chmempools.c ****  *          memory pool.
+  93:../../../os/common/oslib/src/chmempools.c ****  * @pre     The array elements size must be a multiple of the alignment
+  94:../../../os/common/oslib/src/chmempools.c ****  *          requirement for the pool.
+  95:../../../os/common/oslib/src/chmempools.c ****  * @post    The memory pool contains the elements of the input array.
+  96:../../../os/common/oslib/src/chmempools.c ****  *
+  97:../../../os/common/oslib/src/chmempools.c ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+  98:../../../os/common/oslib/src/chmempools.c ****  * @param[in] p         pointer to the array first element
+  99:../../../os/common/oslib/src/chmempools.c ****  * @param[in] n         number of elements in the array
+ 100:../../../os/common/oslib/src/chmempools.c ****  *
+ 101:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 102:../../../os/common/oslib/src/chmempools.c ****  */
+ 103:../../../os/common/oslib/src/chmempools.c **** void chPoolLoadArray(memory_pool_t *mp, void *p, size_t n) {
+  45               		.loc 1 103 0
+  46               		.cfi_startproc
+  47               	.LVL1:
+  48               	/* prologue: function */
+  49               	/* frame size = 0 */
+  50               	/* stack size = 0 */
+  51               	.L__stack_usage = 0
+  52 0000 DC01      		movw r26,r24
+  53 0002 FB01      		movw r30,r22
+ 104:../../../os/common/oslib/src/chmempools.c **** 
+ 105:../../../os/common/oslib/src/chmempools.c ****   chDbgCheck((mp != NULL) && (n != 0U));
+ 106:../../../os/common/oslib/src/chmempools.c **** 
+ 107:../../../os/common/oslib/src/chmempools.c ****   while (n != 0U) {
+  54               		.loc 1 107 0
+  55 0004 4115      		cp r20,__zero_reg__
+  56 0006 5105      		cpc r21,__zero_reg__
+  57 0008 01F0      		breq .L2
+  58               	.LVL2:
+  59               	.L6:
+  60               	.LBB113:
+  61               	.LBB114:
+  62               	.LBB115:
+  63               	.LBB116:
+  64               	.LBB117:
+  65               		.file 2 "../../../os/common/ports/AVR/chcore.h"
+   1:../../../os/common/ports/AVR/chcore.h **** /*
+   2:../../../os/common/ports/AVR/chcore.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/ports/AVR/chcore.h **** 
+   4:../../../os/common/ports/AVR/chcore.h ****     This file is part of ChibiOS.
+   5:../../../os/common/ports/AVR/chcore.h **** 
+   6:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/ports/AVR/chcore.h ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/ports/AVR/chcore.h ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/ports/AVR/chcore.h ****     (at your option) any later version.
+  10:../../../os/common/ports/AVR/chcore.h **** 
+  11:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/ports/AVR/chcore.h ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/ports/AVR/chcore.h ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/ports/AVR/chcore.h ****     GNU General Public License for more details.
+  15:../../../os/common/ports/AVR/chcore.h **** 
+  16:../../../os/common/ports/AVR/chcore.h ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/ports/AVR/chcore.h ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/ports/AVR/chcore.h **** */
+  19:../../../os/common/ports/AVR/chcore.h **** 
+  20:../../../os/common/ports/AVR/chcore.h **** /**
+  21:../../../os/common/ports/AVR/chcore.h ****  * @file    templates/chcore.h
+  22:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port related template macros and structures.
+  23:../../../os/common/ports/AVR/chcore.h ****  * @details This file is a template of the system driver macros provided by
+  24:../../../os/common/ports/AVR/chcore.h ****  *          a port.
+  25:../../../os/common/ports/AVR/chcore.h ****  *
+  26:../../../os/common/ports/AVR/chcore.h ****  * @addtogroup core
+  27:../../../os/common/ports/AVR/chcore.h ****  * @{
+  28:../../../os/common/ports/AVR/chcore.h ****  */
+  29:../../../os/common/ports/AVR/chcore.h **** 
+  30:../../../os/common/ports/AVR/chcore.h **** #ifndef CHCORE_H
+  31:../../../os/common/ports/AVR/chcore.h **** #define CHCORE_H
+  32:../../../os/common/ports/AVR/chcore.h **** 
+  33:../../../os/common/ports/AVR/chcore.h **** #include <avr/io.h>
+  34:../../../os/common/ports/AVR/chcore.h **** #include <avr/interrupt.h>
+  35:../../../os/common/ports/AVR/chcore.h **** 
+  36:../../../os/common/ports/AVR/chcore.h **** extern bool __avr_in_isr;
+  37:../../../os/common/ports/AVR/chcore.h **** 
+  38:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  39:../../../os/common/ports/AVR/chcore.h **** /* Module constants.                                                         */
+  40:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  41:../../../os/common/ports/AVR/chcore.h **** 
+  42:../../../os/common/ports/AVR/chcore.h **** /**
+  43:../../../os/common/ports/AVR/chcore.h ****  * @name    Port Capabilities and Constants
+  44:../../../os/common/ports/AVR/chcore.h ****  * @{
+  45:../../../os/common/ports/AVR/chcore.h ****  */
+  46:../../../os/common/ports/AVR/chcore.h **** /**
+  47:../../../os/common/ports/AVR/chcore.h ****  * @brief   This port supports a realtime counter.
+  48:../../../os/common/ports/AVR/chcore.h ****  */
+  49:../../../os/common/ports/AVR/chcore.h **** #define PORT_SUPPORTS_RT                FALSE
+  50:../../../os/common/ports/AVR/chcore.h **** 
+  51:../../../os/common/ports/AVR/chcore.h **** /**
+  52:../../../os/common/ports/AVR/chcore.h ****  * @brief   Natural alignment constant.
+  53:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the minimum alignment for pointer-size variables.
+  54:../../../os/common/ports/AVR/chcore.h ****  */
+  55:../../../os/common/ports/AVR/chcore.h **** #define PORT_NATURAL_ALIGN              1U
+  56:../../../os/common/ports/AVR/chcore.h **** 
+  57:../../../os/common/ports/AVR/chcore.h **** /**
+  58:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack alignment constant.
+  59:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignement required for the stack pointer.
+  60:../../../os/common/ports/AVR/chcore.h ****  */
+  61:../../../os/common/ports/AVR/chcore.h **** #define PORT_STACK_ALIGN                1U
+  62:../../../os/common/ports/AVR/chcore.h **** 
+  63:../../../os/common/ports/AVR/chcore.h **** /**
+  64:../../../os/common/ports/AVR/chcore.h ****  * @brief   Working Areas alignment constant.
+  65:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignment to be enforced for thread working areas.
+  66:../../../os/common/ports/AVR/chcore.h ****  */
+  67:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA_ALIGN         1U
+  68:../../../os/common/ports/AVR/chcore.h **** /** @} */
+  69:../../../os/common/ports/AVR/chcore.h **** 
+  70:../../../os/common/ports/AVR/chcore.h **** /**
+  71:../../../os/common/ports/AVR/chcore.h ****  * @name    Architecture and Compiler
+  72:../../../os/common/ports/AVR/chcore.h ****  * @{
+  73:../../../os/common/ports/AVR/chcore.h ****  */
+  74:../../../os/common/ports/AVR/chcore.h **** /**
+  75:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining an AVR architecture.
+  76:../../../os/common/ports/AVR/chcore.h ****  */
+  77:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR
+  78:../../../os/common/ports/AVR/chcore.h **** 
+  79:../../../os/common/ports/AVR/chcore.h **** /**
+  80:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining the specific AVR architecture.
+  81:../../../os/common/ports/AVR/chcore.h ****  */
+  82:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR_MEGAAVR
+  83:../../../os/common/ports/AVR/chcore.h **** 
+  84:../../../os/common/ports/AVR/chcore.h **** /**
+  85:../../../os/common/ports/AVR/chcore.h ****  * @brief   Name of the implemented architecture.
+  86:../../../os/common/ports/AVR/chcore.h ****  */
+  87:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_NAME          "MegaAVR"
+  88:../../../os/common/ports/AVR/chcore.h **** 
+  89:../../../os/common/ports/AVR/chcore.h **** /**
+  90:../../../os/common/ports/AVR/chcore.h ****  * @brief   Compiler name and version.
+  91:../../../os/common/ports/AVR/chcore.h ****  */
+  92:../../../os/common/ports/AVR/chcore.h **** #if defined(__GNUC__) || defined(__DOXYGEN__)
+  93:../../../os/common/ports/AVR/chcore.h **** #define PORT_COMPILER_NAME              "GCC " __VERSION__
+  94:../../../os/common/ports/AVR/chcore.h **** 
+  95:../../../os/common/ports/AVR/chcore.h **** #else
+  96:../../../os/common/ports/AVR/chcore.h **** #error "unsupported compiler"
+  97:../../../os/common/ports/AVR/chcore.h **** #endif
+  98:../../../os/common/ports/AVR/chcore.h **** 
+  99:../../../os/common/ports/AVR/chcore.h **** /**
+ 100:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-specific information string.
+ 101:../../../os/common/ports/AVR/chcore.h ****  */
+ 102:../../../os/common/ports/AVR/chcore.h **** #define PORT_INFO                       "None"
+ 103:../../../os/common/ports/AVR/chcore.h **** /** @} */
+ 104:../../../os/common/ports/AVR/chcore.h **** 
+ 105:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 106:../../../os/common/ports/AVR/chcore.h **** /* Module pre-compile time settings.                                         */
+ 107:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 108:../../../os/common/ports/AVR/chcore.h **** 
+ 109:../../../os/common/ports/AVR/chcore.h **** /**
+ 110:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack size for the system idle thread.
+ 111:../../../os/common/ports/AVR/chcore.h ****  * @details This size depends on the idle thread implementation, usually
+ 112:../../../os/common/ports/AVR/chcore.h ****  *          the idle thread should take no more space than those reserved
+ 113:../../../os/common/ports/AVR/chcore.h ****  *          by @p PORT_INT_REQUIRED_STACK.
+ 114:../../../os/common/ports/AVR/chcore.h ****  */
+ 115:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_IDLE_THREAD_STACK_SIZE) || defined(__DOXYGEN__)
+ 116:../../../os/common/ports/AVR/chcore.h **** #define PORT_IDLE_THREAD_STACK_SIZE     8
+ 117:../../../os/common/ports/AVR/chcore.h **** #endif
+ 118:../../../os/common/ports/AVR/chcore.h **** 
+ 119:../../../os/common/ports/AVR/chcore.h **** /**
+ 120:../../../os/common/ports/AVR/chcore.h ****  * @brief   Per-thread stack overhead for interrupts servicing.
+ 121:../../../os/common/ports/AVR/chcore.h ****  * @details This constant is used in the calculation of the correct working
+ 122:../../../os/common/ports/AVR/chcore.h ****  *          area size.
+ 123:../../../os/common/ports/AVR/chcore.h ****  */
+ 124:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_INT_REQUIRED_STACK) || defined(__DOXYGEN__)
+ 125:../../../os/common/ports/AVR/chcore.h **** #define PORT_INT_REQUIRED_STACK         32
+ 126:../../../os/common/ports/AVR/chcore.h **** #endif
+ 127:../../../os/common/ports/AVR/chcore.h **** 
+ 128:../../../os/common/ports/AVR/chcore.h **** /**
+ 129:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables an alternative timer implementation.
+ 130:../../../os/common/ports/AVR/chcore.h ****  * @details Usually the port uses a timer interface defined in the file
+ 131:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer.h, if this option is enabled then the file
+ 132:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer_alt.h is included instead.
+ 133:../../../os/common/ports/AVR/chcore.h ****  */
+ 134:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_USE_ALT_TIMER) || defined(__DOXYGEN__)
+ 135:../../../os/common/ports/AVR/chcore.h **** #define PORT_USE_ALT_TIMER              FALSE
+ 136:../../../os/common/ports/AVR/chcore.h **** #endif
+ 137:../../../os/common/ports/AVR/chcore.h **** 
+ 138:../../../os/common/ports/AVR/chcore.h **** /**
+ 139:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables a "wait for interrupt" instruction in the idle loop.
+ 140:../../../os/common/ports/AVR/chcore.h ****  */
+ 141:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_AVR_WFI_SLEEP_IDLE) || defined(__DOXYGEN__)
+ 142:../../../os/common/ports/AVR/chcore.h **** #define PORT_AVR_WFI_SLEEP_IDLE      FALSE
+ 143:../../../os/common/ports/AVR/chcore.h **** #endif
+ 144:../../../os/common/ports/AVR/chcore.h **** 
+ 145:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 146:../../../os/common/ports/AVR/chcore.h **** /* Derived constants and error checks.                                       */
+ 147:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 148:../../../os/common/ports/AVR/chcore.h **** 
+ 149:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 150:../../../os/common/ports/AVR/chcore.h **** /* Module data structures and types.                                         */
+ 151:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 152:../../../os/common/ports/AVR/chcore.h **** 
+ 153:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 154:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 155:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 156:../../../os/common/ports/AVR/chcore.h **** 
+ 157:../../../os/common/ports/AVR/chcore.h **** /**
+ 158:../../../os/common/ports/AVR/chcore.h ****  * @brief   Type of stack and memory alignment enforcement.
+ 159:../../../os/common/ports/AVR/chcore.h ****  * @note    In this architecture the stack alignment is enforced to 8 bits.
+ 160:../../../os/common/ports/AVR/chcore.h ****  */
+ 161:../../../os/common/ports/AVR/chcore.h **** typedef uint8_t stkalign_t;
+ 162:../../../os/common/ports/AVR/chcore.h **** 
+ 163:../../../os/common/ports/AVR/chcore.h **** /**
+ 164:../../../os/common/ports/AVR/chcore.h ****  * @brief   Interrupt saved context.
+ 165:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the stack frame saved during a
+ 166:../../../os/common/ports/AVR/chcore.h ****  *          preemption-capable interrupt handler.
+ 167:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 168:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 169:../../../os/common/ports/AVR/chcore.h ****  */
+ 170:../../../os/common/ports/AVR/chcore.h **** struct port_extctx {
+ 171:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 172:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r31;
+ 173:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r30;
+ 174:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r27;
+ 175:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r26;
+ 176:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r25;
+ 177:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r24;
+ 178:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r23;
+ 179:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r22;
+ 180:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r21;
+ 181:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r20;
+ 182:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r19;
+ 183:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r18;
+ 184:../../../os/common/ports/AVR/chcore.h ****   uint8_t       sr;
+ 185:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r1;
+ 186:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r0;
+ 187:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 188:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 189:../../../os/common/ports/AVR/chcore.h **** #endif
+ 190:../../../os/common/ports/AVR/chcore.h ****   uint16_t      pc;
+ 191:../../../os/common/ports/AVR/chcore.h **** };
+ 192:../../../os/common/ports/AVR/chcore.h **** 
+ 193:../../../os/common/ports/AVR/chcore.h **** /**
+ 194:../../../os/common/ports/AVR/chcore.h ****  * @brief   System saved context.
+ 195:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the inner stack frame during a context
+ 196:../../../os/common/ports/AVR/chcore.h ****  *          switching.
+ 197:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 198:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 199:../../../os/common/ports/AVR/chcore.h ****  * @note    LR is stored in the caller context so it is not present in this
+ 200:../../../os/common/ports/AVR/chcore.h ****  *          structure.
+ 201:../../../os/common/ports/AVR/chcore.h ****  */
+ 202:../../../os/common/ports/AVR/chcore.h **** struct port_intctx {
+ 203:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 204:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r29;
+ 205:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r28;
+ 206:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r17;
+ 207:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r16;
+ 208:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r15;
+ 209:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r14;
+ 210:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r13;
+ 211:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r12;
+ 212:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r11;
+ 213:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r10;
+ 214:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r9;
+ 215:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r8;
+ 216:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r7;
+ 217:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r6;
+ 218:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r5;
+ 219:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r4;
+ 220:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r3;
+ 221:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r2;
+ 222:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 223:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 224:../../../os/common/ports/AVR/chcore.h **** #endif
+ 225:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcl;
+ 226:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pch;
+ 227:../../../os/common/ports/AVR/chcore.h **** };
+ 228:../../../os/common/ports/AVR/chcore.h **** 
+ 229:../../../os/common/ports/AVR/chcore.h **** /**
+ 230:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p thread_t structure.
+ 231:../../../os/common/ports/AVR/chcore.h ****  * @details This structure usually contains just the saved stack pointer
+ 232:../../../os/common/ports/AVR/chcore.h ****  *          defined as a pointer to a @p port_intctx structure.
+ 233:../../../os/common/ports/AVR/chcore.h ****  */
+ 234:../../../os/common/ports/AVR/chcore.h **** struct port_context {
+ 235:../../../os/common/ports/AVR/chcore.h ****   struct port_intctx *sp;
+ 236:../../../os/common/ports/AVR/chcore.h **** };
+ 237:../../../os/common/ports/AVR/chcore.h **** 
+ 238:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 239:../../../os/common/ports/AVR/chcore.h **** 
+ 240:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 241:../../../os/common/ports/AVR/chcore.h **** /* Module macros.                                                            */
+ 242:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 243:../../../os/common/ports/AVR/chcore.h **** 
+ 244:../../../os/common/ports/AVR/chcore.h **** /**
+ 245:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p chThdCreateI() API.
+ 246:../../../os/common/ports/AVR/chcore.h ****  * @details This code usually setup the context switching frame represented
+ 247:../../../os/common/ports/AVR/chcore.h ****  *          by an @p port_intctx structure.
+ 248:../../../os/common/ports/AVR/chcore.h ****  */
+ 249:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__) || defined(__DOXYGEN__)
+ 250:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 251:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 252:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 253:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 254:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 255:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 256:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 257:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcx = (uint8_t)0;                                             \
+ 258:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 259:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 260:../../../os/common/ports/AVR/chcore.h **** }
+ 261:../../../os/common/ports/AVR/chcore.h **** #else /* !__AVR_3_BYTE_PC__ */
+ 262:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 263:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 264:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 265:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 266:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 267:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 268:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 269:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 270:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 271:../../../os/common/ports/AVR/chcore.h **** }
+ 272:../../../os/common/ports/AVR/chcore.h **** #endif /* !__AVR_3_BYTE_PC__ */
+ 273:../../../os/common/ports/AVR/chcore.h **** 
+ 274:../../../os/common/ports/AVR/chcore.h **** /**
+ 275:../../../os/common/ports/AVR/chcore.h ****  * @brief   Computes the thread working area global size.
+ 276:../../../os/common/ports/AVR/chcore.h ****  * @note    There is no need to perform alignments in this macro.
+ 277:../../../os/common/ports/AVR/chcore.h ****  */
+ 278:../../../os/common/ports/AVR/chcore.h **** #define PORT_WA_SIZE(n) ((sizeof(struct port_intctx) - 1) +                \
+ 279:../../../os/common/ports/AVR/chcore.h ****                          (sizeof(struct port_extctx) - 1) +                \
+ 280:../../../os/common/ports/AVR/chcore.h ****                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
+ 281:../../../os/common/ports/AVR/chcore.h **** 
+ 282:../../../os/common/ports/AVR/chcore.h **** /**
+ 283:../../../os/common/ports/AVR/chcore.h ****  * @brief   Static working area allocation.
+ 284:../../../os/common/ports/AVR/chcore.h ****  * @details This macro is used to allocate a static thread working area
+ 285:../../../os/common/ports/AVR/chcore.h ****  *          aligned as both position and size.
+ 286:../../../os/common/ports/AVR/chcore.h ****  *
+ 287:../../../os/common/ports/AVR/chcore.h ****  * @param[in] s         the name to be assigned to the stack array
+ 288:../../../os/common/ports/AVR/chcore.h ****  * @param[in] n         the stack size to be assigned to the thread
+ 289:../../../os/common/ports/AVR/chcore.h ****  */
+ 290:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA(s, n)                                             \
+ 291:../../../os/common/ports/AVR/chcore.h ****   stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
+ 292:../../../os/common/ports/AVR/chcore.h **** 
+ 293:../../../os/common/ports/AVR/chcore.h **** /**
+ 294:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 295:../../../os/common/ports/AVR/chcore.h ****  */
+ 296:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_PRIORITY(n) false
+ 297:../../../os/common/ports/AVR/chcore.h **** 
+ 298:../../../os/common/ports/AVR/chcore.h **** /**
+ 299:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 300:../../../os/common/ports/AVR/chcore.h ****  */
+ 301:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_KERNEL_PRIORITY(n) false
+ 302:../../../os/common/ports/AVR/chcore.h **** 
+ 303:../../../os/common/ports/AVR/chcore.h **** /**
+ 304:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ prologue code.
+ 305:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the start of all IRQ handlers
+ 306:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 307:../../../os/common/ports/AVR/chcore.h ****  * @note    This code tricks the compiler to save all the specified registers
+ 308:../../../os/common/ports/AVR/chcore.h ****  *          by "touching" them.
+ 309:../../../os/common/ports/AVR/chcore.h ****  */
+ 310:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_PROLOGUE() {                                               \
+ 311:../../../os/common/ports/AVR/chcore.h ****   asm ("" : : : "r18", "r19", "r20", "r21", "r22", "r23", "r24",            \
+ 312:../../../os/common/ports/AVR/chcore.h ****                 "r25", "r26", "r27", "r30", "r31");                         \
+ 313:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 314:../../../os/common/ports/AVR/chcore.h **** }
+ 315:../../../os/common/ports/AVR/chcore.h **** 
+ 316:../../../os/common/ports/AVR/chcore.h **** /**
+ 317:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ epilogue code.
+ 318:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the end of all IRQ handlers
+ 319:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 320:../../../os/common/ports/AVR/chcore.h ****  */
+ 321:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_EPILOGUE() {                                               \
+ 322:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = false;                                                     \
+ 323:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_lock();                                                        \
+ 324:../../../os/common/ports/AVR/chcore.h ****   if (chSchIsPreemptionRequired())                                          \
+ 325:../../../os/common/ports/AVR/chcore.h ****     chSchDoReschedule();                                                    \
+ 326:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_unlock();                                                      \
+ 327:../../../os/common/ports/AVR/chcore.h **** }
+ 328:../../../os/common/ports/AVR/chcore.h **** 
+ 329:../../../os/common/ports/AVR/chcore.h **** /**
+ 330:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ handler function declaration.
+ 331:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 332:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 333:../../../os/common/ports/AVR/chcore.h ****  */
+ 334:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_HANDLER(id) ISR(id)
+ 335:../../../os/common/ports/AVR/chcore.h **** 
+ 336:../../../os/common/ports/AVR/chcore.h **** /**
+ 337:../../../os/common/ports/AVR/chcore.h ****  * @brief   Fast IRQ handler function declaration.
+ 338:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 339:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 340:../../../os/common/ports/AVR/chcore.h ****  */
+ 341:../../../os/common/ports/AVR/chcore.h **** #define PORT_FAST_IRQ_HANDLER(id) ISR(id)
+ 342:../../../os/common/ports/AVR/chcore.h **** 
+ 343:../../../os/common/ports/AVR/chcore.h **** /**
+ 344:../../../os/common/ports/AVR/chcore.h ****  * @brief   Performs a context switch between two threads.
+ 345:../../../os/common/ports/AVR/chcore.h ****  * @details This is the most critical code in any port, this function
+ 346:../../../os/common/ports/AVR/chcore.h ****  *          is responsible for the context switch between 2 threads.
+ 347:../../../os/common/ports/AVR/chcore.h ****  * @note    The implementation of this code affects <b>directly</b> the context
+ 348:../../../os/common/ports/AVR/chcore.h ****  *          switch performance so optimize here as much as you can.
+ 349:../../../os/common/ports/AVR/chcore.h ****  *
+ 350:../../../os/common/ports/AVR/chcore.h ****  * @param[in] ntp       the thread to be switched in
+ 351:../../../os/common/ports/AVR/chcore.h ****  * @param[in] otp       the thread to be switched out
+ 352:../../../os/common/ports/AVR/chcore.h ****  */
+ 353:../../../os/common/ports/AVR/chcore.h **** #define port_switch(ntp, otp) {                                             \
+ 354:../../../os/common/ports/AVR/chcore.h ****   _port_switch(ntp, otp);                                                   \
+ 355:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("" : : : "memory");                                         \
+ 356:../../../os/common/ports/AVR/chcore.h **** }
+ 357:../../../os/common/ports/AVR/chcore.h **** 
+ 358:../../../os/common/ports/AVR/chcore.h **** 
+ 359:../../../os/common/ports/AVR/chcore.h **** /**
+ 360:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-related initialization code.
+ 361:../../../os/common/ports/AVR/chcore.h ****  * @note    This function is empty in this port.
+ 362:../../../os/common/ports/AVR/chcore.h ****  */
+ 363:../../../os/common/ports/AVR/chcore.h **** #define port_init() {                                                       \
+ 364:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 365:../../../os/common/ports/AVR/chcore.h **** }
+ 366:../../../os/common/ports/AVR/chcore.h **** 
+ 367:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 368:../../../os/common/ports/AVR/chcore.h **** /* External declarations.                                                    */
+ 369:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 370:../../../os/common/ports/AVR/chcore.h **** 
+ 371:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 372:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 373:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 374:../../../os/common/ports/AVR/chcore.h **** 
+ 375:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 376:../../../os/common/ports/AVR/chcore.h **** extern "C" {
+ 377:../../../os/common/ports/AVR/chcore.h **** #endif
+ 378:../../../os/common/ports/AVR/chcore.h ****   void _port_switch(thread_t *ntp, thread_t *otp);
+ 379:../../../os/common/ports/AVR/chcore.h ****   void _port_thread_start(void);
+ 380:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 381:../../../os/common/ports/AVR/chcore.h **** }
+ 382:../../../os/common/ports/AVR/chcore.h **** #endif
+ 383:../../../os/common/ports/AVR/chcore.h **** 
+ 384:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 385:../../../os/common/ports/AVR/chcore.h **** 
+ 386:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 387:../../../os/common/ports/AVR/chcore.h **** /* Module inline functions.                                                  */
+ 388:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 389:../../../os/common/ports/AVR/chcore.h **** 
+ 390:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 391:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 392:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 393:../../../os/common/ports/AVR/chcore.h **** 
+ 394:../../../os/common/ports/AVR/chcore.h **** /**
+ 395:../../../os/common/ports/AVR/chcore.h ****  * @brief   Returns a word encoding the current interrupts status.
+ 396:../../../os/common/ports/AVR/chcore.h ****  *
+ 397:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupts status.
+ 398:../../../os/common/ports/AVR/chcore.h ****  */
+ 399:../../../os/common/ports/AVR/chcore.h **** static inline syssts_t port_get_irq_status(void) {
+ 400:../../../os/common/ports/AVR/chcore.h **** 
+ 401:../../../os/common/ports/AVR/chcore.h ****   return SREG;
+ 402:../../../os/common/ports/AVR/chcore.h **** }
+ 403:../../../os/common/ports/AVR/chcore.h **** 
+ 404:../../../os/common/ports/AVR/chcore.h **** /**
+ 405:../../../os/common/ports/AVR/chcore.h ****  * @brief   Checks the interrupt status.
+ 406:../../../os/common/ports/AVR/chcore.h ****  *
+ 407:../../../os/common/ports/AVR/chcore.h ****  * @param[in] sts       the interrupt status word
+ 408:../../../os/common/ports/AVR/chcore.h ****  *
+ 409:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupt status.
+ 410:../../../os/common/ports/AVR/chcore.h ****  * @retval false        the word specified a disabled interrupts status.
+ 411:../../../os/common/ports/AVR/chcore.h ****  * @retval true         the word specified an enabled interrupts status.
+ 412:../../../os/common/ports/AVR/chcore.h ****  */
+ 413:../../../os/common/ports/AVR/chcore.h **** static inline bool port_irq_enabled(syssts_t sts) {
+ 414:../../../os/common/ports/AVR/chcore.h **** 
+ 415:../../../os/common/ports/AVR/chcore.h ****   return (bool)((sts & 0x80) != 0);
+ 416:../../../os/common/ports/AVR/chcore.h **** }
+ 417:../../../os/common/ports/AVR/chcore.h **** 
+ 418:../../../os/common/ports/AVR/chcore.h **** /**
+ 419:../../../os/common/ports/AVR/chcore.h ****  * @brief   Determines the current execution context.
+ 420:../../../os/common/ports/AVR/chcore.h ****  *
+ 421:../../../os/common/ports/AVR/chcore.h ****  * @return              The execution context.
+ 422:../../../os/common/ports/AVR/chcore.h ****  * @retval false        not running in ISR mode.
+ 423:../../../os/common/ports/AVR/chcore.h ****  * @retval true         running in ISR mode.
+ 424:../../../os/common/ports/AVR/chcore.h ****  */
+ 425:../../../os/common/ports/AVR/chcore.h **** static inline bool port_is_isr_context(void) {
+ 426:../../../os/common/ports/AVR/chcore.h **** 
+ 427:../../../os/common/ports/AVR/chcore.h ****   return __avr_in_isr;
+ 428:../../../os/common/ports/AVR/chcore.h **** }
+ 429:../../../os/common/ports/AVR/chcore.h **** 
+ 430:../../../os/common/ports/AVR/chcore.h **** /**
+ 431:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-lock action.
+ 432:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just disables interrupts but may perform more
+ 433:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 434:../../../os/common/ports/AVR/chcore.h ****  */
+ 435:../../../os/common/ports/AVR/chcore.h **** static inline void port_lock(void) {
+ 436:../../../os/common/ports/AVR/chcore.h **** 
+ 437:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("cli" : : : "memory");
+  66               		.loc 2 437 0
+  67               	/* #APP */
+  68               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+  69 000a F894      		cli
+  70               	 ;  0 "" 2
+  71               	.LVL3:
+  72               	/* #NOAPP */
+  73               	.LBE117:
+  74               	.LBE116:
+  75               	.LBE115:
+  76               	.LBB118:
+  77               	.LBB119:
+ 108:../../../os/common/oslib/src/chmempools.c ****     chPoolAdd(mp, p);
+ 109:../../../os/common/oslib/src/chmempools.c ****     /*lint -save -e9087 [11.3] Safe cast.*/
+ 110:../../../os/common/oslib/src/chmempools.c ****     p = (void *)(((uint8_t *)p) + mp->object_size);
+ 111:../../../os/common/oslib/src/chmempools.c ****     /*lint -restore*/
+ 112:../../../os/common/oslib/src/chmempools.c ****     n--;
+ 113:../../../os/common/oslib/src/chmempools.c ****   }
+ 114:../../../os/common/oslib/src/chmempools.c **** }
+ 115:../../../os/common/oslib/src/chmempools.c **** 
+ 116:../../../os/common/oslib/src/chmempools.c **** /**
+ 117:../../../os/common/oslib/src/chmempools.c ****  * @brief   Allocates an object from a memory pool.
+ 118:../../../os/common/oslib/src/chmempools.c ****  * @pre     The memory pool must already be initialized.
+ 119:../../../os/common/oslib/src/chmempools.c ****  *
+ 120:../../../os/common/oslib/src/chmempools.c ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 121:../../../os/common/oslib/src/chmempools.c ****  * @return              The pointer to the allocated object.
+ 122:../../../os/common/oslib/src/chmempools.c ****  * @retval NULL         if pool is empty.
+ 123:../../../os/common/oslib/src/chmempools.c ****  *
+ 124:../../../os/common/oslib/src/chmempools.c ****  * @iclass
+ 125:../../../os/common/oslib/src/chmempools.c ****  */
+ 126:../../../os/common/oslib/src/chmempools.c **** void *chPoolAllocI(memory_pool_t *mp) {
+ 127:../../../os/common/oslib/src/chmempools.c ****   void *objp;
+ 128:../../../os/common/oslib/src/chmempools.c **** 
+ 129:../../../os/common/oslib/src/chmempools.c ****   chDbgCheckClassI();
+ 130:../../../os/common/oslib/src/chmempools.c ****   chDbgCheck(mp != NULL);
+ 131:../../../os/common/oslib/src/chmempools.c **** 
+ 132:../../../os/common/oslib/src/chmempools.c ****   objp = mp->next;
+ 133:../../../os/common/oslib/src/chmempools.c ****   /*lint -save -e9013 [15.7] There is no else because it is not needed.*/
+ 134:../../../os/common/oslib/src/chmempools.c ****   if (objp != NULL) {
+ 135:../../../os/common/oslib/src/chmempools.c ****     mp->next = mp->next->next;
+ 136:../../../os/common/oslib/src/chmempools.c ****   }
+ 137:../../../os/common/oslib/src/chmempools.c ****   else if (mp->provider != NULL) {
+ 138:../../../os/common/oslib/src/chmempools.c ****     objp = mp->provider(mp->object_size, mp->align);
+ 139:../../../os/common/oslib/src/chmempools.c ****   }
+ 140:../../../os/common/oslib/src/chmempools.c ****   /*lint -restore*/
+ 141:../../../os/common/oslib/src/chmempools.c **** 
+ 142:../../../os/common/oslib/src/chmempools.c ****   return objp;
+ 143:../../../os/common/oslib/src/chmempools.c **** }
+ 144:../../../os/common/oslib/src/chmempools.c **** 
+ 145:../../../os/common/oslib/src/chmempools.c **** /**
+ 146:../../../os/common/oslib/src/chmempools.c ****  * @brief   Allocates an object from a memory pool.
+ 147:../../../os/common/oslib/src/chmempools.c ****  * @pre     The memory pool must already be initialized.
+ 148:../../../os/common/oslib/src/chmempools.c ****  *
+ 149:../../../os/common/oslib/src/chmempools.c ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 150:../../../os/common/oslib/src/chmempools.c ****  * @return              The pointer to the allocated object.
+ 151:../../../os/common/oslib/src/chmempools.c ****  * @retval NULL         if pool is empty.
+ 152:../../../os/common/oslib/src/chmempools.c ****  *
+ 153:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 154:../../../os/common/oslib/src/chmempools.c ****  */
+ 155:../../../os/common/oslib/src/chmempools.c **** void *chPoolAlloc(memory_pool_t *mp) {
+ 156:../../../os/common/oslib/src/chmempools.c ****   void *objp;
+ 157:../../../os/common/oslib/src/chmempools.c **** 
+ 158:../../../os/common/oslib/src/chmempools.c ****   chSysLock();
+ 159:../../../os/common/oslib/src/chmempools.c ****   objp = chPoolAllocI(mp);
+ 160:../../../os/common/oslib/src/chmempools.c ****   chSysUnlock();
+ 161:../../../os/common/oslib/src/chmempools.c **** 
+ 162:../../../os/common/oslib/src/chmempools.c ****   return objp;
+ 163:../../../os/common/oslib/src/chmempools.c **** }
+ 164:../../../os/common/oslib/src/chmempools.c **** 
+ 165:../../../os/common/oslib/src/chmempools.c **** /**
+ 166:../../../os/common/oslib/src/chmempools.c ****  * @brief   Releases an object into a memory pool.
+ 167:../../../os/common/oslib/src/chmempools.c ****  * @pre     The memory pool must already be initialized.
+ 168:../../../os/common/oslib/src/chmempools.c ****  * @pre     The freed object must be of the right size for the specified
+ 169:../../../os/common/oslib/src/chmempools.c ****  *          memory pool.
+ 170:../../../os/common/oslib/src/chmempools.c ****  * @pre     The added object must be properly aligned.
+ 171:../../../os/common/oslib/src/chmempools.c ****  *
+ 172:../../../os/common/oslib/src/chmempools.c ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 173:../../../os/common/oslib/src/chmempools.c ****  * @param[in] objp      the pointer to the object to be released
+ 174:../../../os/common/oslib/src/chmempools.c ****  *
+ 175:../../../os/common/oslib/src/chmempools.c ****  * @iclass
+ 176:../../../os/common/oslib/src/chmempools.c ****  */
+ 177:../../../os/common/oslib/src/chmempools.c **** void chPoolFreeI(memory_pool_t *mp, void *objp) {
+ 178:../../../os/common/oslib/src/chmempools.c ****   struct pool_header *php = objp;
+ 179:../../../os/common/oslib/src/chmempools.c **** 
+ 180:../../../os/common/oslib/src/chmempools.c ****   chDbgCheckClassI();
+ 181:../../../os/common/oslib/src/chmempools.c ****   chDbgCheck((mp != NULL) && (objp != NULL));
+ 182:../../../os/common/oslib/src/chmempools.c **** 
+ 183:../../../os/common/oslib/src/chmempools.c ****   chDbgAssert(((size_t)objp & MEM_ALIGN_MASK(mp->align)) == 0U,
+ 184:../../../os/common/oslib/src/chmempools.c ****               "unaligned object");
+ 185:../../../os/common/oslib/src/chmempools.c **** 
+ 186:../../../os/common/oslib/src/chmempools.c ****   php->next = mp->next;
+  78               		.loc 1 186 0
+  79 000c 8D91      		ld r24,X+
+  80 000e 9C91      		ld r25,X
+  81 0010 1197      		sbiw r26,1
+  82 0012 9183      		std Z+1,r25
+  83 0014 8083      		st Z,r24
+ 187:../../../os/common/oslib/src/chmempools.c ****   mp->next = php;
+  84               		.loc 1 187 0
+  85 0016 1196      		adiw r26,1
+  86 0018 FC93      		st X,r31
+  87 001a EE93      		st -X,r30
+  88               	.LVL4:
+  89               	.LBE119:
+  90               	.LBE118:
+  91               	.LBB120:
+  92               	.LBB121:
+  93               	.LBB122:
+  94               	.LBB123:
+ 438:../../../os/common/ports/AVR/chcore.h **** }
+ 439:../../../os/common/ports/AVR/chcore.h **** 
+ 440:../../../os/common/ports/AVR/chcore.h **** /**
+ 441:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-unlock action.
+ 442:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just enables interrupts but may perform more
+ 443:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 444:../../../os/common/ports/AVR/chcore.h ****  */
+ 445:../../../os/common/ports/AVR/chcore.h **** static inline void port_unlock(void) {
+ 446:../../../os/common/ports/AVR/chcore.h **** 
+ 447:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("sei" : : : "memory");
+  95               		.loc 2 447 0
+  96               	/* #APP */
+  97               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+  98 001c 7894      		sei
+  99               	 ;  0 "" 2
+ 100               	.LVL5:
+ 101               	/* #NOAPP */
+ 102               	.LBE123:
+ 103               	.LBE122:
+ 104               	.LBE121:
+ 105               	.LBE120:
+ 106               	.LBE114:
+ 107               	.LBE113:
+ 110:../../../os/common/oslib/src/chmempools.c ****     /*lint -restore*/
+ 108               		.loc 1 110 0
+ 109 001e 1296      		adiw r26,2
+ 110 0020 8D91      		ld r24,X+
+ 111 0022 9C91      		ld r25,X
+ 112 0024 1397      		sbiw r26,2+1
+ 113 0026 E80F      		add r30,r24
+ 114 0028 F91F      		adc r31,r25
+ 115               	.LVL6:
+ 112:../../../os/common/oslib/src/chmempools.c ****   }
+ 116               		.loc 1 112 0
+ 117 002a 4150      		subi r20,1
+ 118 002c 5109      		sbc r21,__zero_reg__
+ 119               	.LVL7:
+ 107:../../../os/common/oslib/src/chmempools.c ****     chPoolAdd(mp, p);
+ 120               		.loc 1 107 0
+ 121 002e 01F4      		brne .L6
+ 122               	.LVL8:
+ 123               	.L2:
+ 124 0030 0895      		ret
+ 125               		.cfi_endproc
+ 126               	.LFE149:
+ 128               		.section	.text.chPoolAllocI,"ax",@progbits
+ 129               	.global	chPoolAllocI
+ 131               	chPoolAllocI:
+ 132               	.LFB150:
+ 126:../../../os/common/oslib/src/chmempools.c ****   void *objp;
+ 133               		.loc 1 126 0
+ 134               		.cfi_startproc
+ 135               	.LVL9:
+ 136 0000 CF93      		push r28
+ 137               	.LCFI0:
+ 138               		.cfi_def_cfa_offset 3
+ 139               		.cfi_offset 28, -2
+ 140 0002 DF93      		push r29
+ 141               	.LCFI1:
+ 142               		.cfi_def_cfa_offset 4
+ 143               		.cfi_offset 29, -3
+ 144               	/* prologue: function */
+ 145               	/* frame size = 0 */
+ 146               	/* stack size = 2 */
+ 147               	.L__stack_usage = 2
+ 148 0004 EC01      		movw r28,r24
+ 132:../../../os/common/oslib/src/chmempools.c ****   /*lint -save -e9013 [15.7] There is no else because it is not needed.*/
+ 149               		.loc 1 132 0
+ 150 0006 A881      		ld r26,Y
+ 151 0008 B981      		ldd r27,Y+1
+ 152               	.LVL10:
+ 134:../../../os/common/oslib/src/chmempools.c ****     mp->next = mp->next->next;
+ 153               		.loc 1 134 0
+ 154 000a 1097      		sbiw r26,0
+ 155 000c 01F0      		breq .L10
+ 135:../../../os/common/oslib/src/chmempools.c ****   }
+ 156               		.loc 1 135 0
+ 157 000e 8D91      		ld r24,X+
+ 158 0010 9C91      		ld r25,X
+ 159 0012 1197      		sbiw r26,1
+ 160               	.LVL11:
+ 161 0014 9983      		std Y+1,r25
+ 162 0016 8883      		st Y,r24
+ 163               	.L11:
+ 143:../../../os/common/oslib/src/chmempools.c **** 
+ 164               		.loc 1 143 0
+ 165 0018 CD01      		movw r24,r26
+ 166               	/* epilogue start */
+ 167 001a DF91      		pop r29
+ 168 001c CF91      		pop r28
+ 169               	.LVL12:
+ 170 001e 0895      		ret
+ 171               	.LVL13:
+ 172               	.L10:
+ 137:../../../os/common/oslib/src/chmempools.c ****     objp = mp->provider(mp->object_size, mp->align);
+ 173               		.loc 1 137 0
+ 174 0020 EE81      		ldd r30,Y+6
+ 175 0022 FF81      		ldd r31,Y+7
+ 176 0024 3097      		sbiw r30,0
+ 177 0026 01F0      		breq .L11
+ 138:../../../os/common/oslib/src/chmempools.c ****   }
+ 178               		.loc 1 138 0
+ 179 0028 6C81      		ldd r22,Y+4
+ 180 002a 7D81      		ldd r23,Y+5
+ 181 002c 8A81      		ldd r24,Y+2
+ 182 002e 9B81      		ldd r25,Y+3
+ 183               	.LVL14:
+ 184               	/* epilogue start */
+ 143:../../../os/common/oslib/src/chmempools.c **** 
+ 185               		.loc 1 143 0
+ 186 0030 DF91      		pop r29
+ 187 0032 CF91      		pop r28
+ 188               	.LVL15:
+ 138:../../../os/common/oslib/src/chmempools.c ****   }
+ 189               		.loc 1 138 0
+ 190 0034 0994      		ijmp
+ 191               	.LVL16:
+ 192               		.cfi_endproc
+ 193               	.LFE150:
+ 195               		.section	.text.chPoolAlloc,"ax",@progbits
+ 196               	.global	chPoolAlloc
+ 198               	chPoolAlloc:
+ 199               	.LFB151:
+ 155:../../../os/common/oslib/src/chmempools.c ****   void *objp;
+ 200               		.loc 1 155 0
+ 201               		.cfi_startproc
+ 202               	.LVL17:
+ 203 0000 CF93      		push r28
+ 204               	.LCFI2:
+ 205               		.cfi_def_cfa_offset 3
+ 206               		.cfi_offset 28, -2
+ 207 0002 DF93      		push r29
+ 208               	.LCFI3:
+ 209               		.cfi_def_cfa_offset 4
+ 210               		.cfi_offset 29, -3
+ 211               	/* prologue: function */
+ 212               	/* frame size = 0 */
+ 213               	/* stack size = 2 */
+ 214               	.L__stack_usage = 2
+ 215               	.LBB124:
+ 216               	.LBB125:
+ 217               	.LBB126:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 218               		.loc 2 437 0
+ 219               	/* #APP */
+ 220               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 221 0004 F894      		cli
+ 222               	 ;  0 "" 2
+ 223               	.LVL18:
+ 224               	/* #NOAPP */
+ 225               	.LBE126:
+ 226               	.LBE125:
+ 227               	.LBE124:
+ 228               	.LBB127:
+ 229               	.LBB128:
+ 132:../../../os/common/oslib/src/chmempools.c ****   /*lint -save -e9013 [15.7] There is no else because it is not needed.*/
+ 230               		.loc 1 132 0
+ 231 0006 EC01      		movw r28,r24
+ 232 0008 A881      		ld r26,Y
+ 233 000a B981      		ldd r27,Y+1
+ 234               	.LVL19:
+ 134:../../../os/common/oslib/src/chmempools.c ****     mp->next = mp->next->next;
+ 235               		.loc 1 134 0
+ 236 000c 1097      		sbiw r26,0
+ 237 000e 01F0      		breq .L16
+ 135:../../../os/common/oslib/src/chmempools.c ****   }
+ 238               		.loc 1 135 0
+ 239 0010 2D91      		ld r18,X+
+ 240 0012 3C91      		ld r19,X
+ 241 0014 1197      		sbiw r26,1
+ 242 0016 3983      		std Y+1,r19
+ 243 0018 2883      		st Y,r18
+ 244               	.L17:
+ 245               	.LVL20:
+ 246               	.LBE128:
+ 247               	.LBE127:
+ 248               	.LBB130:
+ 249               	.LBB131:
+ 250               	.LBB132:
+ 251               	.LBB133:
+ 252               		.loc 2 447 0
+ 253               	/* #APP */
+ 254               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 255 001a 7894      		sei
+ 256               	 ;  0 "" 2
+ 257               	/* #NOAPP */
+ 258               	.LBE133:
+ 259               	.LBE132:
+ 260               	.LBE131:
+ 261               	.LBE130:
+ 163:../../../os/common/oslib/src/chmempools.c **** 
+ 262               		.loc 1 163 0
+ 263 001c CD01      		movw r24,r26
+ 264               	.LVL21:
+ 265               	/* epilogue start */
+ 266 001e DF91      		pop r29
+ 267 0020 CF91      		pop r28
+ 268               	.LVL22:
+ 269 0022 0895      		ret
+ 270               	.LVL23:
+ 271               	.L16:
+ 272               	.LBB137:
+ 273               	.LBB129:
+ 137:../../../os/common/oslib/src/chmempools.c ****     objp = mp->provider(mp->object_size, mp->align);
+ 274               		.loc 1 137 0
+ 275 0024 EC01      		movw r28,r24
+ 276 0026 EE81      		ldd r30,Y+6
+ 277 0028 FF81      		ldd r31,Y+7
+ 278 002a 3097      		sbiw r30,0
+ 279 002c 01F0      		breq .L17
+ 138:../../../os/common/oslib/src/chmempools.c ****   }
+ 280               		.loc 1 138 0
+ 281 002e 6C81      		ldd r22,Y+4
+ 282 0030 7D81      		ldd r23,Y+5
+ 283 0032 8A81      		ldd r24,Y+2
+ 284 0034 9B81      		ldd r25,Y+3
+ 285               	.LVL24:
+ 286 0036 0995      		icall
+ 287               	.LVL25:
+ 288 0038 DC01      		movw r26,r24
+ 289               	.LVL26:
+ 290               	.LBE129:
+ 291               	.LBE137:
+ 292               	.LBB138:
+ 293               	.LBB136:
+ 294               	.LBB135:
+ 295               	.LBB134:
+ 296               		.loc 2 447 0
+ 297               	/* #APP */
+ 298               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 299 003a 7894      		sei
+ 300               	 ;  0 "" 2
+ 301               	/* #NOAPP */
+ 302               	.LBE134:
+ 303               	.LBE135:
+ 304               	.LBE136:
+ 305               	.LBE138:
+ 163:../../../os/common/oslib/src/chmempools.c **** 
+ 306               		.loc 1 163 0
+ 307 003c CD01      		movw r24,r26
+ 308               	/* epilogue start */
+ 309 003e DF91      		pop r29
+ 310 0040 CF91      		pop r28
+ 311               	.LVL27:
+ 312 0042 0895      		ret
+ 313               		.cfi_endproc
+ 314               	.LFE151:
+ 316               		.section	.text.chPoolFreeI,"ax",@progbits
+ 317               	.global	chPoolFreeI
+ 319               	chPoolFreeI:
+ 320               	.LFB152:
+ 177:../../../os/common/oslib/src/chmempools.c ****   struct pool_header *php = objp;
+ 321               		.loc 1 177 0
+ 322               		.cfi_startproc
+ 323               	.LVL28:
+ 324               	/* prologue: function */
+ 325               	/* frame size = 0 */
+ 326               	/* stack size = 0 */
+ 327               	.L__stack_usage = 0
+ 186:../../../os/common/oslib/src/chmempools.c ****   mp->next = php;
+ 328               		.loc 1 186 0
+ 329 0000 FC01      		movw r30,r24
+ 330 0002 2081      		ld r18,Z
+ 331 0004 3181      		ldd r19,Z+1
+ 332 0006 FB01      		movw r30,r22
+ 333 0008 3183      		std Z+1,r19
+ 334 000a 2083      		st Z,r18
+ 335               		.loc 1 187 0
+ 336 000c FC01      		movw r30,r24
+ 337 000e 7183      		std Z+1,r23
+ 338 0010 6083      		st Z,r22
+ 339 0012 0895      		ret
+ 340               		.cfi_endproc
+ 341               	.LFE152:
+ 343               		.section	.text.chPoolFree,"ax",@progbits
+ 344               	.global	chPoolFree
+ 346               	chPoolFree:
+ 347               	.LFB153:
+ 188:../../../os/common/oslib/src/chmempools.c **** }
+ 189:../../../os/common/oslib/src/chmempools.c **** 
+ 190:../../../os/common/oslib/src/chmempools.c **** /**
+ 191:../../../os/common/oslib/src/chmempools.c ****  * @brief   Releases an object into a memory pool.
+ 192:../../../os/common/oslib/src/chmempools.c ****  * @pre     The memory pool must already be initialized.
+ 193:../../../os/common/oslib/src/chmempools.c ****  * @pre     The freed object must be of the right size for the specified
+ 194:../../../os/common/oslib/src/chmempools.c ****  *          memory pool.
+ 195:../../../os/common/oslib/src/chmempools.c ****  * @pre     The added object must be properly aligned.
+ 196:../../../os/common/oslib/src/chmempools.c ****  *
+ 197:../../../os/common/oslib/src/chmempools.c ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 198:../../../os/common/oslib/src/chmempools.c ****  * @param[in] objp      the pointer to the object to be released
+ 199:../../../os/common/oslib/src/chmempools.c ****  *
+ 200:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 201:../../../os/common/oslib/src/chmempools.c ****  */
+ 202:../../../os/common/oslib/src/chmempools.c **** void chPoolFree(memory_pool_t *mp, void *objp) {
+ 348               		.loc 1 202 0
+ 349               		.cfi_startproc
+ 350               	.LVL29:
+ 351               	/* prologue: function */
+ 352               	/* frame size = 0 */
+ 353               	/* stack size = 0 */
+ 354               	.L__stack_usage = 0
+ 355               	.LBB139:
+ 356               	.LBB140:
+ 357               	.LBB141:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 358               		.loc 2 437 0
+ 359               	/* #APP */
+ 360               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 361 0000 F894      		cli
+ 362               	 ;  0 "" 2
+ 363               	.LVL30:
+ 364               	/* #NOAPP */
+ 365               	.LBE141:
+ 366               	.LBE140:
+ 367               	.LBE139:
+ 368               	.LBB142:
+ 369               	.LBB143:
+ 186:../../../os/common/oslib/src/chmempools.c ****   mp->next = php;
+ 370               		.loc 1 186 0
+ 371 0002 FC01      		movw r30,r24
+ 372 0004 2081      		ld r18,Z
+ 373 0006 3181      		ldd r19,Z+1
+ 374 0008 FB01      		movw r30,r22
+ 375 000a 3183      		std Z+1,r19
+ 376 000c 2083      		st Z,r18
+ 187:../../../os/common/oslib/src/chmempools.c **** }
+ 377               		.loc 1 187 0
+ 378 000e FC01      		movw r30,r24
+ 379 0010 7183      		std Z+1,r23
+ 380 0012 6083      		st Z,r22
+ 381               	.LVL31:
+ 382               	.LBE143:
+ 383               	.LBE142:
+ 384               	.LBB144:
+ 385               	.LBB145:
+ 386               	.LBB146:
+ 387               	.LBB147:
+ 388               		.loc 2 447 0
+ 389               	/* #APP */
+ 390               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 391 0014 7894      		sei
+ 392               	 ;  0 "" 2
+ 393               	/* #NOAPP */
+ 394 0016 0895      		ret
+ 395               	.LBE147:
+ 396               	.LBE146:
+ 397               	.LBE145:
+ 398               	.LBE144:
+ 399               		.cfi_endproc
+ 400               	.LFE153:
+ 402               		.section	.text.chGuardedPoolObjectInitAligned,"ax",@progbits
+ 403               	.global	chGuardedPoolObjectInitAligned
+ 405               	chGuardedPoolObjectInitAligned:
+ 406               	.LFB154:
+ 203:../../../os/common/oslib/src/chmempools.c **** 
+ 204:../../../os/common/oslib/src/chmempools.c ****   chSysLock();
+ 205:../../../os/common/oslib/src/chmempools.c ****   chPoolFreeI(mp, objp);
+ 206:../../../os/common/oslib/src/chmempools.c ****   chSysUnlock();
+ 207:../../../os/common/oslib/src/chmempools.c **** }
+ 208:../../../os/common/oslib/src/chmempools.c **** 
+ 209:../../../os/common/oslib/src/chmempools.c **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+ 210:../../../os/common/oslib/src/chmempools.c **** /**
+ 211:../../../os/common/oslib/src/chmempools.c ****  * @brief   Initializes an empty guarded memory pool.
+ 212:../../../os/common/oslib/src/chmempools.c ****  *
+ 213:../../../os/common/oslib/src/chmempools.c ****  * @param[out] gmp      pointer to a @p guarded_memory_pool_t structure
+ 214:../../../os/common/oslib/src/chmempools.c ****  * @param[in] size      the size of the objects contained in this guarded
+ 215:../../../os/common/oslib/src/chmempools.c ****  *                      memory pool, the minimum accepted size is the size
+ 216:../../../os/common/oslib/src/chmempools.c ****  *                      of a pointer to void.
+ 217:../../../os/common/oslib/src/chmempools.c ****  * @param[in] align     required memory alignment
+ 218:../../../os/common/oslib/src/chmempools.c ****  *
+ 219:../../../os/common/oslib/src/chmempools.c ****  * @init
+ 220:../../../os/common/oslib/src/chmempools.c ****  */
+ 221:../../../os/common/oslib/src/chmempools.c **** void chGuardedPoolObjectInitAligned(guarded_memory_pool_t *gmp,
+ 222:../../../os/common/oslib/src/chmempools.c ****                                     size_t size,
+ 223:../../../os/common/oslib/src/chmempools.c ****                                     unsigned align) {
+ 407               		.loc 1 223 0
+ 408               		.cfi_startproc
+ 409               	.LVL32:
+ 410               	/* prologue: function */
+ 411               	/* frame size = 0 */
+ 412               	/* stack size = 0 */
+ 413               	.L__stack_usage = 0
+ 414               	.LBB148:
+ 415               	.LBB149:
+  82:../../../os/common/oslib/src/chmempools.c ****   mp->object_size = size;
+ 416               		.loc 1 82 0
+ 417 0000 FC01      		movw r30,r24
+ 418 0002 1682      		std Z+6,__zero_reg__
+ 419 0004 1582      		std Z+5,__zero_reg__
+  83:../../../os/common/oslib/src/chmempools.c ****   mp->align = align;
+ 420               		.loc 1 83 0
+ 421 0006 7087      		std Z+8,r23
+ 422 0008 6783      		std Z+7,r22
+  84:../../../os/common/oslib/src/chmempools.c ****   mp->provider = provider;
+ 423               		.loc 1 84 0
+ 424 000a 5287      		std Z+10,r21
+ 425 000c 4187      		std Z+9,r20
+  85:../../../os/common/oslib/src/chmempools.c **** }
+ 426               		.loc 1 85 0
+ 427 000e 1486      		std Z+12,__zero_reg__
+ 428 0010 1386      		std Z+11,__zero_reg__
+ 429               	.LVL33:
+ 430               	.LBE149:
+ 431               	.LBE148:
+ 224:../../../os/common/oslib/src/chmempools.c **** 
+ 225:../../../os/common/oslib/src/chmempools.c ****   chPoolObjectInitAligned(&gmp->pool, size, align, NULL);
+ 226:../../../os/common/oslib/src/chmempools.c ****   chSemObjectInit(&gmp->sem, (cnt_t)0);
+ 432               		.loc 1 226 0
+ 433 0012 60E0      		ldi r22,0
+ 434               	.LVL34:
+ 435 0014 0C94 0000 		jmp chSemObjectInit
+ 436               	.LVL35:
+ 437               		.cfi_endproc
+ 438               	.LFE154:
+ 440               		.section	.text.chGuardedPoolLoadArray,"ax",@progbits
+ 441               	.global	chGuardedPoolLoadArray
+ 443               	chGuardedPoolLoadArray:
+ 444               	.LFB155:
+ 227:../../../os/common/oslib/src/chmempools.c **** }
+ 228:../../../os/common/oslib/src/chmempools.c **** 
+ 229:../../../os/common/oslib/src/chmempools.c **** /**
+ 230:../../../os/common/oslib/src/chmempools.c ****  * @brief   Loads a guarded memory pool with an array of static objects.
+ 231:../../../os/common/oslib/src/chmempools.c ****  * @pre     The guarded memory pool must already be initialized.
+ 232:../../../os/common/oslib/src/chmempools.c ****  * @pre     The array elements must be of the right size for the specified
+ 233:../../../os/common/oslib/src/chmempools.c ****  *          guarded memory pool.
+ 234:../../../os/common/oslib/src/chmempools.c ****  * @post    The guarded memory pool contains the elements of the input array.
+ 235:../../../os/common/oslib/src/chmempools.c ****  *
+ 236:../../../os/common/oslib/src/chmempools.c ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 237:../../../os/common/oslib/src/chmempools.c ****  * @param[in] p         pointer to the array first element
+ 238:../../../os/common/oslib/src/chmempools.c ****  * @param[in] n         number of elements in the array
+ 239:../../../os/common/oslib/src/chmempools.c ****  *
+ 240:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 241:../../../os/common/oslib/src/chmempools.c ****  */
+ 242:../../../os/common/oslib/src/chmempools.c **** void chGuardedPoolLoadArray(guarded_memory_pool_t *gmp, void *p, size_t n) {
+ 445               		.loc 1 242 0
+ 446               		.cfi_startproc
+ 447               	.LVL36:
+ 448 0000 EF92      		push r14
+ 449               	.LCFI4:
+ 450               		.cfi_def_cfa_offset 3
+ 451               		.cfi_offset 14, -2
+ 452 0002 FF92      		push r15
+ 453               	.LCFI5:
+ 454               		.cfi_def_cfa_offset 4
+ 455               		.cfi_offset 15, -3
+ 456 0004 0F93      		push r16
+ 457               	.LCFI6:
+ 458               		.cfi_def_cfa_offset 5
+ 459               		.cfi_offset 16, -4
+ 460 0006 1F93      		push r17
+ 461               	.LCFI7:
+ 462               		.cfi_def_cfa_offset 6
+ 463               		.cfi_offset 17, -5
+ 464 0008 CF93      		push r28
+ 465               	.LCFI8:
+ 466               		.cfi_def_cfa_offset 7
+ 467               		.cfi_offset 28, -6
+ 468 000a DF93      		push r29
+ 469               	.LCFI9:
+ 470               		.cfi_def_cfa_offset 8
+ 471               		.cfi_offset 29, -7
+ 472               	/* prologue: function */
+ 473               	/* frame size = 0 */
+ 474               	/* stack size = 6 */
+ 475               	.L__stack_usage = 6
+ 476 000c 8C01      		movw r16,r24
+ 477 000e EB01      		movw r28,r22
+ 478 0010 7A01      		movw r14,r20
+ 243:../../../os/common/oslib/src/chmempools.c **** 
+ 244:../../../os/common/oslib/src/chmempools.c ****   chDbgCheck((gmp != NULL) && (n != 0U));
+ 245:../../../os/common/oslib/src/chmempools.c **** 
+ 246:../../../os/common/oslib/src/chmempools.c ****   while (n != 0U) {
+ 479               		.loc 1 246 0
+ 480 0012 452B      		or r20,r21
+ 481 0014 01F0      		breq .L24
+ 482               	.LVL37:
+ 483               	.L28:
+ 484               	.LBB150:
+ 485               	.LBB151:
+ 486               	.LBB152:
+ 487               	.LBB153:
+ 488               	.LBB154:
+ 489               	.LBB155:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 490               		.loc 2 437 0
+ 491               	/* #APP */
+ 492               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 493 0016 F894      		cli
+ 494               	 ;  0 "" 2
+ 495               	.LVL38:
+ 496               	/* #NOAPP */
+ 497               	.LBE155:
+ 498               	.LBE154:
+ 499               	.LBE153:
+ 500               	.LBB156:
+ 501               	.LBB157:
+ 502               	.LBB158:
+ 503               	.LBB159:
+ 186:../../../os/common/oslib/src/chmempools.c ****   mp->next = php;
+ 504               		.loc 1 186 0
+ 505 0018 F801      		movw r30,r16
+ 506 001a 8581      		ldd r24,Z+5
+ 507 001c 9681      		ldd r25,Z+6
+ 508 001e 9983      		std Y+1,r25
+ 509 0020 8883      		st Y,r24
+ 187:../../../os/common/oslib/src/chmempools.c **** }
+ 510               		.loc 1 187 0
+ 511 0022 D683      		std Z+6,r29
+ 512 0024 C583      		std Z+5,r28
+ 513               	.LVL39:
+ 514               	.LBE159:
+ 515               	.LBE158:
+ 516               		.file 3 "../../../os/common/oslib/include/chmempools.h"
+   1:../../../os/common/oslib/include/chmempools.h **** /*
+   2:../../../os/common/oslib/include/chmempools.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/oslib/include/chmempools.h **** 
+   4:../../../os/common/oslib/include/chmempools.h ****     This file is part of ChibiOS.
+   5:../../../os/common/oslib/include/chmempools.h **** 
+   6:../../../os/common/oslib/include/chmempools.h ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/oslib/include/chmempools.h ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/oslib/include/chmempools.h ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/oslib/include/chmempools.h ****     (at your option) any later version.
+  10:../../../os/common/oslib/include/chmempools.h **** 
+  11:../../../os/common/oslib/include/chmempools.h ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/oslib/include/chmempools.h ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/oslib/include/chmempools.h ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/oslib/include/chmempools.h ****     GNU General Public License for more details.
+  15:../../../os/common/oslib/include/chmempools.h **** 
+  16:../../../os/common/oslib/include/chmempools.h ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/oslib/include/chmempools.h ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/oslib/include/chmempools.h **** */
+  19:../../../os/common/oslib/include/chmempools.h **** 
+  20:../../../os/common/oslib/include/chmempools.h **** /**
+  21:../../../os/common/oslib/include/chmempools.h ****  * @file    chmempools.h
+  22:../../../os/common/oslib/include/chmempools.h ****  * @brief   Memory Pools macros and structures.
+  23:../../../os/common/oslib/include/chmempools.h ****  *
+  24:../../../os/common/oslib/include/chmempools.h ****  * @addtogroup pools
+  25:../../../os/common/oslib/include/chmempools.h ****  * @{
+  26:../../../os/common/oslib/include/chmempools.h ****  */
+  27:../../../os/common/oslib/include/chmempools.h **** 
+  28:../../../os/common/oslib/include/chmempools.h **** #ifndef CHMEMPOOLS_H
+  29:../../../os/common/oslib/include/chmempools.h **** #define CHMEMPOOLS_H
+  30:../../../os/common/oslib/include/chmempools.h **** 
+  31:../../../os/common/oslib/include/chmempools.h **** #if !defined(CH_CFG_USE_MEMPOOLS)
+  32:../../../os/common/oslib/include/chmempools.h **** #define CH_CFG_USE_MEMPOOLS                 FALSE
+  33:../../../os/common/oslib/include/chmempools.h **** #endif
+  34:../../../os/common/oslib/include/chmempools.h **** 
+  35:../../../os/common/oslib/include/chmempools.h **** #if (CH_CFG_USE_MEMPOOLS == TRUE) || defined(__DOXYGEN__)
+  36:../../../os/common/oslib/include/chmempools.h **** 
+  37:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  38:../../../os/common/oslib/include/chmempools.h **** /* Module constants.                                                         */
+  39:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  40:../../../os/common/oslib/include/chmempools.h **** 
+  41:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  42:../../../os/common/oslib/include/chmempools.h **** /* Module pre-compile time settings.                                         */
+  43:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  44:../../../os/common/oslib/include/chmempools.h **** 
+  45:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  46:../../../os/common/oslib/include/chmempools.h **** /* Derived constants and error checks.                                       */
+  47:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  48:../../../os/common/oslib/include/chmempools.h **** 
+  49:../../../os/common/oslib/include/chmempools.h **** #if CH_CFG_USE_MEMCORE == FALSE
+  50:../../../os/common/oslib/include/chmempools.h **** #error "CH_CFG_USE_MEMPOOLS requires CH_CFG_USE_MEMCORE"
+  51:../../../os/common/oslib/include/chmempools.h **** #endif
+  52:../../../os/common/oslib/include/chmempools.h **** 
+  53:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  54:../../../os/common/oslib/include/chmempools.h **** /* Module data structures and types.                                         */
+  55:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  56:../../../os/common/oslib/include/chmempools.h **** 
+  57:../../../os/common/oslib/include/chmempools.h **** /**
+  58:../../../os/common/oslib/include/chmempools.h ****  * @brief   Memory pool free object header.
+  59:../../../os/common/oslib/include/chmempools.h ****  */
+  60:../../../os/common/oslib/include/chmempools.h **** struct pool_header {
+  61:../../../os/common/oslib/include/chmempools.h ****   struct pool_header    *next;          /**< @brief Pointer to the next pool
+  62:../../../os/common/oslib/include/chmempools.h ****                                                     header in the list.     */
+  63:../../../os/common/oslib/include/chmempools.h **** };
+  64:../../../os/common/oslib/include/chmempools.h **** 
+  65:../../../os/common/oslib/include/chmempools.h **** /**
+  66:../../../os/common/oslib/include/chmempools.h ****  * @brief   Memory pool descriptor.
+  67:../../../os/common/oslib/include/chmempools.h ****  */
+  68:../../../os/common/oslib/include/chmempools.h **** typedef struct {
+  69:../../../os/common/oslib/include/chmempools.h ****   struct pool_header    *next;          /**< @brief Pointer to the header.  */
+  70:../../../os/common/oslib/include/chmempools.h ****   size_t                object_size;    /**< @brief Memory pool objects
+  71:../../../os/common/oslib/include/chmempools.h ****                                                     size.                   */
+  72:../../../os/common/oslib/include/chmempools.h ****   unsigned              align;          /**< @brief Required alignment.     */
+  73:../../../os/common/oslib/include/chmempools.h ****   memgetfunc_t          provider;       /**< @brief Memory blocks provider
+  74:../../../os/common/oslib/include/chmempools.h ****                                                     for this pool.          */
+  75:../../../os/common/oslib/include/chmempools.h **** } memory_pool_t;
+  76:../../../os/common/oslib/include/chmempools.h **** 
+  77:../../../os/common/oslib/include/chmempools.h **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+  78:../../../os/common/oslib/include/chmempools.h **** /**
+  79:../../../os/common/oslib/include/chmempools.h ****  * @brief   Guarded memory pool descriptor.
+  80:../../../os/common/oslib/include/chmempools.h ****  */
+  81:../../../os/common/oslib/include/chmempools.h **** typedef struct {
+  82:../../../os/common/oslib/include/chmempools.h ****   semaphore_t           sem;            /**< @brief Counter semaphore guarding
+  83:../../../os/common/oslib/include/chmempools.h ****                                                     the memory pool.        */
+  84:../../../os/common/oslib/include/chmempools.h ****   memory_pool_t         pool;           /**< @brief The memory pool itself. */
+  85:../../../os/common/oslib/include/chmempools.h **** } guarded_memory_pool_t;
+  86:../../../os/common/oslib/include/chmempools.h **** #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
+  87:../../../os/common/oslib/include/chmempools.h **** 
+  88:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  89:../../../os/common/oslib/include/chmempools.h **** /* Module macros.                                                            */
+  90:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+  91:../../../os/common/oslib/include/chmempools.h **** 
+  92:../../../os/common/oslib/include/chmempools.h **** /**
+  93:../../../os/common/oslib/include/chmempools.h ****  * @brief   Data part of a static memory pool initializer.
+  94:../../../os/common/oslib/include/chmempools.h ****  * @details This macro should be used when statically initializing a
+  95:../../../os/common/oslib/include/chmempools.h ****  *          memory pool that is part of a bigger structure.
+  96:../../../os/common/oslib/include/chmempools.h ****  *
+  97:../../../os/common/oslib/include/chmempools.h ****  * @param[in] name      the name of the memory pool variable
+  98:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      size of the memory pool contained objects
+  99:../../../os/common/oslib/include/chmempools.h ****  * @param[in] align     required memory alignment
+ 100:../../../os/common/oslib/include/chmempools.h ****  * @param[in] provider  memory provider function for the memory pool
+ 101:../../../os/common/oslib/include/chmempools.h ****  */
+ 102:../../../os/common/oslib/include/chmempools.h **** #define _MEMORYPOOL_DATA(name, size, align, provider)                       \
+ 103:../../../os/common/oslib/include/chmempools.h ****   {NULL, size, align, provider}
+ 104:../../../os/common/oslib/include/chmempools.h **** 
+ 105:../../../os/common/oslib/include/chmempools.h **** /**
+ 106:../../../os/common/oslib/include/chmempools.h ****  * @brief   Static memory pool initializer.
+ 107:../../../os/common/oslib/include/chmempools.h ****  * @details Statically initialized memory pools require no explicit
+ 108:../../../os/common/oslib/include/chmempools.h ****  *          initialization using @p chPoolInit().
+ 109:../../../os/common/oslib/include/chmempools.h ****  *
+ 110:../../../os/common/oslib/include/chmempools.h ****  * @param[in] name      the name of the memory pool variable
+ 111:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      size of the memory pool contained objects
+ 112:../../../os/common/oslib/include/chmempools.h ****  * @param[in] align     required memory alignment
+ 113:../../../os/common/oslib/include/chmempools.h ****  * @param[in] provider  memory provider function for the memory pool or @p NULL
+ 114:../../../os/common/oslib/include/chmempools.h ****  *                      if the pool is not allowed to grow automatically
+ 115:../../../os/common/oslib/include/chmempools.h ****  */
+ 116:../../../os/common/oslib/include/chmempools.h **** #define MEMORYPOOL_DECL(name, size, align, provider)                        \
+ 117:../../../os/common/oslib/include/chmempools.h ****   memory_pool_t name = _MEMORYPOOL_DATA(name, size, align, provider)
+ 118:../../../os/common/oslib/include/chmempools.h **** 
+ 119:../../../os/common/oslib/include/chmempools.h **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+ 120:../../../os/common/oslib/include/chmempools.h **** /**
+ 121:../../../os/common/oslib/include/chmempools.h ****  * @brief   Data part of a static guarded memory pool initializer.
+ 122:../../../os/common/oslib/include/chmempools.h ****  * @details This macro should be used when statically initializing a
+ 123:../../../os/common/oslib/include/chmempools.h ****  *          memory pool that is part of a bigger structure.
+ 124:../../../os/common/oslib/include/chmempools.h ****  *
+ 125:../../../os/common/oslib/include/chmempools.h ****  * @param[in] name      the name of the memory pool variable
+ 126:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      size of the memory pool contained objects
+ 127:../../../os/common/oslib/include/chmempools.h ****  * @param[in] align     required memory alignment
+ 128:../../../os/common/oslib/include/chmempools.h ****  */
+ 129:../../../os/common/oslib/include/chmempools.h **** #define _GUARDEDMEMORYPOOL_DATA(name, size, align) {                        \
+ 130:../../../os/common/oslib/include/chmempools.h ****   _SEMAPHORE_DATA(name.sem, (cnt_t)0),                                      \
+ 131:../../../os/common/oslib/include/chmempools.h ****   _MEMORYPOOL_DATA(NULL, size, align, NULL)                                 \
+ 132:../../../os/common/oslib/include/chmempools.h **** }
+ 133:../../../os/common/oslib/include/chmempools.h **** 
+ 134:../../../os/common/oslib/include/chmempools.h **** /**
+ 135:../../../os/common/oslib/include/chmempools.h ****  * @brief   Static guarded memory pool initializer.
+ 136:../../../os/common/oslib/include/chmempools.h ****  * @details Statically initialized guarded memory pools require no explicit
+ 137:../../../os/common/oslib/include/chmempools.h ****  *          initialization using @p chGuardedPoolInit().
+ 138:../../../os/common/oslib/include/chmempools.h ****  *
+ 139:../../../os/common/oslib/include/chmempools.h ****  * @param[in] name      the name of the guarded memory pool variable
+ 140:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      size of the memory pool contained objects
+ 141:../../../os/common/oslib/include/chmempools.h ****  * @param[in] align     required memory alignment
+ 142:../../../os/common/oslib/include/chmempools.h ****  */
+ 143:../../../os/common/oslib/include/chmempools.h **** #define GUARDEDMEMORYPOOL_DECL(name, size, align)                           \
+ 144:../../../os/common/oslib/include/chmempools.h ****   guarded_memory_pool_t name = _GUARDEDMEMORYPOOL_DATA(name, size, align)
+ 145:../../../os/common/oslib/include/chmempools.h **** #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
+ 146:../../../os/common/oslib/include/chmempools.h **** 
+ 147:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+ 148:../../../os/common/oslib/include/chmempools.h **** /* External declarations.                                                    */
+ 149:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+ 150:../../../os/common/oslib/include/chmempools.h **** 
+ 151:../../../os/common/oslib/include/chmempools.h **** #ifdef __cplusplus
+ 152:../../../os/common/oslib/include/chmempools.h **** extern "C" {
+ 153:../../../os/common/oslib/include/chmempools.h **** #endif
+ 154:../../../os/common/oslib/include/chmempools.h ****   void chPoolObjectInitAligned(memory_pool_t *mp, size_t size,
+ 155:../../../os/common/oslib/include/chmempools.h ****                                unsigned align, memgetfunc_t provider);
+ 156:../../../os/common/oslib/include/chmempools.h ****   void chPoolLoadArray(memory_pool_t *mp, void *p, size_t n);
+ 157:../../../os/common/oslib/include/chmempools.h ****   void *chPoolAllocI(memory_pool_t *mp);
+ 158:../../../os/common/oslib/include/chmempools.h ****   void *chPoolAlloc(memory_pool_t *mp);
+ 159:../../../os/common/oslib/include/chmempools.h ****   void chPoolFreeI(memory_pool_t *mp, void *objp);
+ 160:../../../os/common/oslib/include/chmempools.h ****   void chPoolFree(memory_pool_t *mp, void *objp);
+ 161:../../../os/common/oslib/include/chmempools.h **** #if CH_CFG_USE_SEMAPHORES == TRUE
+ 162:../../../os/common/oslib/include/chmempools.h ****   void chGuardedPoolObjectInitAligned(guarded_memory_pool_t *gmp,
+ 163:../../../os/common/oslib/include/chmempools.h ****                                       size_t size,
+ 164:../../../os/common/oslib/include/chmempools.h ****                                       unsigned align);
+ 165:../../../os/common/oslib/include/chmempools.h ****   void chGuardedPoolLoadArray(guarded_memory_pool_t *gmp, void *p, size_t n);
+ 166:../../../os/common/oslib/include/chmempools.h ****   void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
+ 167:../../../os/common/oslib/include/chmempools.h ****                                    sysinterval_t timeout);
+ 168:../../../os/common/oslib/include/chmempools.h ****   void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
+ 169:../../../os/common/oslib/include/chmempools.h ****                                   sysinterval_t timeout);
+ 170:../../../os/common/oslib/include/chmempools.h ****   void chGuardedPoolFree(guarded_memory_pool_t *gmp, void *objp);
+ 171:../../../os/common/oslib/include/chmempools.h **** #endif
+ 172:../../../os/common/oslib/include/chmempools.h **** #ifdef __cplusplus
+ 173:../../../os/common/oslib/include/chmempools.h **** }
+ 174:../../../os/common/oslib/include/chmempools.h **** #endif
+ 175:../../../os/common/oslib/include/chmempools.h **** 
+ 176:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+ 177:../../../os/common/oslib/include/chmempools.h **** /* Module inline functions.                                                  */
+ 178:../../../os/common/oslib/include/chmempools.h **** /*===========================================================================*/
+ 179:../../../os/common/oslib/include/chmempools.h **** 
+ 180:../../../os/common/oslib/include/chmempools.h **** /**
+ 181:../../../os/common/oslib/include/chmempools.h ****  * @brief   Initializes an empty memory pool.
+ 182:../../../os/common/oslib/include/chmempools.h ****  *
+ 183:../../../os/common/oslib/include/chmempools.h ****  * @param[out] mp       pointer to a @p memory_pool_t structure
+ 184:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      the size of the objects contained in this memory pool,
+ 185:../../../os/common/oslib/include/chmempools.h ****  *                      the minimum accepted size is the size of a pointer to
+ 186:../../../os/common/oslib/include/chmempools.h ****  *                      void.
+ 187:../../../os/common/oslib/include/chmempools.h ****  * @param[in] provider  memory provider function for the memory pool or
+ 188:../../../os/common/oslib/include/chmempools.h ****  *                      @p NULL if the pool is not allowed to grow
+ 189:../../../os/common/oslib/include/chmempools.h ****  *                      automatically
+ 190:../../../os/common/oslib/include/chmempools.h ****  *
+ 191:../../../os/common/oslib/include/chmempools.h ****  * @init
+ 192:../../../os/common/oslib/include/chmempools.h ****  */
+ 193:../../../os/common/oslib/include/chmempools.h **** static inline void chPoolObjectInit(memory_pool_t *mp,
+ 194:../../../os/common/oslib/include/chmempools.h ****                                     size_t size,
+ 195:../../../os/common/oslib/include/chmempools.h ****                                     memgetfunc_t provider) {
+ 196:../../../os/common/oslib/include/chmempools.h **** 
+ 197:../../../os/common/oslib/include/chmempools.h ****   chPoolObjectInitAligned(mp, size, PORT_NATURAL_ALIGN, provider);
+ 198:../../../os/common/oslib/include/chmempools.h **** }
+ 199:../../../os/common/oslib/include/chmempools.h **** 
+ 200:../../../os/common/oslib/include/chmempools.h **** /**
+ 201:../../../os/common/oslib/include/chmempools.h ****  * @brief   Adds an object to a memory pool.
+ 202:../../../os/common/oslib/include/chmempools.h ****  * @pre     The memory pool must be already been initialized.
+ 203:../../../os/common/oslib/include/chmempools.h ****  * @pre     The added object must be of the right size for the specified
+ 204:../../../os/common/oslib/include/chmempools.h ****  *          memory pool.
+ 205:../../../os/common/oslib/include/chmempools.h ****  * @pre     The added object must be properly aligned.
+ 206:../../../os/common/oslib/include/chmempools.h ****  * @note    This function is just an alias for @p chPoolFree() and has been
+ 207:../../../os/common/oslib/include/chmempools.h ****  *          added for clarity.
+ 208:../../../os/common/oslib/include/chmempools.h ****  *
+ 209:../../../os/common/oslib/include/chmempools.h ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 210:../../../os/common/oslib/include/chmempools.h ****  * @param[in] objp      the pointer to the object to be added
+ 211:../../../os/common/oslib/include/chmempools.h ****  *
+ 212:../../../os/common/oslib/include/chmempools.h ****  * @api
+ 213:../../../os/common/oslib/include/chmempools.h ****  */
+ 214:../../../os/common/oslib/include/chmempools.h **** static inline void chPoolAdd(memory_pool_t *mp, void *objp) {
+ 215:../../../os/common/oslib/include/chmempools.h **** 
+ 216:../../../os/common/oslib/include/chmempools.h ****   chPoolFree(mp, objp);
+ 217:../../../os/common/oslib/include/chmempools.h **** }
+ 218:../../../os/common/oslib/include/chmempools.h **** 
+ 219:../../../os/common/oslib/include/chmempools.h **** /**
+ 220:../../../os/common/oslib/include/chmempools.h ****  * @brief   Adds an object to a memory pool.
+ 221:../../../os/common/oslib/include/chmempools.h ****  * @pre     The memory pool must be already been initialized.
+ 222:../../../os/common/oslib/include/chmempools.h ****  * @pre     The added object must be of the right size for the specified
+ 223:../../../os/common/oslib/include/chmempools.h ****  *          memory pool.
+ 224:../../../os/common/oslib/include/chmempools.h ****  * @pre     The added object must be properly aligned.
+ 225:../../../os/common/oslib/include/chmempools.h ****  * @note    This function is just an alias for @p chPoolFreeI() and has been
+ 226:../../../os/common/oslib/include/chmempools.h ****  *          added for clarity.
+ 227:../../../os/common/oslib/include/chmempools.h ****  *
+ 228:../../../os/common/oslib/include/chmempools.h ****  * @param[in] mp        pointer to a @p memory_pool_t structure
+ 229:../../../os/common/oslib/include/chmempools.h ****  * @param[in] objp      the pointer to the object to be added
+ 230:../../../os/common/oslib/include/chmempools.h ****  *
+ 231:../../../os/common/oslib/include/chmempools.h ****  * @iclass
+ 232:../../../os/common/oslib/include/chmempools.h ****  */
+ 233:../../../os/common/oslib/include/chmempools.h **** static inline void chPoolAddI(memory_pool_t *mp, void *objp) {
+ 234:../../../os/common/oslib/include/chmempools.h **** 
+ 235:../../../os/common/oslib/include/chmempools.h ****   chPoolFreeI(mp, objp);
+ 236:../../../os/common/oslib/include/chmempools.h **** }
+ 237:../../../os/common/oslib/include/chmempools.h **** 
+ 238:../../../os/common/oslib/include/chmempools.h **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+ 239:../../../os/common/oslib/include/chmempools.h **** /**
+ 240:../../../os/common/oslib/include/chmempools.h ****  * @brief   Initializes an empty guarded memory pool.
+ 241:../../../os/common/oslib/include/chmempools.h ****  *
+ 242:../../../os/common/oslib/include/chmempools.h ****  * @param[out] gmp      pointer to a @p guarded_memory_pool_t structure
+ 243:../../../os/common/oslib/include/chmempools.h ****  * @param[in] size      the size of the objects contained in this guarded
+ 244:../../../os/common/oslib/include/chmempools.h ****  *                      memory pool, the minimum accepted size is the size
+ 245:../../../os/common/oslib/include/chmempools.h ****  *                      of a pointer to void.
+ 246:../../../os/common/oslib/include/chmempools.h ****  *
+ 247:../../../os/common/oslib/include/chmempools.h ****  * @init
+ 248:../../../os/common/oslib/include/chmempools.h ****  */
+ 249:../../../os/common/oslib/include/chmempools.h **** static inline void chGuardedPoolObjectInit(guarded_memory_pool_t *gmp,
+ 250:../../../os/common/oslib/include/chmempools.h ****                                            size_t size) {
+ 251:../../../os/common/oslib/include/chmempools.h **** 
+ 252:../../../os/common/oslib/include/chmempools.h ****   chGuardedPoolObjectInitAligned(gmp, size, PORT_NATURAL_ALIGN);
+ 253:../../../os/common/oslib/include/chmempools.h **** }
+ 254:../../../os/common/oslib/include/chmempools.h **** 
+ 255:../../../os/common/oslib/include/chmempools.h **** /**
+ 256:../../../os/common/oslib/include/chmempools.h ****  * @brief   Allocates an object from a guarded memory pool.
+ 257:../../../os/common/oslib/include/chmempools.h ****  * @pre     The guarded memory pool must be already been initialized.
+ 258:../../../os/common/oslib/include/chmempools.h ****  *
+ 259:../../../os/common/oslib/include/chmempools.h ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 260:../../../os/common/oslib/include/chmempools.h ****  * @return              The pointer to the allocated object.
+ 261:../../../os/common/oslib/include/chmempools.h ****  * @retval NULL         if the pool is empty.
+ 262:../../../os/common/oslib/include/chmempools.h ****  *
+ 263:../../../os/common/oslib/include/chmempools.h ****  * @iclass
+ 264:../../../os/common/oslib/include/chmempools.h ****  */
+ 265:../../../os/common/oslib/include/chmempools.h **** static inline void *chGuardedPoolAllocI(guarded_memory_pool_t *gmp) {
+ 266:../../../os/common/oslib/include/chmempools.h ****   void *p;
+ 267:../../../os/common/oslib/include/chmempools.h **** 
+ 268:../../../os/common/oslib/include/chmempools.h ****   p = chPoolAllocI(&gmp->pool);
+ 269:../../../os/common/oslib/include/chmempools.h ****   if (p != NULL) {
+ 270:../../../os/common/oslib/include/chmempools.h ****     chSemFastWaitI(&gmp->sem);
+ 271:../../../os/common/oslib/include/chmempools.h ****     chDbgAssert(chSemGetCounterI(&gmp->sem) >= (cnt_t)0,
+ 272:../../../os/common/oslib/include/chmempools.h ****                 "semaphore out of sync");
+ 273:../../../os/common/oslib/include/chmempools.h ****   }
+ 274:../../../os/common/oslib/include/chmempools.h ****   return p;
+ 275:../../../os/common/oslib/include/chmempools.h **** }
+ 276:../../../os/common/oslib/include/chmempools.h **** 
+ 277:../../../os/common/oslib/include/chmempools.h **** /**
+ 278:../../../os/common/oslib/include/chmempools.h ****  * @brief   Releases an object into a guarded memory pool.
+ 279:../../../os/common/oslib/include/chmempools.h ****  * @pre     The guarded memory pool must already be initialized.
+ 280:../../../os/common/oslib/include/chmempools.h ****  * @pre     The freed object must be of the right size for the specified
+ 281:../../../os/common/oslib/include/chmempools.h ****  *          guarded memory pool.
+ 282:../../../os/common/oslib/include/chmempools.h ****  * @pre     The added object must be properly aligned.
+ 283:../../../os/common/oslib/include/chmempools.h ****  *
+ 284:../../../os/common/oslib/include/chmempools.h ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 285:../../../os/common/oslib/include/chmempools.h ****  * @param[in] objp      the pointer to the object to be released
+ 286:../../../os/common/oslib/include/chmempools.h ****  *
+ 287:../../../os/common/oslib/include/chmempools.h ****  * @iclass
+ 288:../../../os/common/oslib/include/chmempools.h ****  */
+ 289:../../../os/common/oslib/include/chmempools.h **** static inline void chGuardedPoolFreeI(guarded_memory_pool_t *gmp, void *objp) {
+ 290:../../../os/common/oslib/include/chmempools.h **** 
+ 291:../../../os/common/oslib/include/chmempools.h ****   chPoolFreeI(&gmp->pool, objp);
+ 292:../../../os/common/oslib/include/chmempools.h ****   chSemSignalI(&gmp->sem);
+ 517               		.loc 3 292 0
+ 518 0026 C801      		movw r24,r16
+ 519 0028 0E94 0000 		call chSemSignalI
+ 520               	.LVL40:
+ 521               	.LBE157:
+ 522               	.LBE156:
+ 247:../../../os/common/oslib/src/chmempools.c ****     chGuardedPoolAdd(gmp, p);
+ 248:../../../os/common/oslib/src/chmempools.c ****     /*lint -save -e9087 [11.3] Safe cast.*/
+ 249:../../../os/common/oslib/src/chmempools.c ****     p = (void *)(((uint8_t *)p) + gmp->pool.object_size);
+ 250:../../../os/common/oslib/src/chmempools.c ****     /*lint -restore*/
+ 251:../../../os/common/oslib/src/chmempools.c ****     n--;
+ 252:../../../os/common/oslib/src/chmempools.c ****   }
+ 253:../../../os/common/oslib/src/chmempools.c **** }
+ 254:../../../os/common/oslib/src/chmempools.c **** 
+ 255:../../../os/common/oslib/src/chmempools.c **** /**
+ 256:../../../os/common/oslib/src/chmempools.c ****  * @brief   Allocates an object from a guarded memory pool.
+ 257:../../../os/common/oslib/src/chmempools.c ****  * @pre     The guarded memory pool must already be initialized.
+ 258:../../../os/common/oslib/src/chmempools.c ****  *
+ 259:../../../os/common/oslib/src/chmempools.c ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 260:../../../os/common/oslib/src/chmempools.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
+ 261:../../../os/common/oslib/src/chmempools.c ****  *                      the following special values are allowed:
+ 262:../../../os/common/oslib/src/chmempools.c ****  *                      - @a TIME_IMMEDIATE immediate timeout.
+ 263:../../../os/common/oslib/src/chmempools.c ****  *                      - @a TIME_INFINITE no timeout.
+ 264:../../../os/common/oslib/src/chmempools.c ****  *                      .
+ 265:../../../os/common/oslib/src/chmempools.c ****  * @return              The pointer to the allocated object.
+ 266:../../../os/common/oslib/src/chmempools.c ****  * @retval NULL         if the operation timed out.
+ 267:../../../os/common/oslib/src/chmempools.c ****  *
+ 268:../../../os/common/oslib/src/chmempools.c ****  * @sclass
+ 269:../../../os/common/oslib/src/chmempools.c ****  */
+ 270:../../../os/common/oslib/src/chmempools.c **** void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
+ 271:../../../os/common/oslib/src/chmempools.c ****                                  sysinterval_t timeout) {
+ 272:../../../os/common/oslib/src/chmempools.c ****   msg_t msg;
+ 273:../../../os/common/oslib/src/chmempools.c **** 
+ 274:../../../os/common/oslib/src/chmempools.c ****   msg = chSemWaitTimeoutS(&gmp->sem, timeout);
+ 275:../../../os/common/oslib/src/chmempools.c ****   if (msg != MSG_OK) {
+ 276:../../../os/common/oslib/src/chmempools.c ****     return NULL;
+ 277:../../../os/common/oslib/src/chmempools.c ****   }
+ 278:../../../os/common/oslib/src/chmempools.c **** 
+ 279:../../../os/common/oslib/src/chmempools.c ****   return chPoolAllocI(&gmp->pool);
+ 280:../../../os/common/oslib/src/chmempools.c **** }
+ 281:../../../os/common/oslib/src/chmempools.c **** 
+ 282:../../../os/common/oslib/src/chmempools.c **** /**
+ 283:../../../os/common/oslib/src/chmempools.c ****  * @brief   Allocates an object from a guarded memory pool.
+ 284:../../../os/common/oslib/src/chmempools.c ****  * @pre     The guarded memory pool must already be initialized.
+ 285:../../../os/common/oslib/src/chmempools.c ****  *
+ 286:../../../os/common/oslib/src/chmempools.c ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 287:../../../os/common/oslib/src/chmempools.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
+ 288:../../../os/common/oslib/src/chmempools.c ****  *                      the following special values are allowed:
+ 289:../../../os/common/oslib/src/chmempools.c ****  *                      - @a TIME_IMMEDIATE immediate timeout.
+ 290:../../../os/common/oslib/src/chmempools.c ****  *                      - @a TIME_INFINITE no timeout.
+ 291:../../../os/common/oslib/src/chmempools.c ****  *                      .
+ 292:../../../os/common/oslib/src/chmempools.c ****  * @return              The pointer to the allocated object.
+ 293:../../../os/common/oslib/src/chmempools.c ****  * @retval NULL         if the operation timed out.
+ 294:../../../os/common/oslib/src/chmempools.c ****  *
+ 295:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 296:../../../os/common/oslib/src/chmempools.c ****  */
+ 297:../../../os/common/oslib/src/chmempools.c **** void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
+ 298:../../../os/common/oslib/src/chmempools.c ****                                 sysinterval_t timeout) {
+ 299:../../../os/common/oslib/src/chmempools.c ****   void *p;
+ 300:../../../os/common/oslib/src/chmempools.c **** 
+ 301:../../../os/common/oslib/src/chmempools.c ****   chSysLock();
+ 302:../../../os/common/oslib/src/chmempools.c ****   p = chGuardedPoolAllocTimeoutS(gmp, timeout);
+ 303:../../../os/common/oslib/src/chmempools.c ****   chSysUnlock();
+ 304:../../../os/common/oslib/src/chmempools.c **** 
+ 305:../../../os/common/oslib/src/chmempools.c ****   return p;
+ 306:../../../os/common/oslib/src/chmempools.c **** }
+ 307:../../../os/common/oslib/src/chmempools.c **** 
+ 308:../../../os/common/oslib/src/chmempools.c **** /**
+ 309:../../../os/common/oslib/src/chmempools.c ****  * @brief   Releases an object into a guarded memory pool.
+ 310:../../../os/common/oslib/src/chmempools.c ****  * @pre     The guarded memory pool must already be initialized.
+ 311:../../../os/common/oslib/src/chmempools.c ****  * @pre     The freed object must be of the right size for the specified
+ 312:../../../os/common/oslib/src/chmempools.c ****  *          guarded memory pool.
+ 313:../../../os/common/oslib/src/chmempools.c ****  * @pre     The added object must be properly aligned.
+ 314:../../../os/common/oslib/src/chmempools.c ****  *
+ 315:../../../os/common/oslib/src/chmempools.c ****  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ 316:../../../os/common/oslib/src/chmempools.c ****  * @param[in] objp      the pointer to the object to be released
+ 317:../../../os/common/oslib/src/chmempools.c ****  *
+ 318:../../../os/common/oslib/src/chmempools.c ****  * @api
+ 319:../../../os/common/oslib/src/chmempools.c ****  */
+ 320:../../../os/common/oslib/src/chmempools.c **** void chGuardedPoolFree(guarded_memory_pool_t *gmp, void *objp) {
+ 321:../../../os/common/oslib/src/chmempools.c **** 
+ 322:../../../os/common/oslib/src/chmempools.c ****   chSysLock();
+ 323:../../../os/common/oslib/src/chmempools.c ****   chGuardedPoolFreeI(gmp, objp);
+ 324:../../../os/common/oslib/src/chmempools.c ****   chSchRescheduleS();
+ 523               		.loc 1 324 0
+ 524 002c 0E94 0000 		call chSchRescheduleS
+ 525               	.LVL41:
+ 526               	.LBB160:
+ 527               	.LBB161:
+ 528               	.LBB162:
+ 529               	.LBB163:
+ 530               		.loc 2 447 0
+ 531               	/* #APP */
+ 532               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 533 0030 7894      		sei
+ 534               	 ;  0 "" 2
+ 535               	.LVL42:
+ 536               	/* #NOAPP */
+ 537               	.LBE163:
+ 538               	.LBE162:
+ 539               	.LBE161:
+ 540               	.LBE160:
+ 541               	.LBE152:
+ 542               	.LBE151:
+ 543               	.LBE150:
+ 249:../../../os/common/oslib/src/chmempools.c ****     /*lint -restore*/
+ 544               		.loc 1 249 0
+ 545 0032 F801      		movw r30,r16
+ 546 0034 8781      		ldd r24,Z+7
+ 547 0036 9085      		ldd r25,Z+8
+ 548 0038 C80F      		add r28,r24
+ 549 003a D91F      		adc r29,r25
+ 550               	.LVL43:
+ 251:../../../os/common/oslib/src/chmempools.c ****   }
+ 551               		.loc 1 251 0
+ 552 003c F1E0      		ldi r31,1
+ 553 003e EF1A      		sub r14,r31
+ 554 0040 F108      		sbc r15,__zero_reg__
+ 555               	.LVL44:
+ 246:../../../os/common/oslib/src/chmempools.c ****     chGuardedPoolAdd(gmp, p);
+ 556               		.loc 1 246 0
+ 557 0042 01F4      		brne .L28
+ 558               	.L24:
+ 559               	/* epilogue start */
+ 253:../../../os/common/oslib/src/chmempools.c **** 
+ 560               		.loc 1 253 0
+ 561 0044 DF91      		pop r29
+ 562 0046 CF91      		pop r28
+ 563               	.LVL45:
+ 564 0048 1F91      		pop r17
+ 565 004a 0F91      		pop r16
+ 566               	.LVL46:
+ 567 004c FF90      		pop r15
+ 568 004e EF90      		pop r14
+ 569               	.LVL47:
+ 570 0050 0895      		ret
+ 571               		.cfi_endproc
+ 572               	.LFE155:
+ 574               		.section	.text.chGuardedPoolAllocTimeoutS,"ax",@progbits
+ 575               	.global	chGuardedPoolAllocTimeoutS
+ 577               	chGuardedPoolAllocTimeoutS:
+ 578               	.LFB156:
+ 271:../../../os/common/oslib/src/chmempools.c ****   msg_t msg;
+ 579               		.loc 1 271 0
+ 580               		.cfi_startproc
+ 581               	.LVL48:
+ 582 0000 CF93      		push r28
+ 583               	.LCFI10:
+ 584               		.cfi_def_cfa_offset 3
+ 585               		.cfi_offset 28, -2
+ 586 0002 DF93      		push r29
+ 587               	.LCFI11:
+ 588               		.cfi_def_cfa_offset 4
+ 589               		.cfi_offset 29, -3
+ 590               	/* prologue: function */
+ 591               	/* frame size = 0 */
+ 592               	/* stack size = 2 */
+ 593               	.L__stack_usage = 2
+ 594 0004 EC01      		movw r28,r24
+ 274:../../../os/common/oslib/src/chmempools.c ****   if (msg != MSG_OK) {
+ 595               		.loc 1 274 0
+ 596 0006 0E94 0000 		call chSemWaitTimeoutS
+ 597               	.LVL49:
+ 275:../../../os/common/oslib/src/chmempools.c ****     return NULL;
+ 598               		.loc 1 275 0
+ 599 000a 892B      		or r24,r25
+ 600 000c 01F4      		brne .L34
+ 601               	.LVL50:
+ 602               	.LBB164:
+ 603               	.LBB165:
+ 132:../../../os/common/oslib/src/chmempools.c ****   /*lint -save -e9013 [15.7] There is no else because it is not needed.*/
+ 604               		.loc 1 132 0
+ 605 000e ED81      		ldd r30,Y+5
+ 606 0010 FE81      		ldd r31,Y+6
+ 607               	.LVL51:
+ 134:../../../os/common/oslib/src/chmempools.c ****     mp->next = mp->next->next;
+ 608               		.loc 1 134 0
+ 609 0012 3097      		sbiw r30,0
+ 610 0014 01F0      		breq .L32
+ 135:../../../os/common/oslib/src/chmempools.c ****   }
+ 611               		.loc 1 135 0
+ 612 0016 8081      		ld r24,Z
+ 613 0018 9181      		ldd r25,Z+1
+ 614               	.LVL52:
+ 615 001a 9E83      		std Y+6,r25
+ 616 001c 8D83      		std Y+5,r24
+ 617 001e CF01      		movw r24,r30
+ 618               	/* epilogue start */
+ 619               	.LBE165:
+ 620               	.LBE164:
+ 280:../../../os/common/oslib/src/chmempools.c **** 
+ 621               		.loc 1 280 0
+ 622 0020 DF91      		pop r29
+ 623 0022 CF91      		pop r28
+ 624               	.LVL53:
+ 625 0024 0895      		ret
+ 626               	.LVL54:
+ 627               	.L34:
+ 276:../../../os/common/oslib/src/chmempools.c ****   }
+ 628               		.loc 1 276 0
+ 629 0026 80E0      		ldi r24,0
+ 630               	.LVL55:
+ 631 0028 90E0      		ldi r25,0
+ 632               	/* epilogue start */
+ 280:../../../os/common/oslib/src/chmempools.c **** 
+ 633               		.loc 1 280 0
+ 634 002a DF91      		pop r29
+ 635 002c CF91      		pop r28
+ 636               	.LVL56:
+ 637 002e 0895      		ret
+ 638               	.LVL57:
+ 639               	.L32:
+ 640               	.LBB168:
+ 641               	.LBB166:
+ 137:../../../os/common/oslib/src/chmempools.c ****     objp = mp->provider(mp->object_size, mp->align);
+ 642               		.loc 1 137 0
+ 643 0030 EB85      		ldd r30,Y+11
+ 644 0032 FC85      		ldd r31,Y+12
+ 645               	.LVL58:
+ 646 0034 3097      		sbiw r30,0
+ 647 0036 01F0      		breq .L34
+ 138:../../../os/common/oslib/src/chmempools.c ****   }
+ 648               		.loc 1 138 0
+ 649 0038 6985      		ldd r22,Y+9
+ 650 003a 7A85      		ldd r23,Y+10
+ 651 003c 8F81      		ldd r24,Y+7
+ 652 003e 9885      		ldd r25,Y+8
+ 653               	.LVL59:
+ 654               	/* epilogue start */
+ 655               	.LBE166:
+ 656               	.LBE168:
+ 280:../../../os/common/oslib/src/chmempools.c **** 
+ 657               		.loc 1 280 0
+ 658 0040 DF91      		pop r29
+ 659 0042 CF91      		pop r28
+ 660               	.LVL60:
+ 661               	.LBB169:
+ 662               	.LBB167:
+ 138:../../../os/common/oslib/src/chmempools.c ****   }
+ 663               		.loc 1 138 0
+ 664 0044 0994      		ijmp
+ 665               	.LVL61:
+ 666               	.LBE167:
+ 667               	.LBE169:
+ 668               		.cfi_endproc
+ 669               	.LFE156:
+ 671               		.section	.text.chGuardedPoolAllocTimeout,"ax",@progbits
+ 672               	.global	chGuardedPoolAllocTimeout
+ 674               	chGuardedPoolAllocTimeout:
+ 675               	.LFB157:
+ 298:../../../os/common/oslib/src/chmempools.c ****   void *p;
+ 676               		.loc 1 298 0
+ 677               		.cfi_startproc
+ 678               	.LVL62:
+ 679               	/* prologue: function */
+ 680               	/* frame size = 0 */
+ 681               	/* stack size = 0 */
+ 682               	.L__stack_usage = 0
+ 683               	.LBB170:
+ 684               	.LBB171:
+ 685               	.LBB172:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 686               		.loc 2 437 0
+ 687               	/* #APP */
+ 688               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 689 0000 F894      		cli
+ 690               	 ;  0 "" 2
+ 691               	/* #NOAPP */
+ 692               	.LBE172:
+ 693               	.LBE171:
+ 694               	.LBE170:
+ 302:../../../os/common/oslib/src/chmempools.c ****   chSysUnlock();
+ 695               		.loc 1 302 0
+ 696 0002 0E94 0000 		call chGuardedPoolAllocTimeoutS
+ 697               	.LVL63:
+ 698               	.LBB173:
+ 699               	.LBB174:
+ 700               	.LBB175:
+ 701               	.LBB176:
+ 702               		.loc 2 447 0
+ 703               	/* #APP */
+ 704               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 705 0006 7894      		sei
+ 706               	 ;  0 "" 2
+ 707               	/* #NOAPP */
+ 708               	.LBE176:
+ 709               	.LBE175:
+ 710               	.LBE174:
+ 711               	.LBE173:
+ 306:../../../os/common/oslib/src/chmempools.c **** 
+ 712               		.loc 1 306 0
+ 713 0008 0895      		ret
+ 714               		.cfi_endproc
+ 715               	.LFE157:
+ 717               		.section	.text.chGuardedPoolFree,"ax",@progbits
+ 718               	.global	chGuardedPoolFree
+ 720               	chGuardedPoolFree:
+ 721               	.LFB158:
+ 320:../../../os/common/oslib/src/chmempools.c **** 
+ 722               		.loc 1 320 0
+ 723               		.cfi_startproc
+ 724               	.LVL64:
+ 725               	/* prologue: function */
+ 726               	/* frame size = 0 */
+ 727               	/* stack size = 0 */
+ 728               	.L__stack_usage = 0
+ 729               	.LBB177:
+ 730               	.LBB178:
+ 731               	.LBB179:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 732               		.loc 2 437 0
+ 733               	/* #APP */
+ 734               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 735 0000 F894      		cli
+ 736               	 ;  0 "" 2
+ 737               	.LVL65:
+ 738               	/* #NOAPP */
+ 739               	.LBE179:
+ 740               	.LBE178:
+ 741               	.LBE177:
+ 742               	.LBB180:
+ 743               	.LBB181:
+ 744               	.LBB182:
+ 745               	.LBB183:
+ 186:../../../os/common/oslib/src/chmempools.c ****   mp->next = php;
+ 746               		.loc 1 186 0
+ 747 0002 FC01      		movw r30,r24
+ 748 0004 2581      		ldd r18,Z+5
+ 749 0006 3681      		ldd r19,Z+6
+ 750 0008 FB01      		movw r30,r22
+ 751 000a 3183      		std Z+1,r19
+ 752 000c 2083      		st Z,r18
+ 187:../../../os/common/oslib/src/chmempools.c **** }
+ 753               		.loc 1 187 0
+ 754 000e FC01      		movw r30,r24
+ 755 0010 7683      		std Z+6,r23
+ 756 0012 6583      		std Z+5,r22
+ 757               	.LVL66:
+ 758               	.LBE183:
+ 759               	.LBE182:
+ 760               		.loc 3 292 0
+ 761 0014 0E94 0000 		call chSemSignalI
+ 762               	.LVL67:
+ 763               	.LBE181:
+ 764               	.LBE180:
+ 765               		.loc 1 324 0
+ 766 0018 0E94 0000 		call chSchRescheduleS
+ 767               	.LVL68:
+ 768               	.LBB184:
+ 769               	.LBB185:
+ 770               	.LBB186:
+ 771               	.LBB187:
+ 772               		.loc 2 447 0
+ 773               	/* #APP */
+ 774               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 775 001c 7894      		sei
+ 776               	 ;  0 "" 2
+ 777               	/* #NOAPP */
+ 778 001e 0895      		ret
+ 779               	.LBE187:
+ 780               	.LBE186:
+ 781               	.LBE185:
+ 782               	.LBE184:
+ 783               		.cfi_endproc
+ 784               	.LFE158:
+ 786               		.text
+ 787               	.Letext0:
+ 788               		.file 4 "/usr/lib/gcc/avr/5.4.0/include/stddef.h"
+ 789               		.file 5 "/usr/lib/avr/include/stdint.h"
+ 790               		.file 6 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+ 791               		.file 7 "../../../os/rt/include/chsystypes.h"
+ 792               		.file 8 "../../../os/rt/include/chschd.h"
+ 793               		.file 9 "../../../os/rt/include/chtime.h"
+ 794               		.file 10 "../../../os/rt/include/chsem.h"
+ 795               		.file 11 "../../../os/rt/include/chmtx.h"
+ 796               		.file 12 "../../../os/common/oslib/include/chmemcore.h"
+ 797               		.file 13 "../../../os/rt/include/chsys.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 chmempools.c
+     /tmp/ccO6KL9v.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccO6KL9v.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccO6KL9v.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccO6KL9v.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccO6KL9v.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccO6KL9v.s:13     .text.chPoolObjectInitAligned:0000000000000000 chPoolObjectInitAligned
+     /tmp/ccO6KL9v.s:43     .text.chPoolLoadArray:0000000000000000 chPoolLoadArray
+     /tmp/ccO6KL9v.s:131    .text.chPoolAllocI:0000000000000000 chPoolAllocI
+     /tmp/ccO6KL9v.s:198    .text.chPoolAlloc:0000000000000000 chPoolAlloc
+     /tmp/ccO6KL9v.s:319    .text.chPoolFreeI:0000000000000000 chPoolFreeI
+     /tmp/ccO6KL9v.s:346    .text.chPoolFree:0000000000000000 chPoolFree
+     /tmp/ccO6KL9v.s:405    .text.chGuardedPoolObjectInitAligned:0000000000000000 chGuardedPoolObjectInitAligned
+     /tmp/ccO6KL9v.s:443    .text.chGuardedPoolLoadArray:0000000000000000 chGuardedPoolLoadArray
+     /tmp/ccO6KL9v.s:577    .text.chGuardedPoolAllocTimeoutS:0000000000000000 chGuardedPoolAllocTimeoutS
+     /tmp/ccO6KL9v.s:674    .text.chGuardedPoolAllocTimeout:0000000000000000 chGuardedPoolAllocTimeout
+     /tmp/ccO6KL9v.s:720    .text.chGuardedPoolFree:0000000000000000 chGuardedPoolFree
+
+UNDEFINED SYMBOLS
+chSemObjectInit
+chSemSignalI
+chSchRescheduleS
+chSemWaitTimeoutS

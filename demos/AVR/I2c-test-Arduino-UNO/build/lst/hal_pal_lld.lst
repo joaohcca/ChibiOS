@@ -437,17 +437,17 @@
  210               		.file 11 "../../../os/hal/ports/AVR/MEGA/LLD/GPIOv1/hal_pal_lld.h"
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 hal_pal_lld.c
-     /tmp/ccZCH4PC.s:2      *ABS*:000000000000003e __SP_H__
-     /tmp/ccZCH4PC.s:3      *ABS*:000000000000003d __SP_L__
-     /tmp/ccZCH4PC.s:4      *ABS*:000000000000003f __SREG__
-     /tmp/ccZCH4PC.s:5      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/ccZCH4PC.s:6      *ABS*:0000000000000001 __zero_reg__
-     /tmp/ccZCH4PC.s:13     .text._pal_lld_init:0000000000000000 _pal_lld_init
-     /tmp/ccZCH4PC.s:50     .text._pal_lld_setgroupmode:0000000000000000 _pal_lld_setgroupmode
-     /tmp/ccZCH4PC.s:125    .text._pal_lld_enablepadevent:0000000000000000 _pal_lld_enablepadevent
-     /tmp/ccZCH4PC.s:141    .text._pal_lld_setlineid:0000000000000000 _pal_lld_setlineid
-     /tmp/ccZCH4PC.s:165    .text._pal_lld_getportfromline:0000000000000000 _pal_lld_getportfromline
-     /tmp/ccZCH4PC.s:184    .text._pal_lld_getpadfromline:0000000000000000 _pal_lld_getpadfromline
+     /tmp/cck3MeWN.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cck3MeWN.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cck3MeWN.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cck3MeWN.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cck3MeWN.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cck3MeWN.s:13     .text._pal_lld_init:0000000000000000 _pal_lld_init
+     /tmp/cck3MeWN.s:50     .text._pal_lld_setgroupmode:0000000000000000 _pal_lld_setgroupmode
+     /tmp/cck3MeWN.s:125    .text._pal_lld_enablepadevent:0000000000000000 _pal_lld_enablepadevent
+     /tmp/cck3MeWN.s:141    .text._pal_lld_setlineid:0000000000000000 _pal_lld_setlineid
+     /tmp/cck3MeWN.s:165    .text._pal_lld_getportfromline:0000000000000000 _pal_lld_getportfromline
+     /tmp/cck3MeWN.s:184    .text._pal_lld_getpadfromline:0000000000000000 _pal_lld_getpadfromline
                             *COM*:0000000000000000 _pal_events
 
 UNDEFINED SYMBOLS
