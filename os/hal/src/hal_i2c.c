@@ -395,10 +395,9 @@ msg_t i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr,
   else {
     i2cp->state = I2C_READY;
   }
-  return rdymsg;
   osalSysUnlock();
   chSysUnlock();
-  
+  return rdymsg;
 }
 
 msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
@@ -419,10 +418,10 @@ msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_
   else {
     i2cp->state = I2C_READY;
   }
-  return rdymsg;
+  
   chSysUnlock();
   osalSysUnlock();
-
+  return rdymsg;
 }
 
 

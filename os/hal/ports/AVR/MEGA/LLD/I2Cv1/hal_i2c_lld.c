@@ -118,15 +118,15 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   /*review cases where state 0x60 should return nack (not initialize ?)
   same decision making on the 0x68 and 0x70)*/
     if (i2cp->rxidx == (i2cp->rxbytes -1)){
-      TWCR = (1 << TWINT) | (1 << TWIE);
+      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
     }
     else{
-      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE));
+      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE) | (1 << TWEN));
     }
   break;
   case TWI_SLAVE_RX_POST_ARB_LOST: /*ref $68*/
     if (i2cp->rxidx ==(i2cp->rxbytes -1)){
-      TWCR = (1 << TWINT) | (1 << TWIE);
+      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
     }
     else{
       TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE));
@@ -135,12 +135,11 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
   /*send nack master move to $88*/
-  if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
+  if (i2cp->rxidx++ == (i2cp->rxbytes - 1)) {
     TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
   /*buffer can recieve more bytes stay in $80*/
   else {
-    i2cp->rxidx++;
     TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
   }
   break;
@@ -152,6 +151,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
    TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
    _i2c_wakeup_isr(i2cp); /*wake up thread*/
   break;
+
   case TWI_SLAVE_STOP: /*ref A0*/
   /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA));
@@ -161,45 +161,42 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
   /*load data from buffer to TWDR*/
   /*check if there's more data to transmmit*/
-   TWDR = i2cp->txbuf[i2cp->txidx]; 
+   TWDR = i2cp->txbuf[i2cp->txidx++]; 
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = ((1 << TWINT) | (1 << TWIE));
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
   else{
-    i2cp->txidx++;
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN) );
   }
   break;
   case TWI_SLAVE_TX_POST_ARB_LOST:/*ref $B0*/
   /*load data and check for nack transmission*/
-    TWDR = i2cp->txbuf[i2cp->txidx];
+    TWDR = i2cp->txbuf[i2cp->txidx++];
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE));
+    TWCR = (1 << TWINT | (1 << TWIE)) | (1 << TWEN);
   }
   else{
-    i2cp->txidx++;
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN));
   }
   break;
   case TWI_SLAVE_TX_DATA_ACK: /*ref $B8*/
-    TWDR = i2cp->txbuf[i2cp->txidx]; 
+    TWDR = i2cp->txbuf[i2cp->txidx++]; 
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE));
+    TWCR = (1 << TWINT | (1 << TWIE) | (1 << TWEN));
   }
   else{
-    i2cp->txidx++;
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE));
+    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN) );
   }
   break;
   case TWI_SLAVE_TX_DATA_NACK: /*ref $C0*/
   /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA) | (1 << TWEN));
   break;
   case TWI_SLAVE_TX_LAST_DATA_ACK: /*ref $C8*/
   /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
+   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA) | (1 << TWEN));
    break;
   case TWI_ARBITRATION_LOST:
     i2cp->errors |= I2C_ARBITRATION_LOST;
@@ -369,6 +366,7 @@ msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   if (i2cadr != 0 ){ 
     uint8_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
     i2cp->addr = adr;                                               /*Implement slave addr*/
+    TWAR = adr;
     return I2C_NO_ERROR; 
     }
   else
