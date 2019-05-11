@@ -360,13 +360,14 @@ void i2cUnmatchAll(I2CDriver *i2cp)
  *
  * @api
  */
-/*void i2cSlaveConfigure(I2CDriver *i2cp,
-                   const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg)
+/*void i2cSlaveConfigure(I2CDriver *i2cp,i2caddr_t addr,
+                                      const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
 {
   osalDbgCheck((i2cp != NULL));
   chSysLock();
-  i2c_lld_slaveReceive(i2cp, rxMsg);
-  i2c_lld_slaveReply(i2cp, replyMsg);
+  i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
+  i2c_lld_slaveReply(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
   chSysUnlock();
 }*/
 
@@ -418,9 +419,8 @@ msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_
   else {
     i2cp->state = I2C_READY;
   }
-  
-  chSysUnlock();
   osalSysUnlock();
+  chSysUnlock();
   return rdymsg;
 }
 

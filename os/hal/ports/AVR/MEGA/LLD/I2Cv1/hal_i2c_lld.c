@@ -121,7 +121,7 @@ OSAL_IRQ_HANDLER(TWI_vect) {
       TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
     }
     else{
-      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE) | (1 << TWEN));
+      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN)  | (1 << TWEA));
     }
   break;
   case TWI_SLAVE_RX_POST_ARB_LOST: /*ref $68*/
@@ -129,18 +129,18 @@ OSAL_IRQ_HANDLER(TWI_vect) {
       TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
     }
     else{
-      TWCR = ((1 << TWINT) | (1 << TWEA)| (1 << TWIE));
+      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
     }
   case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
   /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
   /*send nack master move to $88*/
-  if (i2cp->rxidx++ == (i2cp->rxbytes - 1)) {
-    TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+  if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
   /*buffer can recieve more bytes stay in $80*/
   else {
-    TWCR = ((1 << TWEA) | (1 << TWINT) | (1 << TWEN) | (1 << TWIE));
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
   }
   break;
   case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
@@ -148,15 +148,16 @@ OSAL_IRQ_HANDLER(TWI_vect) {
 
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA));
+   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEN) | (1<<TWEA));
    _i2c_wakeup_isr(i2cp); /*wake up thread*/
   break;
 
   case TWI_SLAVE_STOP: /*ref A0*/
   /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEA));
+   TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEN)  | (1<<TWEA));
   _i2c_wakeup_isr(i2cp); /*wake up thread*/
   break;
+  
   //slave transmitt status
   case TWI_SLAVE_TX_ADDR_ACK: /*ref $A8*/
   /*load data from buffer to TWDR*/
@@ -166,37 +167,39 @@ OSAL_IRQ_HANDLER(TWI_vect) {
     TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
   else{
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN) );
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
   }
   break;
   case TWI_SLAVE_TX_POST_ARB_LOST:/*ref $B0*/
   /*load data and check for nack transmission*/
     TWDR = i2cp->txbuf[i2cp->txidx++];
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE)) | (1 << TWEN);
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
   else{
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN));
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
   }
   break;
   case TWI_SLAVE_TX_DATA_ACK: /*ref $B8*/
-    TWDR = i2cp->txbuf[i2cp->txidx++]; 
+    TWDR = i2cp->txbuf[i2cp->txidx++];
   if (i2cp->txidx ==(i2cp->txbytes -1)){
-    TWCR = (1 << TWINT | (1 << TWIE) | (1 << TWEN));
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
   else{
-    TWCR = ((1 << TWINT) | (1 << TWEA) | (1 << TWIE) | (1 << TWEN) );
+    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
   }
   break;
   case TWI_SLAVE_TX_DATA_NACK: /*ref $C0*/
   /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA) | (1 << TWEN));
+   TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
+   _i2c_wakeup_isr(i2cp);
   break;
   case TWI_SLAVE_TX_LAST_DATA_ACK: /*ref $C8*/
   /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1<< TWIE)| (1<<TWEA) | (1 << TWEN));
+   TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEA) | (1 << TWEN));
+   _i2c_wakeup_isr(i2cp);
    break;
   case TWI_ARBITRATION_LOST:
     i2cp->errors |= I2C_ARBITRATION_LOST;
@@ -423,8 +426,8 @@ msg_t  i2c_lld_slaveReply(I2CDriver *i2cp,  i2caddr_t addr,
   i2cp->txbuf = txbuf;
   i2cp->txbytes = txbytes;
   i2cp->txidx = 0;
-  i2cp->rxbuf = rxbuf;
-  i2cp->rxbytes = rxbytes;
+  i2cp->rxbuf = NULL;
+  i2cp->rxbytes = 0;
   i2cp->rxidx = 0;
   TWCR = ( (1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA));
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    

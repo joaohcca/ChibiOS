@@ -34,36 +34,40 @@
 
 static THD_WORKING_AREA(waThread1, 32);
 static THD_FUNCTION(Thread1, arg) {
-  i2caddr_t slaveaddr=5;
+  i2caddr_t slaveaddr=8;
   size_t txbytes=5;
   size_t rxbytes=5;
-  uint8_t rxbuf[rxbytes];
+  uint8_t rxbuffer[rxbytes];
   uint8_t txbuffer[txbytes];
   sysinterval_t TIMEOUT=1000;
   msg_t debug;
-  int errors;
-  for (int n = 0; n < txbytes ;n++){
-    txbuffer[n]=n+1;
+  int errors; 
+
+  for (uint8_t n = 0; n < txbytes ; n++){
+        txbuffer[n]=n+4;
+        chprintf((BaseSequentialStream *) &SD1, "Master txbuffer[%d]=%d ",n ,txbuffer[n]);
   }
 
   (void)arg;
   chRegSetThreadName("MasterSendI2C");
   while (true) {
     palTogglePad(IOPORT2, PORTB_LED1);
-    chprintf((BaseSequentialStream *) &SD1, "iniciando processo de envio do master\r\n");  
-    chThdSleepMilliseconds(500);
-    debug=i2cMasterTransmitTimeout(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);  
-    i2cGetErrors(&I2CD1);  
-    chprintf((BaseSequentialStream *) &SD1, "errors = %d\r\n",errors);
-    //chThdSleepMilliseconds(2000); //estudar valor real e ver se deve ser empirico esse resultado
-    chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
-    for (int n = 0; n < txbytes ;n++){
-    chprintf( (BaseSequentialStream *) &SD1, "buffer[%d] %d ",n,txbuffer[n]);
-      }
+    chprintf((BaseSequentialStream *) &SD1, "\r\n iniciando processo de envio do master\r\n");  
     
-    //conversão do valor de debug
+    debug=i2cMasterReceive(&I2CD1,slaveaddr, rxbuffer, rxbytes);  
+    //debug=i2cMasterTransmit(&I2CD1, slaveaddr,txbuffer, txbytes, rxbuffer, rxbytes); 
+    errors=i2cGetErrors(&I2CD1);  
+    chprintf((BaseSequentialStream *) &SD1, "i2c get errors = %d\r\n",errors);
+    
+    
+    chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);   
+    
     chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
-      }
+    for (uint8_t n = 0; n < txbytes ; n++){
+        chprintf( (BaseSequentialStream *) &SD1, "Master txbuffer[%d]=%d ",n , txbuffer[n]);
+        }
+     chprintf((BaseSequentialStream *) &SD1, "end\r\n");   
+  }
 }
 
 
@@ -96,7 +100,6 @@ int main(void) {
    * Starts the MasterSendI2C thread
    */
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-  
   
 
 
