@@ -161,8 +161,8 @@ void i2cStop(I2CDriver *i2cp) {
 i2cflags_t i2cGetErrors(I2CDriver *i2cp) {
 
   osalDbgCheck(i2cp != NULL);
-
-  return i2c_lld_get_errors(i2cp);
+  return 0;
+  //return i2c_lld_get_errors(i2cp);
 }
 
 /**
@@ -274,7 +274,7 @@ msg_t i2cMasterReceiveTimeout(I2CDriver *i2cp,
 
 /**
  * @brief   Reconfigure I2C channel to respond to indicated address
- *          in addition to those already matched
+ *          
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
  * @param[in] i2cadr    I2C network address
@@ -316,12 +316,13 @@ msg_t i2cMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
  *
  * @api
  */
-void i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
+msg_t i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
 {
   osalDbgCheck((i2cp != NULL));
   chSysLock();
-  i2c_lld_unmatchAddress(i2cp, i2cadr);
+  msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
   chSysUnlock();
+  return result;
 }
 
 
@@ -344,75 +345,38 @@ void i2cUnmatchAll(I2CDriver *i2cp)
   chSysUnlock();
 }
 
-
 /**
- * @brief   Configure callbacks & buffers for message reception & query reply
+ * @brief   Receives data from the I2C bus as a salve.
  *
  * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
+ * @param[in] addr      slave device address (7 bits) without R/W bit (is it nescessary ?)
+ * @param[out] rxbuf    pointer to receive buffer
+ * @param[in] rxbytes   number of bytes to be received
+ * @param[in] timeout   the number of ticks before the operation timeouts,
+ *                      the following special values are allowed:
+ *                      - @a TIME_INFINITE no timeout.
+ *                      .
  *
- * @details             Must be called from a thread
- *                      Call i2cMatchAddress() after this to start processing
- *     Enabling match addresses before installing handler callbacks can
- *     result in locking the I2C bus when a master accesses those
- *     unconfigured slave addresses
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
+ *                      be retrieved using @p i2cGetErrors().
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
  *
  * @api
  */
-/*void i2cSlaveConfigure(I2CDriver *i2cp,i2caddr_t addr,
-                                      const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
-{
-  osalDbgCheck((i2cp != NULL));
-  chSysLock();
-  i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
-  i2c_lld_slaveReply(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
-  chSysUnlock();
-}*/
 
-
-
-
-msg_t i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr,
-                                      const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
+msg_t i2cSlaveReceive(I2CDriver *i2cp, uint8_t *rxbuf, size_t rxbytes, bool gce, sysinterval_t timeout)
 {
   
  msg_t rdymsg;
 
-  osalDbgCheck((i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
-               ( (rxbytes == 0U) || ( (rxbytes > 0U) && (rxbuf != NULL) ) ) &&
+  osalDbgCheck((i2cp != NULL) && ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
                (timeout != TIME_IMMEDIATE) );
-
-  chSysLock();
-  osalSysLock();
+    osalSysLock();
   i2cp->errors = I2C_NO_ERROR;
   i2cp->state = I2C_ACTIVE_RX;
-  rdymsg = i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes,timeout);
-    if (rdymsg == MSG_TIMEOUT) {
-    i2cp->state = I2C_LOCKED;
-  }
-  else {
-    i2cp->state = I2C_READY;
-  }
-  osalSysUnlock();
-  chSysUnlock();
-  return rdymsg;
-}
-
-msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
-{
-   msg_t rdymsg;
-  osalDbgCheck( (i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
-  ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
-               (timeout != TIME_IMMEDIATE) );
-  chSysLock();
-  osalSysLock();
-  i2cp->errors = I2C_NO_ERROR;
-  i2cp->state = I2C_ACTIVE_TX;
-  rdymsg = i2c_lld_slaveReply(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout );
+  rdymsg = i2c_lld_slaveReceive(i2cp, rxbuf, rxbytes, gce, timeout);
   if (rdymsg == MSG_TIMEOUT) {
     i2cp->state = I2C_LOCKED;
   }
@@ -420,11 +384,56 @@ msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_
     i2cp->state = I2C_READY;
   }
   osalSysUnlock();
-  chSysUnlock();
   return rdymsg;
 }
 
+/**
+ * @brief   Sends data via the I2C bus as a slave.
+ * @details Function designed to realize "read-through-write" transfer
+ *          paradigm. If you want transmit data without any further read,
+ *          than set @b rxbytes field to 0.
+ *
+ * @param[in] i2cp      pointer to the @p I2CDriver object
+ * @param[in] addr      slave device address (7 bits) without R/W bit - is it nescessary(?)
+ * @param[in] txbuf     pointer to transmit buffer
+ * @param[in] txbytes   number of bytes to be transmitted
+ * @param[out] rxbuf    pointer to receive buffer
+ * @param[in] rxbytes   number of bytes to be received, set it to 0 if
+ *                      you want transmit only
+ * @param[in] timeout   the number of ticks before the operation timeouts,
+ *                      the following special values are allowed:
+ *                      - @a TIME_INFINITE no timeout.
+ *                      .
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_RESET    if one or more I2C errors occurred, the errors can
+ *                      be retrieved using @p i2cGetErrors().
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ * @api
+ */
 
+msg_t i2cSlaveReply(I2CDriver *i2cp, const uint8_t *txbuf, size_t txbytes,
+                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout)
+{
+  msg_t rdymsg;
+  osalDbgCheck( (i2cp != NULL) && (txbytes > 0U) && (txbuf != NULL) &&
+  ((rxbytes == 0U) || ((rxbytes > 0U) && (rxbuf != NULL))) &&
+               (timeout != TIME_IMMEDIATE) );
+  osalSysLock();
+  i2cp->errors = I2C_NO_ERROR;
+  i2cp->state = I2C_ACTIVE_TX;
+  rdymsg = i2c_lld_slaveReply(i2cp, txbuf, txbytes, rxbuf, rxbytes, timeout );
+  if (rdymsg == MSG_TIMEOUT) {
+    i2cp->state = I2C_LOCKED;
+  }
+  else {
+    i2cp->state = I2C_READY;
+  }
+  osalSysUnlock();
+  return rdymsg;
+}
 
 #endif /* HAL_USE_I2C == TRUE */
 /** @} */

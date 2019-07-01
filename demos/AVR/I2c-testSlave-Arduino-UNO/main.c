@@ -34,7 +34,7 @@
 
 static THD_WORKING_AREA(waThread1, 32);
 static THD_FUNCTION(Thread1, arg) {
-  i2caddr_t slaveaddr=4;
+  i2caddr_t slaveaddr=5;
   size_t txbytes=5;
   size_t rxbytes=5;
   uint8_t rxbuffer[rxbytes];
@@ -42,33 +42,36 @@ static THD_FUNCTION(Thread1, arg) {
   sysinterval_t TIMEOUT=500;
   msg_t debug;
   int errors;
+  bool gce = FALSE;
    for (uint8_t n = 0; n < txbytes ; n++){
         txbuffer[n]=n+10;
         chprintf((BaseSequentialStream *) &SD1, "Slave txbuffer[%d]=%d ",n ,txbuffer[n]);
-        }
+         }
   (void)arg;
   chRegSetThreadName("SlaveRecieveI2C");
   //i2cSlaveConfigure( slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);
   while (true) {
-    palTogglePad(IOPORT2, PORTB_LED1);
+
+    chprintf((BaseSequentialStream *) &SD1, "\r\n");
     chprintf((BaseSequentialStream *) &SD1, "\r\n iniciando processo de recebimento do slave\r\n");  
-        //chThdSleepMilliseconds(500);
-    /*configurar endereço do slave e "encaixar" o matchaddress*/
-    debug = i2cMatchAddress(&I2CD1, slaveaddr);    
-    chprintf((BaseSequentialStream *) &SD1, "debug = %d\r\n",debug);
-    errors=i2cGetErrors(&I2CD1);  
+    //chThdSleepMilliseconds(500);
+    /*configurar endereço do slave */
+    
+    i2cMatchAddress(&I2CD1, slaveaddr); 
+
+    errors=i2cGetErrors(&I2CD1);
     chprintf((BaseSequentialStream *) &SD1, "errors = %d\r\n",errors);
-    debug= i2cSlaveReply(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuffer, rxbytes, TIMEOUT); 
-    chprintf((BaseSequentialStream *) &SD1, "debug slave API = %d\r\n",debug);    
-    //i2cSlaveReceive(&I2CD1, slaveaddr, txbuffer, txbytes, rxbuffer, rxbytes, TIMEOUT);
-      chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
+    debug=i2cSlaveReceive(&I2CD1, rxbuffer, rxbytes, gce, TIMEOUT); 
+    //debug = i2cSlaveReply(&I2CD1, txbuffer, txbytes, rxbuffer, rxbytes, TIMEOUT);
+    chprintf((BaseSequentialStream *) &SD1, "debug slave API = %d\r\n",debug);
+    chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");
       for (uint8_t n = 0; n < rxbytes ; n++){
         chprintf( (BaseSequentialStream *) &SD1, "Slave rxbuffer[%d]=%d ",n ,rxbuffer[n]);
+        chprintf( (BaseSequentialStream *) &SD1, "Slave txbuffer[%d]=%d \n \r",n ,txbuffer[n]);
         }
     }
     chprintf((BaseSequentialStream *) &SD1, "end\r\n" );   
 }
-
 
 
 /*
@@ -85,16 +88,19 @@ int main(void) {
    */
   halInit();
   chSysInit();
-  i2cInit();  
+  i2cInit();
+
   /*
    * Activates the serial driv/os/hal/lib/streams/chprintf.er 1 using the driver default configuration.
    */
   sdStart(&SD1, NULL);
+
+
   /*chnWrite
    * Starts the SLAVEI2C thread
    */
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
   while (TRUE) {
-    chThdSleepMilliseconds(1000);  
+    chThdSleepMilliseconds(1000);
   }
 }
