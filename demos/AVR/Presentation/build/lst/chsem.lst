@@ -1,0 +1,2684 @@
+   1               		.file	"chsem.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.chSemObjectInit,"ax",@progbits
+  11               	.global	chSemObjectInit
+  13               	chSemObjectInit:
+  14               	.LFB148:
+  15               		.file 1 "../../../os/rt/src/chsem.c"
+   1:../../../os/rt/src/chsem.c **** /*
+   2:../../../os/rt/src/chsem.c ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/rt/src/chsem.c **** 
+   4:../../../os/rt/src/chsem.c ****     This file is part of ChibiOS.
+   5:../../../os/rt/src/chsem.c **** 
+   6:../../../os/rt/src/chsem.c ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/rt/src/chsem.c ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/rt/src/chsem.c ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/rt/src/chsem.c ****     (at your option) any later version.
+  10:../../../os/rt/src/chsem.c **** 
+  11:../../../os/rt/src/chsem.c ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/rt/src/chsem.c ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/rt/src/chsem.c ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/rt/src/chsem.c ****     GNU General Public License for more details.
+  15:../../../os/rt/src/chsem.c **** 
+  16:../../../os/rt/src/chsem.c ****     You should have received a copy of the GNU General Public License
+  17:../../../os/rt/src/chsem.c ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/rt/src/chsem.c **** */
+  19:../../../os/rt/src/chsem.c **** 
+  20:../../../os/rt/src/chsem.c **** /**
+  21:../../../os/rt/src/chsem.c ****  * @file    chsem.c
+  22:../../../os/rt/src/chsem.c ****  * @brief   Semaphores code.
+  23:../../../os/rt/src/chsem.c ****  *
+  24:../../../os/rt/src/chsem.c ****  * @addtogroup semaphores
+  25:../../../os/rt/src/chsem.c ****  * @details Semaphores related APIs and services.
+  26:../../../os/rt/src/chsem.c ****  *          <h2>Operation mode</h2>
+  27:../../../os/rt/src/chsem.c ****  *          Semaphores are a flexible synchronization primitive, ChibiOS/RT
+  28:../../../os/rt/src/chsem.c ****  *          implements semaphores in their "counting semaphores" variant as
+  29:../../../os/rt/src/chsem.c ****  *          defined by Edsger Dijkstra plus several enhancements like:
+  30:../../../os/rt/src/chsem.c ****  *          - Wait operation with timeout.
+  31:../../../os/rt/src/chsem.c ****  *          - Reset operation.
+  32:../../../os/rt/src/chsem.c ****  *          - Atomic wait+signal operation.
+  33:../../../os/rt/src/chsem.c ****  *          - Return message from the wait operation (OK, RESET, TIMEOUT).
+  34:../../../os/rt/src/chsem.c ****  *          .
+  35:../../../os/rt/src/chsem.c ****  *          The binary semaphores variant can be easily implemented using
+  36:../../../os/rt/src/chsem.c ****  *          counting semaphores.<br>
+  37:../../../os/rt/src/chsem.c ****  *          Operations defined for semaphores:
+  38:../../../os/rt/src/chsem.c ****  *          - <b>Signal</b>: The semaphore counter is increased and if the
+  39:../../../os/rt/src/chsem.c ****  *            result is non-positive then a waiting thread is removed from
+  40:../../../os/rt/src/chsem.c ****  *            the semaphore queue and made ready for execution.
+  41:../../../os/rt/src/chsem.c ****  *          - <b>Wait</b>: The semaphore counter is decreased and if the result
+  42:../../../os/rt/src/chsem.c ****  *            becomes negative the thread is queued in the semaphore and
+  43:../../../os/rt/src/chsem.c ****  *            suspended.
+  44:../../../os/rt/src/chsem.c ****  *          - <b>Reset</b>: The semaphore counter is reset to a non-negative
+  45:../../../os/rt/src/chsem.c ****  *            value and all the threads in the queue are released.
+  46:../../../os/rt/src/chsem.c ****  *          .
+  47:../../../os/rt/src/chsem.c ****  *          Semaphores can be used as guards for mutual exclusion zones
+  48:../../../os/rt/src/chsem.c ****  *          (note that mutexes are recommended for this kind of use) but
+  49:../../../os/rt/src/chsem.c ****  *          also have other uses, queues guards and counters for example.<br>
+  50:../../../os/rt/src/chsem.c ****  *          Semaphores usually use a FIFO queuing strategy but it is possible
+  51:../../../os/rt/src/chsem.c ****  *          to make them order threads by priority by enabling
+  52:../../../os/rt/src/chsem.c ****  *          @p CH_CFG_USE_SEMAPHORES_PRIORITY in @p chconf.h.
+  53:../../../os/rt/src/chsem.c ****  * @pre     In order to use the semaphore APIs the @p CH_CFG_USE_SEMAPHORES
+  54:../../../os/rt/src/chsem.c ****  *          option must be enabled in @p chconf.h.
+  55:../../../os/rt/src/chsem.c ****  * @{
+  56:../../../os/rt/src/chsem.c ****  */
+  57:../../../os/rt/src/chsem.c **** 
+  58:../../../os/rt/src/chsem.c **** #include "ch.h"
+  59:../../../os/rt/src/chsem.c **** 
+  60:../../../os/rt/src/chsem.c **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+  61:../../../os/rt/src/chsem.c **** 
+  62:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  63:../../../os/rt/src/chsem.c **** /* Module exported variables.                                                */
+  64:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  65:../../../os/rt/src/chsem.c **** 
+  66:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  67:../../../os/rt/src/chsem.c **** /* Module local types.                                                       */
+  68:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  69:../../../os/rt/src/chsem.c **** 
+  70:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  71:../../../os/rt/src/chsem.c **** /* Module local variables.                                                   */
+  72:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  73:../../../os/rt/src/chsem.c **** 
+  74:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  75:../../../os/rt/src/chsem.c **** /* Module local functions.                                                   */
+  76:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  77:../../../os/rt/src/chsem.c **** 
+  78:../../../os/rt/src/chsem.c **** #if CH_CFG_USE_SEMAPHORES_PRIORITY == TRUE
+  79:../../../os/rt/src/chsem.c **** #define sem_insert(tp, qp) queue_prio_insert(tp, qp)
+  80:../../../os/rt/src/chsem.c **** #else
+  81:../../../os/rt/src/chsem.c **** #define sem_insert(tp, qp) queue_insert(tp, qp)
+  82:../../../os/rt/src/chsem.c **** #endif
+  83:../../../os/rt/src/chsem.c **** 
+  84:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  85:../../../os/rt/src/chsem.c **** /* Module exported functions.                                                */
+  86:../../../os/rt/src/chsem.c **** /*===========================================================================*/
+  87:../../../os/rt/src/chsem.c **** 
+  88:../../../os/rt/src/chsem.c **** /**
+  89:../../../os/rt/src/chsem.c ****  * @brief   Initializes a semaphore with the specified counter value.
+  90:../../../os/rt/src/chsem.c ****  *
+  91:../../../os/rt/src/chsem.c ****  * @param[out] sp       pointer to a @p semaphore_t structure
+  92:../../../os/rt/src/chsem.c ****  * @param[in] n         initial value of the semaphore counter. Must be
+  93:../../../os/rt/src/chsem.c ****  *                      non-negative.
+  94:../../../os/rt/src/chsem.c ****  *
+  95:../../../os/rt/src/chsem.c ****  * @init
+  96:../../../os/rt/src/chsem.c ****  */
+  97:../../../os/rt/src/chsem.c **** void chSemObjectInit(semaphore_t *sp, cnt_t n) {
+  16               		.loc 1 97 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: function */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  23 0000 FC01      		movw r30,r24
+  24               	.LVL1:
+  25               	.LBB74:
+  26               	.LBB75:
+  27               		.file 2 "../../../os/rt/include/chschd.h"
+   1:../../../os/rt/include/chschd.h **** /*
+   2:../../../os/rt/include/chschd.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/rt/include/chschd.h **** 
+   4:../../../os/rt/include/chschd.h ****     This file is part of ChibiOS.
+   5:../../../os/rt/include/chschd.h **** 
+   6:../../../os/rt/include/chschd.h ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/rt/include/chschd.h ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/rt/include/chschd.h ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/rt/include/chschd.h ****     (at your option) any later version.
+  10:../../../os/rt/include/chschd.h **** 
+  11:../../../os/rt/include/chschd.h ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/rt/include/chschd.h ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/rt/include/chschd.h ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/rt/include/chschd.h ****     GNU General Public License for more details.
+  15:../../../os/rt/include/chschd.h **** 
+  16:../../../os/rt/include/chschd.h ****     You should have received a copy of the GNU General Public License
+  17:../../../os/rt/include/chschd.h ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/rt/include/chschd.h **** */
+  19:../../../os/rt/include/chschd.h **** 
+  20:../../../os/rt/include/chschd.h **** /**
+  21:../../../os/rt/include/chschd.h ****  * @file    chschd.h
+  22:../../../os/rt/include/chschd.h ****  * @brief   Scheduler macros and structures.
+  23:../../../os/rt/include/chschd.h ****  *
+  24:../../../os/rt/include/chschd.h ****  * @addtogroup scheduler
+  25:../../../os/rt/include/chschd.h ****  * @{
+  26:../../../os/rt/include/chschd.h ****  */
+  27:../../../os/rt/include/chschd.h **** 
+  28:../../../os/rt/include/chschd.h **** #ifndef CHSCHD_H
+  29:../../../os/rt/include/chschd.h **** #define CHSCHD_H
+  30:../../../os/rt/include/chschd.h **** 
+  31:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+  32:../../../os/rt/include/chschd.h **** /* Module constants.                                                         */
+  33:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+  34:../../../os/rt/include/chschd.h **** 
+  35:../../../os/rt/include/chschd.h **** /**
+  36:../../../os/rt/include/chschd.h ****  * @name    Wakeup status codes
+  37:../../../os/rt/include/chschd.h ****  * @{
+  38:../../../os/rt/include/chschd.h ****  */
+  39:../../../os/rt/include/chschd.h **** #define MSG_OK              (msg_t)0    /**< @brief Normal wakeup message.  */
+  40:../../../os/rt/include/chschd.h **** #define MSG_TIMEOUT         (msg_t)-1   /**< @brief Wakeup caused by a timeout
+  41:../../../os/rt/include/chschd.h ****                                              condition.                     */
+  42:../../../os/rt/include/chschd.h **** #define MSG_RESET           (msg_t)-2   /**< @brief Wakeup caused by a reset
+  43:../../../os/rt/include/chschd.h ****                                              condition.                     */
+  44:../../../os/rt/include/chschd.h **** /** @} */
+  45:../../../os/rt/include/chschd.h **** 
+  46:../../../os/rt/include/chschd.h **** /**
+  47:../../../os/rt/include/chschd.h ****  * @name    Priority constants
+  48:../../../os/rt/include/chschd.h ****  * @{
+  49:../../../os/rt/include/chschd.h ****  */
+  50:../../../os/rt/include/chschd.h **** #define NOPRIO              (tprio_t)0      /**< @brief Ready list header
+  51:../../../os/rt/include/chschd.h ****                                                  priority.                  */
+  52:../../../os/rt/include/chschd.h **** #define IDLEPRIO            (tprio_t)1      /**< @brief Idle priority.      */
+  53:../../../os/rt/include/chschd.h **** #define LOWPRIO             (tprio_t)2      /**< @brief Lowest priority.    */
+  54:../../../os/rt/include/chschd.h **** #define NORMALPRIO          (tprio_t)128    /**< @brief Normal priority.    */
+  55:../../../os/rt/include/chschd.h **** #define HIGHPRIO            (tprio_t)255    /**< @brief Highest priority.   */
+  56:../../../os/rt/include/chschd.h **** /** @} */
+  57:../../../os/rt/include/chschd.h **** 
+  58:../../../os/rt/include/chschd.h **** /**
+  59:../../../os/rt/include/chschd.h ****  * @name    Thread states
+  60:../../../os/rt/include/chschd.h ****  * @{
+  61:../../../os/rt/include/chschd.h ****  */
+  62:../../../os/rt/include/chschd.h **** #define CH_STATE_READY      (tstate_t)0      /**< @brief Waiting on the
+  63:../../../os/rt/include/chschd.h ****                                                   ready list.               */
+  64:../../../os/rt/include/chschd.h **** #define CH_STATE_CURRENT    (tstate_t)1      /**< @brief Currently running. */
+  65:../../../os/rt/include/chschd.h **** #define CH_STATE_WTSTART    (tstate_t)2      /**< @brief Just created.      */
+  66:../../../os/rt/include/chschd.h **** #define CH_STATE_SUSPENDED  (tstate_t)3      /**< @brief Suspended state.   */
+  67:../../../os/rt/include/chschd.h **** #define CH_STATE_QUEUED     (tstate_t)4      /**< @brief On a queue.        */
+  68:../../../os/rt/include/chschd.h **** #define CH_STATE_WTSEM      (tstate_t)5      /**< @brief On a semaphore.    */
+  69:../../../os/rt/include/chschd.h **** #define CH_STATE_WTMTX      (tstate_t)6      /**< @brief On a mutex.        */
+  70:../../../os/rt/include/chschd.h **** #define CH_STATE_WTCOND     (tstate_t)7      /**< @brief On a cond.variable.*/
+  71:../../../os/rt/include/chschd.h **** #define CH_STATE_SLEEPING   (tstate_t)8      /**< @brief Sleeping.          */
+  72:../../../os/rt/include/chschd.h **** #define CH_STATE_WTEXIT     (tstate_t)9      /**< @brief Waiting a thread.  */
+  73:../../../os/rt/include/chschd.h **** #define CH_STATE_WTOREVT    (tstate_t)10     /**< @brief One event.         */
+  74:../../../os/rt/include/chschd.h **** #define CH_STATE_WTANDEVT   (tstate_t)11     /**< @brief Several events.    */
+  75:../../../os/rt/include/chschd.h **** #define CH_STATE_SNDMSGQ    (tstate_t)12     /**< @brief Sending a message,
+  76:../../../os/rt/include/chschd.h ****                                                   in queue.                 */
+  77:../../../os/rt/include/chschd.h **** #define CH_STATE_SNDMSG     (tstate_t)13     /**< @brief Sent a message,
+  78:../../../os/rt/include/chschd.h ****                                                   waiting answer.           */
+  79:../../../os/rt/include/chschd.h **** #define CH_STATE_WTMSG      (tstate_t)14     /**< @brief Waiting for a
+  80:../../../os/rt/include/chschd.h ****                                                   message.                  */
+  81:../../../os/rt/include/chschd.h **** #define CH_STATE_FINAL      (tstate_t)15     /**< @brief Thread terminated. */
+  82:../../../os/rt/include/chschd.h **** 
+  83:../../../os/rt/include/chschd.h **** /**
+  84:../../../os/rt/include/chschd.h ****  * @brief   Thread states as array of strings.
+  85:../../../os/rt/include/chschd.h ****  * @details Each element in an array initialized with this macro can be
+  86:../../../os/rt/include/chschd.h ****  *          indexed using the numeric thread state values.
+  87:../../../os/rt/include/chschd.h ****  */
+  88:../../../os/rt/include/chschd.h **** #define CH_STATE_NAMES                                                     \
+  89:../../../os/rt/include/chschd.h ****   "READY", "CURRENT", "WTSTART", "SUSPENDED", "QUEUED", "WTSEM", "WTMTX",  \
+  90:../../../os/rt/include/chschd.h ****   "WTCOND", "SLEEPING", "WTEXIT", "WTOREVT", "WTANDEVT", "SNDMSGQ",        \
+  91:../../../os/rt/include/chschd.h ****   "SNDMSG", "WTMSG", "FINAL"
+  92:../../../os/rt/include/chschd.h **** /** @} */
+  93:../../../os/rt/include/chschd.h **** 
+  94:../../../os/rt/include/chschd.h **** /**
+  95:../../../os/rt/include/chschd.h ****  * @name    Thread flags and attributes
+  96:../../../os/rt/include/chschd.h ****  * @{
+  97:../../../os/rt/include/chschd.h ****  */
+  98:../../../os/rt/include/chschd.h **** #define CH_FLAG_MODE_MASK   (tmode_t)3U     /**< @brief Thread memory mode
+  99:../../../os/rt/include/chschd.h ****                                                  mask.                      */
+ 100:../../../os/rt/include/chschd.h **** #define CH_FLAG_MODE_STATIC (tmode_t)0U     /**< @brief Static thread.      */
+ 101:../../../os/rt/include/chschd.h **** #define CH_FLAG_MODE_HEAP   (tmode_t)1U     /**< @brief Thread allocated
+ 102:../../../os/rt/include/chschd.h ****                                                  from a Memory Heap.        */
+ 103:../../../os/rt/include/chschd.h **** #define CH_FLAG_MODE_MPOOL  (tmode_t)2U     /**< @brief Thread allocated
+ 104:../../../os/rt/include/chschd.h ****                                                  from a Memory Pool.        */
+ 105:../../../os/rt/include/chschd.h **** #define CH_FLAG_TERMINATE   (tmode_t)4U     /**< @brief Termination requested
+ 106:../../../os/rt/include/chschd.h ****                                                  flag.                      */
+ 107:../../../os/rt/include/chschd.h **** /** @} */
+ 108:../../../os/rt/include/chschd.h **** 
+ 109:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 110:../../../os/rt/include/chschd.h **** /* Module pre-compile time settings.                                         */
+ 111:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 112:../../../os/rt/include/chschd.h **** 
+ 113:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 114:../../../os/rt/include/chschd.h **** /* Derived constants and error checks.                                       */
+ 115:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 116:../../../os/rt/include/chschd.h **** 
+ 117:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 118:../../../os/rt/include/chschd.h **** /* Module data structures and types.                                         */
+ 119:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 120:../../../os/rt/include/chschd.h **** 
+ 121:../../../os/rt/include/chschd.h **** /**
+ 122:../../../os/rt/include/chschd.h ****  * @brief   Generic threads single link list, it works like a stack.
+ 123:../../../os/rt/include/chschd.h ****  */
+ 124:../../../os/rt/include/chschd.h **** struct ch_threads_list {
+ 125:../../../os/rt/include/chschd.h ****   thread_t              *next;      /**< @brief Next in the list/queue.     */
+ 126:../../../os/rt/include/chschd.h **** };
+ 127:../../../os/rt/include/chschd.h **** 
+ 128:../../../os/rt/include/chschd.h **** /**
+ 129:../../../os/rt/include/chschd.h ****  * @brief   Generic threads bidirectional linked list header and element.
+ 130:../../../os/rt/include/chschd.h ****  */
+ 131:../../../os/rt/include/chschd.h **** struct ch_threads_queue {
+ 132:../../../os/rt/include/chschd.h ****   thread_t              *next;      /**< @brief Next in the list/queue.     */
+ 133:../../../os/rt/include/chschd.h ****   thread_t              *prev;      /**< @brief Previous in the queue.      */
+ 134:../../../os/rt/include/chschd.h **** };
+ 135:../../../os/rt/include/chschd.h **** 
+ 136:../../../os/rt/include/chschd.h **** /**
+ 137:../../../os/rt/include/chschd.h ****  * @brief   Structure representing a thread.
+ 138:../../../os/rt/include/chschd.h ****  * @note    Not all the listed fields are always needed, by switching off some
+ 139:../../../os/rt/include/chschd.h ****  *          not needed ChibiOS/RT subsystems it is possible to save RAM space
+ 140:../../../os/rt/include/chschd.h ****  *          by shrinking this structure.
+ 141:../../../os/rt/include/chschd.h ****  */
+ 142:../../../os/rt/include/chschd.h **** struct ch_thread {
+ 143:../../../os/rt/include/chschd.h ****   threads_queue_t       queue;      /**< @brief Threads queue header.       */
+ 144:../../../os/rt/include/chschd.h ****   tprio_t               prio;       /**< @brief Thread priority.            */
+ 145:../../../os/rt/include/chschd.h ****   struct port_context   ctx;        /**< @brief Processor context.          */
+ 146:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
+ 147:../../../os/rt/include/chschd.h ****   thread_t              *newer;     /**< @brief Newer registry element.     */
+ 148:../../../os/rt/include/chschd.h ****   thread_t              *older;     /**< @brief Older registry element.     */
+ 149:../../../os/rt/include/chschd.h **** #endif
+ 150:../../../os/rt/include/chschd.h ****   /* End of the fields shared with the ReadyList structure. */
+ 151:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
+ 152:../../../os/rt/include/chschd.h ****   /**
+ 153:../../../os/rt/include/chschd.h ****    * @brief   Thread name or @p NULL.
+ 154:../../../os/rt/include/chschd.h ****    */
+ 155:../../../os/rt/include/chschd.h ****   const char            *name;
+ 156:../../../os/rt/include/chschd.h **** #endif
+ 157:../../../os/rt/include/chschd.h **** #if (CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE) ||  \
+ 158:../../../os/rt/include/chschd.h ****     defined(__DOXYGEN__)
+ 159:../../../os/rt/include/chschd.h ****   /**
+ 160:../../../os/rt/include/chschd.h ****    * @brief   Working area base address.
+ 161:../../../os/rt/include/chschd.h ****    * @note    This pointer is used for stack overflow checks and for
+ 162:../../../os/rt/include/chschd.h ****    *          dynamic threading.
+ 163:../../../os/rt/include/chschd.h ****    */
+ 164:../../../os/rt/include/chschd.h ****   stkalign_t            *wabase;
+ 165:../../../os/rt/include/chschd.h **** #endif
+ 166:../../../os/rt/include/chschd.h ****   /**
+ 167:../../../os/rt/include/chschd.h ****    * @brief   Current thread state.
+ 168:../../../os/rt/include/chschd.h ****    */
+ 169:../../../os/rt/include/chschd.h ****   tstate_t              state;
+ 170:../../../os/rt/include/chschd.h ****   /**
+ 171:../../../os/rt/include/chschd.h ****    * @brief   Various thread flags.
+ 172:../../../os/rt/include/chschd.h ****    */
+ 173:../../../os/rt/include/chschd.h ****   tmode_t               flags;
+ 174:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
+ 175:../../../os/rt/include/chschd.h ****   /**
+ 176:../../../os/rt/include/chschd.h ****    * @brief   References to this thread.
+ 177:../../../os/rt/include/chschd.h ****    */
+ 178:../../../os/rt/include/chschd.h ****   trefs_t               refs;
+ 179:../../../os/rt/include/chschd.h **** #endif
+ 180:../../../os/rt/include/chschd.h ****   /**
+ 181:../../../os/rt/include/chschd.h ****    * @brief   Number of ticks remaining to this thread.
+ 182:../../../os/rt/include/chschd.h ****    */
+ 183:../../../os/rt/include/chschd.h **** #if (CH_CFG_TIME_QUANTUM > 0) || defined(__DOXYGEN__)
+ 184:../../../os/rt/include/chschd.h ****   tslices_t             ticks;
+ 185:../../../os/rt/include/chschd.h **** #endif
+ 186:../../../os/rt/include/chschd.h **** #if (CH_DBG_THREADS_PROFILING == TRUE) || defined(__DOXYGEN__)
+ 187:../../../os/rt/include/chschd.h ****   /**
+ 188:../../../os/rt/include/chschd.h ****    * @brief   Thread consumed time in ticks.
+ 189:../../../os/rt/include/chschd.h ****    * @note    This field can overflow.
+ 190:../../../os/rt/include/chschd.h ****    */
+ 191:../../../os/rt/include/chschd.h ****   volatile systime_t    time;
+ 192:../../../os/rt/include/chschd.h **** #endif
+ 193:../../../os/rt/include/chschd.h ****   /**
+ 194:../../../os/rt/include/chschd.h ****    * @brief   State-specific fields.
+ 195:../../../os/rt/include/chschd.h ****    * @note    All the fields declared in this union are only valid in the
+ 196:../../../os/rt/include/chschd.h ****    *          specified state or condition and are thus volatile.
+ 197:../../../os/rt/include/chschd.h ****    */
+ 198:../../../os/rt/include/chschd.h ****   union {
+ 199:../../../os/rt/include/chschd.h ****     /**
+ 200:../../../os/rt/include/chschd.h ****      * @brief   Thread wakeup code.
+ 201:../../../os/rt/include/chschd.h ****      * @note    This field contains the low level message sent to the thread
+ 202:../../../os/rt/include/chschd.h ****      *          by the waking thread or interrupt handler. The value is valid
+ 203:../../../os/rt/include/chschd.h ****      *          after exiting the @p chSchWakeupS() function.
+ 204:../../../os/rt/include/chschd.h ****      */
+ 205:../../../os/rt/include/chschd.h ****     msg_t               rdymsg;
+ 206:../../../os/rt/include/chschd.h ****     /**
+ 207:../../../os/rt/include/chschd.h ****      * @brief   Thread exit code.
+ 208:../../../os/rt/include/chschd.h ****      * @note    The thread termination code is stored in this field in order
+ 209:../../../os/rt/include/chschd.h ****      *          to be retrieved by the thread performing a @p chThdWait() on
+ 210:../../../os/rt/include/chschd.h ****      *          this thread.
+ 211:../../../os/rt/include/chschd.h ****      */
+ 212:../../../os/rt/include/chschd.h ****     msg_t               exitcode;
+ 213:../../../os/rt/include/chschd.h ****     /**
+ 214:../../../os/rt/include/chschd.h ****      * @brief   Pointer to a generic "wait" object.
+ 215:../../../os/rt/include/chschd.h ****      * @note    This field is used to get a generic pointer to a synchronization
+ 216:../../../os/rt/include/chschd.h ****      *          object and is valid when the thread is in one of the wait
+ 217:../../../os/rt/include/chschd.h ****      *          states.
+ 218:../../../os/rt/include/chschd.h ****      */
+ 219:../../../os/rt/include/chschd.h ****     void                *wtobjp;
+ 220:../../../os/rt/include/chschd.h ****     /**
+ 221:../../../os/rt/include/chschd.h ****      * @brief   Pointer to a generic thread reference object.
+ 222:../../../os/rt/include/chschd.h ****      * @note    This field is used to get a pointer to a synchronization
+ 223:../../../os/rt/include/chschd.h ****      *          object and is valid when the thread is in @p CH_STATE_SUSPENDED
+ 224:../../../os/rt/include/chschd.h ****      *          state.
+ 225:../../../os/rt/include/chschd.h ****      */
+ 226:../../../os/rt/include/chschd.h ****     thread_reference_t  *wttrp;
+ 227:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_MESSAGES == TRUE) || defined(__DOXYGEN__)
+ 228:../../../os/rt/include/chschd.h ****     /**
+ 229:../../../os/rt/include/chschd.h ****      * @brief   Thread sent message.
+ 230:../../../os/rt/include/chschd.h ****      */
+ 231:../../../os/rt/include/chschd.h ****     msg_t               sentmsg;
+ 232:../../../os/rt/include/chschd.h **** #endif
+ 233:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+ 234:../../../os/rt/include/chschd.h ****     /**
+ 235:../../../os/rt/include/chschd.h ****      * @brief   Pointer to a generic semaphore object.
+ 236:../../../os/rt/include/chschd.h ****      * @note    This field is used to get a pointer to a synchronization
+ 237:../../../os/rt/include/chschd.h ****      *          object and is valid when the thread is in @p CH_STATE_WTSEM
+ 238:../../../os/rt/include/chschd.h ****      *          state.
+ 239:../../../os/rt/include/chschd.h ****      */
+ 240:../../../os/rt/include/chschd.h ****     struct ch_semaphore *wtsemp;
+ 241:../../../os/rt/include/chschd.h **** #endif
+ 242:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_MUTEXES == TRUE) || defined(__DOXYGEN__)
+ 243:../../../os/rt/include/chschd.h ****     /**
+ 244:../../../os/rt/include/chschd.h ****      * @brief   Pointer to a generic mutex object.
+ 245:../../../os/rt/include/chschd.h ****      * @note    This field is used to get a pointer to a synchronization
+ 246:../../../os/rt/include/chschd.h ****      *          object and is valid when the thread is in @p CH_STATE_WTMTX
+ 247:../../../os/rt/include/chschd.h ****      *          state.
+ 248:../../../os/rt/include/chschd.h ****      */
+ 249:../../../os/rt/include/chschd.h ****     struct ch_mutex     *wtmtxp;
+ 250:../../../os/rt/include/chschd.h **** #endif
+ 251:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_EVENTS == TRUE) || defined(__DOXYGEN__)
+ 252:../../../os/rt/include/chschd.h ****     /**
+ 253:../../../os/rt/include/chschd.h ****      * @brief   Enabled events mask.
+ 254:../../../os/rt/include/chschd.h ****      * @note    This field is only valid while the thread is in the
+ 255:../../../os/rt/include/chschd.h ****      *          @p CH_STATE_WTOREVT or @p CH_STATE_WTANDEVT states.
+ 256:../../../os/rt/include/chschd.h ****      */
+ 257:../../../os/rt/include/chschd.h ****     eventmask_t         ewmask;
+ 258:../../../os/rt/include/chschd.h **** #endif
+ 259:../../../os/rt/include/chschd.h ****   }                     u;
+ 260:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_WAITEXIT == TRUE) || defined(__DOXYGEN__)
+ 261:../../../os/rt/include/chschd.h ****   /**
+ 262:../../../os/rt/include/chschd.h ****    * @brief   Termination waiting list.
+ 263:../../../os/rt/include/chschd.h ****    */
+ 264:../../../os/rt/include/chschd.h ****   threads_list_t        waiting;
+ 265:../../../os/rt/include/chschd.h **** #endif
+ 266:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_MESSAGES == TRUE) || defined(__DOXYGEN__)
+ 267:../../../os/rt/include/chschd.h ****   /**
+ 268:../../../os/rt/include/chschd.h ****    * @brief   Messages queue.
+ 269:../../../os/rt/include/chschd.h ****    */
+ 270:../../../os/rt/include/chschd.h ****   threads_queue_t       msgqueue;
+ 271:../../../os/rt/include/chschd.h **** #endif
+ 272:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_EVENTS == TRUE) || defined(__DOXYGEN__)
+ 273:../../../os/rt/include/chschd.h ****   /**
+ 274:../../../os/rt/include/chschd.h ****    * @brief   Pending events mask.
+ 275:../../../os/rt/include/chschd.h ****    */
+ 276:../../../os/rt/include/chschd.h ****   eventmask_t           epending;
+ 277:../../../os/rt/include/chschd.h **** #endif
+ 278:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_MUTEXES == TRUE) || defined(__DOXYGEN__)
+ 279:../../../os/rt/include/chschd.h ****   /**
+ 280:../../../os/rt/include/chschd.h ****    * @brief   List of the mutexes owned by this thread.
+ 281:../../../os/rt/include/chschd.h ****    * @note    The list is terminated by a @p NULL in this field.
+ 282:../../../os/rt/include/chschd.h ****    */
+ 283:../../../os/rt/include/chschd.h ****   struct ch_mutex       *mtxlist;
+ 284:../../../os/rt/include/chschd.h ****   /**
+ 285:../../../os/rt/include/chschd.h ****    * @brief   Thread's own, non-inherited, priority.
+ 286:../../../os/rt/include/chschd.h ****    */
+ 287:../../../os/rt/include/chschd.h ****   tprio_t               realprio;
+ 288:../../../os/rt/include/chschd.h **** #endif
+ 289:../../../os/rt/include/chschd.h **** #if ((CH_CFG_USE_DYNAMIC == TRUE) && (CH_CFG_USE_MEMPOOLS == TRUE)) ||      \
+ 290:../../../os/rt/include/chschd.h ****     defined(__DOXYGEN__)
+ 291:../../../os/rt/include/chschd.h ****   /**
+ 292:../../../os/rt/include/chschd.h ****    * @brief   Memory Pool where the thread workspace is returned.
+ 293:../../../os/rt/include/chschd.h ****    */
+ 294:../../../os/rt/include/chschd.h ****   void                  *mpool;
+ 295:../../../os/rt/include/chschd.h **** #endif
+ 296:../../../os/rt/include/chschd.h **** #if (CH_DBG_STATISTICS == TRUE) || defined(__DOXYGEN__)
+ 297:../../../os/rt/include/chschd.h ****   /**
+ 298:../../../os/rt/include/chschd.h ****    * @brief   Thread statistics.
+ 299:../../../os/rt/include/chschd.h ****    */
+ 300:../../../os/rt/include/chschd.h ****   time_measurement_t    stats;
+ 301:../../../os/rt/include/chschd.h **** #endif
+ 302:../../../os/rt/include/chschd.h **** #if defined(CH_CFG_THREAD_EXTRA_FIELDS)
+ 303:../../../os/rt/include/chschd.h ****   /* Extra fields defined in chconf.h.*/
+ 304:../../../os/rt/include/chschd.h ****   CH_CFG_THREAD_EXTRA_FIELDS
+ 305:../../../os/rt/include/chschd.h **** #endif
+ 306:../../../os/rt/include/chschd.h **** };
+ 307:../../../os/rt/include/chschd.h **** 
+ 308:../../../os/rt/include/chschd.h **** /**
+ 309:../../../os/rt/include/chschd.h ****  * @extends virtual_timers_list_t
+ 310:../../../os/rt/include/chschd.h ****  *
+ 311:../../../os/rt/include/chschd.h ****  * @brief   Virtual Timer descriptor structure.
+ 312:../../../os/rt/include/chschd.h ****  */
+ 313:../../../os/rt/include/chschd.h **** struct ch_virtual_timer {
+ 314:../../../os/rt/include/chschd.h ****   virtual_timer_t       *next;      /**< @brief Next timer in the list.     */
+ 315:../../../os/rt/include/chschd.h ****   virtual_timer_t       *prev;      /**< @brief Previous timer in the list. */
+ 316:../../../os/rt/include/chschd.h ****   sysinterval_t         delta;      /**< @brief Time delta before timeout.  */
+ 317:../../../os/rt/include/chschd.h ****   vtfunc_t              func;       /**< @brief Timer callback function
+ 318:../../../os/rt/include/chschd.h ****                                                 pointer.                    */
+ 319:../../../os/rt/include/chschd.h ****   void                  *par;       /**< @brief Timer callback function
+ 320:../../../os/rt/include/chschd.h ****                                                 parameter.                  */
+ 321:../../../os/rt/include/chschd.h **** };
+ 322:../../../os/rt/include/chschd.h **** 
+ 323:../../../os/rt/include/chschd.h **** /**
+ 324:../../../os/rt/include/chschd.h ****  * @brief   Virtual timers list header.
+ 325:../../../os/rt/include/chschd.h ****  * @note    The timers list is implemented as a double link bidirectional list
+ 326:../../../os/rt/include/chschd.h ****  *          in order to make the unlink time constant, the reset of a virtual
+ 327:../../../os/rt/include/chschd.h ****  *          timer is often used in the code.
+ 328:../../../os/rt/include/chschd.h ****  */
+ 329:../../../os/rt/include/chschd.h **** struct ch_virtual_timers_list {
+ 330:../../../os/rt/include/chschd.h ****   virtual_timer_t       *next;      /**< @brief Next timer in the delta
+ 331:../../../os/rt/include/chschd.h ****                                                 list.                       */
+ 332:../../../os/rt/include/chschd.h ****   virtual_timer_t       *prev;      /**< @brief Last timer in the delta
+ 333:../../../os/rt/include/chschd.h ****                                                 list.                       */
+ 334:../../../os/rt/include/chschd.h ****   sysinterval_t         delta;      /**< @brief Must be initialized to -1.  */
+ 335:../../../os/rt/include/chschd.h **** #if (CH_CFG_ST_TIMEDELTA == 0) || defined(__DOXYGEN__)
+ 336:../../../os/rt/include/chschd.h ****   volatile systime_t    systime;    /**< @brief System Time counter.        */
+ 337:../../../os/rt/include/chschd.h **** #endif
+ 338:../../../os/rt/include/chschd.h **** #if (CH_CFG_ST_TIMEDELTA > 0) || defined(__DOXYGEN__)
+ 339:../../../os/rt/include/chschd.h ****   /**
+ 340:../../../os/rt/include/chschd.h ****    * @brief   System time of the last tick event.
+ 341:../../../os/rt/include/chschd.h ****    */
+ 342:../../../os/rt/include/chschd.h ****   systime_t             lasttime;   /**< @brief System time of the last
+ 343:../../../os/rt/include/chschd.h ****                                                 tick event.                 */
+ 344:../../../os/rt/include/chschd.h **** #endif
+ 345:../../../os/rt/include/chschd.h **** };
+ 346:../../../os/rt/include/chschd.h **** 
+ 347:../../../os/rt/include/chschd.h **** /**
+ 348:../../../os/rt/include/chschd.h ****  * @extends threads_queue_t
+ 349:../../../os/rt/include/chschd.h ****  */
+ 350:../../../os/rt/include/chschd.h **** struct ch_ready_list {
+ 351:../../../os/rt/include/chschd.h ****   threads_queue_t       queue;      /**< @brief Threads queue.              */
+ 352:../../../os/rt/include/chschd.h ****   tprio_t               prio;       /**< @brief This field must be
+ 353:../../../os/rt/include/chschd.h ****                                                 initialized to zero.        */
+ 354:../../../os/rt/include/chschd.h ****   struct port_context   ctx;        /**< @brief Not used, present because
+ 355:../../../os/rt/include/chschd.h ****                                                 offsets.                    */
+ 356:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
+ 357:../../../os/rt/include/chschd.h ****   thread_t              *newer;     /**< @brief Newer registry element.     */
+ 358:../../../os/rt/include/chschd.h ****   thread_t              *older;     /**< @brief Older registry element.     */
+ 359:../../../os/rt/include/chschd.h **** #endif
+ 360:../../../os/rt/include/chschd.h ****   /* End of the fields shared with the thread_t structure.*/
+ 361:../../../os/rt/include/chschd.h ****   thread_t              *current;   /**< @brief The currently running
+ 362:../../../os/rt/include/chschd.h ****                                                 thread.                     */
+ 363:../../../os/rt/include/chschd.h **** };
+ 364:../../../os/rt/include/chschd.h **** 
+ 365:../../../os/rt/include/chschd.h **** /**
+ 366:../../../os/rt/include/chschd.h ****  * @brief   System debug data structure.
+ 367:../../../os/rt/include/chschd.h ****  */
+ 368:../../../os/rt/include/chschd.h **** struct ch_system_debug {
+ 369:../../../os/rt/include/chschd.h ****   /**
+ 370:../../../os/rt/include/chschd.h ****    * @brief   Pointer to the panic message.
+ 371:../../../os/rt/include/chschd.h ****    * @details This pointer is meant to be accessed through the debugger, it is
+ 372:../../../os/rt/include/chschd.h ****    *          written once and then the system is halted.
+ 373:../../../os/rt/include/chschd.h ****    * @note    Accesses to this pointer must never be optimized out so the
+ 374:../../../os/rt/include/chschd.h ****    *          field itself is declared volatile.
+ 375:../../../os/rt/include/chschd.h ****    */
+ 376:../../../os/rt/include/chschd.h ****   const char            * volatile panic_msg;
+ 377:../../../os/rt/include/chschd.h **** #if (CH_DBG_SYSTEM_STATE_CHECK == TRUE) || defined(__DOXYGEN__)
+ 378:../../../os/rt/include/chschd.h ****   /**
+ 379:../../../os/rt/include/chschd.h ****    * @brief   ISR nesting level.
+ 380:../../../os/rt/include/chschd.h ****    */
+ 381:../../../os/rt/include/chschd.h ****   cnt_t                 isr_cnt;
+ 382:../../../os/rt/include/chschd.h ****   /**
+ 383:../../../os/rt/include/chschd.h ****    * @brief   Lock nesting level.
+ 384:../../../os/rt/include/chschd.h ****    */
+ 385:../../../os/rt/include/chschd.h ****   cnt_t                 lock_cnt;
+ 386:../../../os/rt/include/chschd.h **** #endif
+ 387:../../../os/rt/include/chschd.h **** #if (CH_DBG_TRACE_MASK != CH_DBG_TRACE_MASK_DISABLED) || defined(__DOXYGEN__)
+ 388:../../../os/rt/include/chschd.h ****   /**
+ 389:../../../os/rt/include/chschd.h ****    * @brief   Public trace buffer.
+ 390:../../../os/rt/include/chschd.h ****    */
+ 391:../../../os/rt/include/chschd.h ****   ch_trace_buffer_t     trace_buffer;
+ 392:../../../os/rt/include/chschd.h **** #endif
+ 393:../../../os/rt/include/chschd.h **** };
+ 394:../../../os/rt/include/chschd.h **** 
+ 395:../../../os/rt/include/chschd.h **** /**
+ 396:../../../os/rt/include/chschd.h ****  * @brief   System data structure.
+ 397:../../../os/rt/include/chschd.h ****  * @note    This structure contain all the data areas used by the OS except
+ 398:../../../os/rt/include/chschd.h ****  *          stacks.
+ 399:../../../os/rt/include/chschd.h ****  */
+ 400:../../../os/rt/include/chschd.h **** struct ch_system {
+ 401:../../../os/rt/include/chschd.h ****   /**
+ 402:../../../os/rt/include/chschd.h ****    * @brief   Ready list header.
+ 403:../../../os/rt/include/chschd.h ****    */
+ 404:../../../os/rt/include/chschd.h ****   ready_list_t          rlist;
+ 405:../../../os/rt/include/chschd.h ****   /**
+ 406:../../../os/rt/include/chschd.h ****    * @brief   Virtual timers delta list header.
+ 407:../../../os/rt/include/chschd.h ****    */
+ 408:../../../os/rt/include/chschd.h ****   virtual_timers_list_t vtlist;
+ 409:../../../os/rt/include/chschd.h ****   /**
+ 410:../../../os/rt/include/chschd.h ****    * @brief   System debug.
+ 411:../../../os/rt/include/chschd.h ****    */
+ 412:../../../os/rt/include/chschd.h ****   system_debug_t        dbg;
+ 413:../../../os/rt/include/chschd.h ****   /**
+ 414:../../../os/rt/include/chschd.h ****    * @brief   Main thread descriptor.
+ 415:../../../os/rt/include/chschd.h ****    */
+ 416:../../../os/rt/include/chschd.h ****   thread_t              mainthread;
+ 417:../../../os/rt/include/chschd.h **** #if (CH_CFG_USE_TM == TRUE) || defined(__DOXYGEN__)
+ 418:../../../os/rt/include/chschd.h ****   /**
+ 419:../../../os/rt/include/chschd.h ****    * @brief   Time measurement calibration data.
+ 420:../../../os/rt/include/chschd.h ****    */
+ 421:../../../os/rt/include/chschd.h ****   tm_calibration_t      tm;
+ 422:../../../os/rt/include/chschd.h **** #endif
+ 423:../../../os/rt/include/chschd.h **** #if (CH_DBG_STATISTICS == TRUE) || defined(__DOXYGEN__)
+ 424:../../../os/rt/include/chschd.h ****   /**
+ 425:../../../os/rt/include/chschd.h ****    * @brief   Global kernel statistics.
+ 426:../../../os/rt/include/chschd.h ****    */
+ 427:../../../os/rt/include/chschd.h ****   kernel_stats_t        kernel_stats;
+ 428:../../../os/rt/include/chschd.h **** #endif
+ 429:../../../os/rt/include/chschd.h ****   CH_CFG_SYSTEM_EXTRA_FIELDS
+ 430:../../../os/rt/include/chschd.h **** };
+ 431:../../../os/rt/include/chschd.h **** 
+ 432:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 433:../../../os/rt/include/chschd.h **** /* Module macros.                                                            */
+ 434:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 435:../../../os/rt/include/chschd.h **** 
+ 436:../../../os/rt/include/chschd.h **** /**
+ 437:../../../os/rt/include/chschd.h ****  * @brief   Returns the priority of the first thread on the given ready list.
+ 438:../../../os/rt/include/chschd.h ****  *
+ 439:../../../os/rt/include/chschd.h ****  * @notapi
+ 440:../../../os/rt/include/chschd.h ****  */
+ 441:../../../os/rt/include/chschd.h **** #define firstprio(rlp)  ((rlp)->next->prio)
+ 442:../../../os/rt/include/chschd.h **** 
+ 443:../../../os/rt/include/chschd.h **** /**
+ 444:../../../os/rt/include/chschd.h ****  * @brief   Current thread pointer access macro.
+ 445:../../../os/rt/include/chschd.h ****  * @note    This macro is not meant to be used in the application code but
+ 446:../../../os/rt/include/chschd.h ****  *          only from within the kernel, use @p chThdGetSelfX() instead.
+ 447:../../../os/rt/include/chschd.h ****  */
+ 448:../../../os/rt/include/chschd.h **** #define currp ch.rlist.current
+ 449:../../../os/rt/include/chschd.h **** 
+ 450:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 451:../../../os/rt/include/chschd.h **** /* External declarations.                                                    */
+ 452:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 453:../../../os/rt/include/chschd.h **** 
+ 454:../../../os/rt/include/chschd.h **** #if !defined(__DOXYGEN__)
+ 455:../../../os/rt/include/chschd.h **** extern ch_system_t ch;
+ 456:../../../os/rt/include/chschd.h **** #endif
+ 457:../../../os/rt/include/chschd.h **** 
+ 458:../../../os/rt/include/chschd.h **** /*
+ 459:../../../os/rt/include/chschd.h ****  * Scheduler APIs.
+ 460:../../../os/rt/include/chschd.h ****  */
+ 461:../../../os/rt/include/chschd.h **** #ifdef __cplusplus
+ 462:../../../os/rt/include/chschd.h **** extern "C" {
+ 463:../../../os/rt/include/chschd.h **** #endif
+ 464:../../../os/rt/include/chschd.h ****   void _scheduler_init(void);
+ 465:../../../os/rt/include/chschd.h ****   thread_t *chSchReadyI(thread_t *tp);
+ 466:../../../os/rt/include/chschd.h ****   thread_t *chSchReadyAheadI(thread_t *tp);
+ 467:../../../os/rt/include/chschd.h ****   void chSchGoSleepS(tstate_t newstate);
+ 468:../../../os/rt/include/chschd.h ****   msg_t chSchGoSleepTimeoutS(tstate_t newstate, sysinterval_t timeout);
+ 469:../../../os/rt/include/chschd.h ****   void chSchWakeupS(thread_t *ntp, msg_t msg);
+ 470:../../../os/rt/include/chschd.h ****   void chSchRescheduleS(void);
+ 471:../../../os/rt/include/chschd.h ****   bool chSchIsPreemptionRequired(void);
+ 472:../../../os/rt/include/chschd.h ****   void chSchDoRescheduleBehind(void);
+ 473:../../../os/rt/include/chschd.h ****   void chSchDoRescheduleAhead(void);
+ 474:../../../os/rt/include/chschd.h ****   void chSchDoReschedule(void);
+ 475:../../../os/rt/include/chschd.h **** #if CH_CFG_OPTIMIZE_SPEED == FALSE
+ 476:../../../os/rt/include/chschd.h ****   void queue_prio_insert(thread_t *tp, threads_queue_t *tqp);
+ 477:../../../os/rt/include/chschd.h ****   void queue_insert(thread_t *tp, threads_queue_t *tqp);
+ 478:../../../os/rt/include/chschd.h ****   thread_t *queue_fifo_remove(threads_queue_t *tqp);
+ 479:../../../os/rt/include/chschd.h ****   thread_t *queue_lifo_remove(threads_queue_t *tqp);
+ 480:../../../os/rt/include/chschd.h ****   thread_t *queue_dequeue(thread_t *tp);
+ 481:../../../os/rt/include/chschd.h ****   void list_insert(thread_t *tp, threads_list_t *tlp);
+ 482:../../../os/rt/include/chschd.h ****   thread_t *list_remove(threads_list_t *tlp);
+ 483:../../../os/rt/include/chschd.h **** #endif /* CH_CFG_OPTIMIZE_SPEED == FALSE */
+ 484:../../../os/rt/include/chschd.h **** #ifdef __cplusplus
+ 485:../../../os/rt/include/chschd.h **** }
+ 486:../../../os/rt/include/chschd.h **** #endif
+ 487:../../../os/rt/include/chschd.h **** 
+ 488:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 489:../../../os/rt/include/chschd.h **** /* Module inline functions.                                                  */
+ 490:../../../os/rt/include/chschd.h **** /*===========================================================================*/
+ 491:../../../os/rt/include/chschd.h **** 
+ 492:../../../os/rt/include/chschd.h **** /**
+ 493:../../../os/rt/include/chschd.h ****  * @brief   Threads list initialization.
+ 494:../../../os/rt/include/chschd.h ****  *
+ 495:../../../os/rt/include/chschd.h ****  * @param[in] tlp       pointer to the threads list object
+ 496:../../../os/rt/include/chschd.h ****  *
+ 497:../../../os/rt/include/chschd.h ****  * @notapi
+ 498:../../../os/rt/include/chschd.h ****  */
+ 499:../../../os/rt/include/chschd.h **** static inline void list_init(threads_list_t *tlp) {
+ 500:../../../os/rt/include/chschd.h **** 
+ 501:../../../os/rt/include/chschd.h ****   tlp->next = (thread_t *)tlp;
+ 502:../../../os/rt/include/chschd.h **** }
+ 503:../../../os/rt/include/chschd.h **** 
+ 504:../../../os/rt/include/chschd.h **** /**
+ 505:../../../os/rt/include/chschd.h ****  * @brief   Evaluates to @p true if the specified threads list is empty.
+ 506:../../../os/rt/include/chschd.h ****  *
+ 507:../../../os/rt/include/chschd.h ****  * @param[in] tlp       pointer to the threads list object
+ 508:../../../os/rt/include/chschd.h ****  * @return              The status of the list.
+ 509:../../../os/rt/include/chschd.h ****  *
+ 510:../../../os/rt/include/chschd.h ****  * @notapi
+ 511:../../../os/rt/include/chschd.h ****  */
+ 512:../../../os/rt/include/chschd.h **** static inline bool list_isempty(threads_list_t *tlp) {
+ 513:../../../os/rt/include/chschd.h **** 
+ 514:../../../os/rt/include/chschd.h ****   return (bool)(tlp->next == (thread_t *)tlp);
+ 515:../../../os/rt/include/chschd.h **** }
+ 516:../../../os/rt/include/chschd.h **** 
+ 517:../../../os/rt/include/chschd.h **** /**
+ 518:../../../os/rt/include/chschd.h ****  * @brief   Evaluates to @p true if the specified threads list is not empty.
+ 519:../../../os/rt/include/chschd.h ****  *
+ 520:../../../os/rt/include/chschd.h ****  * @param[in] tlp       pointer to the threads list object
+ 521:../../../os/rt/include/chschd.h ****  * @return              The status of the list.
+ 522:../../../os/rt/include/chschd.h ****  *
+ 523:../../../os/rt/include/chschd.h ****  * @notapi
+ 524:../../../os/rt/include/chschd.h ****  */
+ 525:../../../os/rt/include/chschd.h **** static inline bool list_notempty(threads_list_t *tlp) {
+ 526:../../../os/rt/include/chschd.h **** 
+ 527:../../../os/rt/include/chschd.h ****   return (bool)(tlp->next != (thread_t *)tlp);
+ 528:../../../os/rt/include/chschd.h **** }
+ 529:../../../os/rt/include/chschd.h **** 
+ 530:../../../os/rt/include/chschd.h **** /**
+ 531:../../../os/rt/include/chschd.h ****  * @brief   Threads queue initialization.
+ 532:../../../os/rt/include/chschd.h ****  *
+ 533:../../../os/rt/include/chschd.h ****  * @param[in] tqp       pointer to the threads queue object
+ 534:../../../os/rt/include/chschd.h ****  *
+ 535:../../../os/rt/include/chschd.h ****  * @notapi
+ 536:../../../os/rt/include/chschd.h ****  */
+ 537:../../../os/rt/include/chschd.h **** static inline void queue_init(threads_queue_t *tqp) {
+ 538:../../../os/rt/include/chschd.h **** 
+ 539:../../../os/rt/include/chschd.h ****   tqp->next = (thread_t *)tqp;
+  28               		.loc 2 539 0
+  29 0002 9183      		std Z+1,r25
+  30 0004 8083      		st Z,r24
+ 540:../../../os/rt/include/chschd.h ****   tqp->prev = (thread_t *)tqp;
+  31               		.loc 2 540 0
+  32 0006 9383      		std Z+3,r25
+  33 0008 8283      		std Z+2,r24
+  34               	.LVL2:
+  35               	.LBE75:
+  36               	.LBE74:
+  98:../../../os/rt/src/chsem.c **** 
+  99:../../../os/rt/src/chsem.c ****   chDbgCheck((sp != NULL) && (n >= (cnt_t)0));
+ 100:../../../os/rt/src/chsem.c **** 
+ 101:../../../os/rt/src/chsem.c ****   queue_init(&sp->queue);
+ 102:../../../os/rt/src/chsem.c ****   sp->cnt = n;
+  37               		.loc 1 102 0
+  38 000a 6483      		std Z+4,r22
+  39 000c 0895      		ret
+  40               		.cfi_endproc
+  41               	.LFE148:
+  43               		.section	.text.chSemResetI,"ax",@progbits
+  44               	.global	chSemResetI
+  46               	chSemResetI:
+  47               	.LFB150:
+ 103:../../../os/rt/src/chsem.c **** }
+ 104:../../../os/rt/src/chsem.c **** 
+ 105:../../../os/rt/src/chsem.c **** /**
+ 106:../../../os/rt/src/chsem.c ****  * @brief   Performs a reset operation on the semaphore.
+ 107:../../../os/rt/src/chsem.c ****  * @post    After invoking this function all the threads waiting on the
+ 108:../../../os/rt/src/chsem.c ****  *          semaphore, if any, are released and the semaphore counter is set
+ 109:../../../os/rt/src/chsem.c ****  *          to the specified, non negative, value.
+ 110:../../../os/rt/src/chsem.c ****  * @note    The released threads can recognize they were waked up by a reset
+ 111:../../../os/rt/src/chsem.c ****  *          rather than a signal because the @p chSemWait() will return
+ 112:../../../os/rt/src/chsem.c ****  *          @p MSG_RESET instead of @p MSG_OK.
+ 113:../../../os/rt/src/chsem.c ****  *
+ 114:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 115:../../../os/rt/src/chsem.c ****  * @param[in] n         the new value of the semaphore counter. The value must
+ 116:../../../os/rt/src/chsem.c ****  *                      be non-negative.
+ 117:../../../os/rt/src/chsem.c ****  *
+ 118:../../../os/rt/src/chsem.c ****  * @api
+ 119:../../../os/rt/src/chsem.c ****  */
+ 120:../../../os/rt/src/chsem.c **** void chSemReset(semaphore_t *sp, cnt_t n) {
+ 121:../../../os/rt/src/chsem.c **** 
+ 122:../../../os/rt/src/chsem.c ****   chSysLock();
+ 123:../../../os/rt/src/chsem.c ****   chSemResetI(sp, n);
+ 124:../../../os/rt/src/chsem.c ****   chSchRescheduleS();
+ 125:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 126:../../../os/rt/src/chsem.c **** }
+ 127:../../../os/rt/src/chsem.c **** 
+ 128:../../../os/rt/src/chsem.c **** /**
+ 129:../../../os/rt/src/chsem.c ****  * @brief   Performs a reset operation on the semaphore.
+ 130:../../../os/rt/src/chsem.c ****  * @post    After invoking this function all the threads waiting on the
+ 131:../../../os/rt/src/chsem.c ****  *          semaphore, if any, are released and the semaphore counter is set
+ 132:../../../os/rt/src/chsem.c ****  *          to the specified, non negative, value.
+ 133:../../../os/rt/src/chsem.c ****  * @post    This function does not reschedule so a call to a rescheduling
+ 134:../../../os/rt/src/chsem.c ****  *          function must be performed before unlocking the kernel. Note that
+ 135:../../../os/rt/src/chsem.c ****  *          interrupt handlers always reschedule on exit so an explicit
+ 136:../../../os/rt/src/chsem.c ****  *          reschedule must not be performed in ISRs.
+ 137:../../../os/rt/src/chsem.c ****  * @note    The released threads can recognize they were waked up by a reset
+ 138:../../../os/rt/src/chsem.c ****  *          rather than a signal because the @p chSemWait() will return
+ 139:../../../os/rt/src/chsem.c ****  *          @p MSG_RESET instead of @p MSG_OK.
+ 140:../../../os/rt/src/chsem.c ****  *
+ 141:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 142:../../../os/rt/src/chsem.c ****  * @param[in] n         the new value of the semaphore counter. The value must
+ 143:../../../os/rt/src/chsem.c ****  *                      be non-negative.
+ 144:../../../os/rt/src/chsem.c ****  *
+ 145:../../../os/rt/src/chsem.c ****  * @iclass
+ 146:../../../os/rt/src/chsem.c ****  */
+ 147:../../../os/rt/src/chsem.c **** void chSemResetI(semaphore_t *sp, cnt_t n) {
+  48               		.loc 1 147 0
+  49               		.cfi_startproc
+  50               	.LVL3:
+  51 0000 EF92      		push r14
+  52               	.LCFI0:
+  53               		.cfi_def_cfa_offset 3
+  54               		.cfi_offset 14, -2
+  55 0002 FF92      		push r15
+  56               	.LCFI1:
+  57               		.cfi_def_cfa_offset 4
+  58               		.cfi_offset 15, -3
+  59 0004 1F93      		push r17
+  60               	.LCFI2:
+  61               		.cfi_def_cfa_offset 5
+  62               		.cfi_offset 17, -4
+  63 0006 CF93      		push r28
+  64               	.LCFI3:
+  65               		.cfi_def_cfa_offset 6
+  66               		.cfi_offset 28, -5
+  67 0008 DF93      		push r29
+  68               	.LCFI4:
+  69               		.cfi_def_cfa_offset 7
+  70               		.cfi_offset 29, -6
+  71               	/* prologue: function */
+  72               	/* frame size = 0 */
+  73               	/* stack size = 5 */
+  74               	.L__stack_usage = 5
+  75 000a EC01      		movw r28,r24
+ 148:../../../os/rt/src/chsem.c ****   cnt_t cnt;
+ 149:../../../os/rt/src/chsem.c **** 
+ 150:../../../os/rt/src/chsem.c ****   chDbgCheckClassI();
+ 151:../../../os/rt/src/chsem.c ****   chDbgCheck((sp != NULL) && (n >= (cnt_t)0));
+ 152:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 153:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 154:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 155:../../../os/rt/src/chsem.c **** 
+ 156:../../../os/rt/src/chsem.c ****   cnt = sp->cnt;
+  76               		.loc 1 156 0
+  77 000c 1C81      		ldd r17,Y+4
+  78               	.LVL4:
+ 157:../../../os/rt/src/chsem.c ****   sp->cnt = n;
+  79               		.loc 1 157 0
+  80 000e 6C83      		std Y+4,r22
+ 158:../../../os/rt/src/chsem.c ****   while (++cnt <= (cnt_t)0) {
+  81               		.loc 1 158 0
+  82 0010 1F5F      		subi r17,lo8(-(1))
+  83               	.LVL5:
+  84 0012 1116      		cp __zero_reg__,r17
+  85 0014 04F0      		brlt .L2
+ 159:../../../os/rt/src/chsem.c ****     chSchReadyI(queue_lifo_remove(&sp->queue))->u.rdymsg = MSG_RESET;
+  86               		.loc 1 159 0
+  87 0016 8EEF      		ldi r24,lo8(-2)
+  88 0018 E82E      		mov r14,r24
+  89 001a FF24      		clr r15
+  90 001c FA94      		dec r15
+  91               	.LVL6:
+  92               	.L6:
+  93               	.LBB76:
+  94               	.LBB77:
+ 541:../../../os/rt/include/chschd.h **** }
+ 542:../../../os/rt/include/chschd.h **** 
+ 543:../../../os/rt/include/chschd.h **** /**
+ 544:../../../os/rt/include/chschd.h ****  * @brief   Evaluates to @p true if the specified threads queue is empty.
+ 545:../../../os/rt/include/chschd.h ****  *
+ 546:../../../os/rt/include/chschd.h ****  * @param[in] tqp       pointer to the threads queue object
+ 547:../../../os/rt/include/chschd.h ****  * @return              The status of the queue.
+ 548:../../../os/rt/include/chschd.h ****  *
+ 549:../../../os/rt/include/chschd.h ****  * @notapi
+ 550:../../../os/rt/include/chschd.h ****  */
+ 551:../../../os/rt/include/chschd.h **** static inline bool queue_isempty(const threads_queue_t *tqp) {
+ 552:../../../os/rt/include/chschd.h **** 
+ 553:../../../os/rt/include/chschd.h ****   return (bool)(tqp->next == (const thread_t *)tqp);
+ 554:../../../os/rt/include/chschd.h **** }
+ 555:../../../os/rt/include/chschd.h **** 
+ 556:../../../os/rt/include/chschd.h **** /**
+ 557:../../../os/rt/include/chschd.h ****  * @brief   Evaluates to @p true if the specified threads queue is not empty.
+ 558:../../../os/rt/include/chschd.h ****  *
+ 559:../../../os/rt/include/chschd.h ****  * @param[in] tqp       pointer to the threads queue object
+ 560:../../../os/rt/include/chschd.h ****  * @return              The status of the queue.
+ 561:../../../os/rt/include/chschd.h ****  *
+ 562:../../../os/rt/include/chschd.h ****  * @notapi
+ 563:../../../os/rt/include/chschd.h ****  */
+ 564:../../../os/rt/include/chschd.h **** static inline bool queue_notempty(const threads_queue_t *tqp) {
+ 565:../../../os/rt/include/chschd.h **** 
+ 566:../../../os/rt/include/chschd.h ****   return (bool)(tqp->next != (const thread_t *)tqp);
+ 567:../../../os/rt/include/chschd.h **** }
+ 568:../../../os/rt/include/chschd.h **** 
+ 569:../../../os/rt/include/chschd.h **** /* If the performance code path has been chosen then all the following
+ 570:../../../os/rt/include/chschd.h ****    functions are inlined into the various kernel modules.*/
+ 571:../../../os/rt/include/chschd.h **** #if CH_CFG_OPTIMIZE_SPEED == TRUE
+ 572:../../../os/rt/include/chschd.h **** static inline void list_insert(thread_t *tp, threads_list_t *tlp) {
+ 573:../../../os/rt/include/chschd.h **** 
+ 574:../../../os/rt/include/chschd.h ****   tp->queue.next = tlp->next;
+ 575:../../../os/rt/include/chschd.h ****   tlp->next = tp;
+ 576:../../../os/rt/include/chschd.h **** }
+ 577:../../../os/rt/include/chschd.h **** 
+ 578:../../../os/rt/include/chschd.h **** static inline thread_t *list_remove(threads_list_t *tlp) {
+ 579:../../../os/rt/include/chschd.h **** 
+ 580:../../../os/rt/include/chschd.h ****   thread_t *tp = tlp->next;
+ 581:../../../os/rt/include/chschd.h ****   tlp->next = tp->queue.next;
+ 582:../../../os/rt/include/chschd.h **** 
+ 583:../../../os/rt/include/chschd.h ****   return tp;
+ 584:../../../os/rt/include/chschd.h **** }
+ 585:../../../os/rt/include/chschd.h **** 
+ 586:../../../os/rt/include/chschd.h **** static inline void queue_prio_insert(thread_t *tp, threads_queue_t *tqp) {
+ 587:../../../os/rt/include/chschd.h **** 
+ 588:../../../os/rt/include/chschd.h ****   thread_t *cp = (thread_t *)tqp;
+ 589:../../../os/rt/include/chschd.h ****   do {
+ 590:../../../os/rt/include/chschd.h ****     cp = cp->queue.next;
+ 591:../../../os/rt/include/chschd.h ****   } while ((cp != (thread_t *)tqp) && (cp->prio >= tp->prio));
+ 592:../../../os/rt/include/chschd.h ****   tp->queue.next             = cp;
+ 593:../../../os/rt/include/chschd.h ****   tp->queue.prev             = cp->queue.prev;
+ 594:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 595:../../../os/rt/include/chschd.h ****   cp->queue.prev             = tp;
+ 596:../../../os/rt/include/chschd.h **** }
+ 597:../../../os/rt/include/chschd.h **** 
+ 598:../../../os/rt/include/chschd.h **** static inline void queue_insert(thread_t *tp, threads_queue_t *tqp) {
+ 599:../../../os/rt/include/chschd.h **** 
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.next             = (thread_t *)tqp;
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 602:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 603:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 604:../../../os/rt/include/chschd.h **** }
+ 605:../../../os/rt/include/chschd.h **** 
+ 606:../../../os/rt/include/chschd.h **** static inline thread_t *queue_fifo_remove(threads_queue_t *tqp) {
+ 607:../../../os/rt/include/chschd.h ****   thread_t *tp = tqp->next;
+ 608:../../../os/rt/include/chschd.h **** 
+ 609:../../../os/rt/include/chschd.h ****   tqp->next             = tp->queue.next;
+ 610:../../../os/rt/include/chschd.h ****   tqp->next->queue.prev = (thread_t *)tqp;
+ 611:../../../os/rt/include/chschd.h **** 
+ 612:../../../os/rt/include/chschd.h ****   return tp;
+ 613:../../../os/rt/include/chschd.h **** }
+ 614:../../../os/rt/include/chschd.h **** 
+ 615:../../../os/rt/include/chschd.h **** static inline thread_t *queue_lifo_remove(threads_queue_t *tqp) {
+ 616:../../../os/rt/include/chschd.h ****   thread_t *tp = tqp->prev;
+  95               		.loc 2 616 0
+  96 001e 8A81      		ldd r24,Y+2
+  97 0020 9B81      		ldd r25,Y+3
+  98               	.LVL7:
+ 617:../../../os/rt/include/chschd.h **** 
+ 618:../../../os/rt/include/chschd.h ****   tqp->prev             = tp->queue.prev;
+  99               		.loc 2 618 0
+ 100 0022 DC01      		movw r26,r24
+ 101 0024 1296      		adiw r26,2
+ 102 0026 ED91      		ld r30,X+
+ 103 0028 FC91      		ld r31,X
+ 104 002a 1397      		sbiw r26,2+1
+ 105 002c FB83      		std Y+3,r31
+ 106 002e EA83      		std Y+2,r30
+ 619:../../../os/rt/include/chschd.h ****   tqp->prev->queue.next = (thread_t *)tqp;
+ 107               		.loc 2 619 0
+ 108 0030 D183      		std Z+1,r29
+ 109 0032 C083      		st Z,r28
+ 110               	.LVL8:
+ 111               	.LBE77:
+ 112               	.LBE76:
+ 113               		.loc 1 159 0
+ 114 0034 0E94 0000 		call chSchReadyI
+ 115               	.LVL9:
+ 116 0038 FC01      		movw r30,r24
+ 117 003a F18A      		std Z+17,r15
+ 118 003c E08A      		std Z+16,r14
+ 119 003e 1F5F      		subi r17,lo8(-(1))
+ 120               	.LVL10:
+ 158:../../../os/rt/src/chsem.c ****     chSchReadyI(queue_lifo_remove(&sp->queue))->u.rdymsg = MSG_RESET;
+ 121               		.loc 1 158 0
+ 122 0040 1130      		cpi r17,lo8(1)
+ 123 0042 01F4      		brne .L6
+ 124               	.L2:
+ 125               	/* epilogue start */
+ 160:../../../os/rt/src/chsem.c ****   }
+ 161:../../../os/rt/src/chsem.c **** }
+ 126               		.loc 1 161 0
+ 127 0044 DF91      		pop r29
+ 128 0046 CF91      		pop r28
+ 129               	.LVL11:
+ 130 0048 1F91      		pop r17
+ 131               	.LVL12:
+ 132 004a FF90      		pop r15
+ 133 004c EF90      		pop r14
+ 134 004e 0895      		ret
+ 135               		.cfi_endproc
+ 136               	.LFE150:
+ 138               		.section	.text.chSemReset,"ax",@progbits
+ 139               	.global	chSemReset
+ 141               	chSemReset:
+ 142               	.LFB149:
+ 120:../../../os/rt/src/chsem.c **** 
+ 143               		.loc 1 120 0
+ 144               		.cfi_startproc
+ 145               	.LVL13:
+ 146               	/* prologue: function */
+ 147               	/* frame size = 0 */
+ 148               	/* stack size = 0 */
+ 149               	.L__stack_usage = 0
+ 150               	.LBB78:
+ 151               	.LBB79:
+ 152               	.LBB80:
+ 153               		.file 3 "../../../os/common/ports/AVR/chcore.h"
+   1:../../../os/common/ports/AVR/chcore.h **** /*
+   2:../../../os/common/ports/AVR/chcore.h ****     ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
+   3:../../../os/common/ports/AVR/chcore.h **** 
+   4:../../../os/common/ports/AVR/chcore.h ****     This file is part of ChibiOS.
+   5:../../../os/common/ports/AVR/chcore.h **** 
+   6:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is free software; you can redistribute it and/or modify
+   7:../../../os/common/ports/AVR/chcore.h ****     it under the terms of the GNU General Public License as published by
+   8:../../../os/common/ports/AVR/chcore.h ****     the Free Software Foundation; either version 3 of the License, or
+   9:../../../os/common/ports/AVR/chcore.h ****     (at your option) any later version.
+  10:../../../os/common/ports/AVR/chcore.h **** 
+  11:../../../os/common/ports/AVR/chcore.h ****     ChibiOS is distributed in the hope that it will be useful,
+  12:../../../os/common/ports/AVR/chcore.h ****     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  13:../../../os/common/ports/AVR/chcore.h ****     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  14:../../../os/common/ports/AVR/chcore.h ****     GNU General Public License for more details.
+  15:../../../os/common/ports/AVR/chcore.h **** 
+  16:../../../os/common/ports/AVR/chcore.h ****     You should have received a copy of the GNU General Public License
+  17:../../../os/common/ports/AVR/chcore.h ****     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  18:../../../os/common/ports/AVR/chcore.h **** */
+  19:../../../os/common/ports/AVR/chcore.h **** 
+  20:../../../os/common/ports/AVR/chcore.h **** /**
+  21:../../../os/common/ports/AVR/chcore.h ****  * @file    templates/chcore.h
+  22:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port related template macros and structures.
+  23:../../../os/common/ports/AVR/chcore.h ****  * @details This file is a template of the system driver macros provided by
+  24:../../../os/common/ports/AVR/chcore.h ****  *          a port.
+  25:../../../os/common/ports/AVR/chcore.h ****  *
+  26:../../../os/common/ports/AVR/chcore.h ****  * @addtogroup core
+  27:../../../os/common/ports/AVR/chcore.h ****  * @{
+  28:../../../os/common/ports/AVR/chcore.h ****  */
+  29:../../../os/common/ports/AVR/chcore.h **** 
+  30:../../../os/common/ports/AVR/chcore.h **** #ifndef CHCORE_H
+  31:../../../os/common/ports/AVR/chcore.h **** #define CHCORE_H
+  32:../../../os/common/ports/AVR/chcore.h **** 
+  33:../../../os/common/ports/AVR/chcore.h **** #include <avr/io.h>
+  34:../../../os/common/ports/AVR/chcore.h **** #include <avr/interrupt.h>
+  35:../../../os/common/ports/AVR/chcore.h **** 
+  36:../../../os/common/ports/AVR/chcore.h **** extern bool __avr_in_isr;
+  37:../../../os/common/ports/AVR/chcore.h **** 
+  38:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  39:../../../os/common/ports/AVR/chcore.h **** /* Module constants.                                                         */
+  40:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+  41:../../../os/common/ports/AVR/chcore.h **** 
+  42:../../../os/common/ports/AVR/chcore.h **** /**
+  43:../../../os/common/ports/AVR/chcore.h ****  * @name    Port Capabilities and Constants
+  44:../../../os/common/ports/AVR/chcore.h ****  * @{
+  45:../../../os/common/ports/AVR/chcore.h ****  */
+  46:../../../os/common/ports/AVR/chcore.h **** /**
+  47:../../../os/common/ports/AVR/chcore.h ****  * @brief   This port supports a realtime counter.
+  48:../../../os/common/ports/AVR/chcore.h ****  */
+  49:../../../os/common/ports/AVR/chcore.h **** #define PORT_SUPPORTS_RT                FALSE
+  50:../../../os/common/ports/AVR/chcore.h **** 
+  51:../../../os/common/ports/AVR/chcore.h **** /**
+  52:../../../os/common/ports/AVR/chcore.h ****  * @brief   Natural alignment constant.
+  53:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the minimum alignment for pointer-size variables.
+  54:../../../os/common/ports/AVR/chcore.h ****  */
+  55:../../../os/common/ports/AVR/chcore.h **** #define PORT_NATURAL_ALIGN              1U
+  56:../../../os/common/ports/AVR/chcore.h **** 
+  57:../../../os/common/ports/AVR/chcore.h **** /**
+  58:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack alignment constant.
+  59:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignement required for the stack pointer.
+  60:../../../os/common/ports/AVR/chcore.h ****  */
+  61:../../../os/common/ports/AVR/chcore.h **** #define PORT_STACK_ALIGN                1U
+  62:../../../os/common/ports/AVR/chcore.h **** 
+  63:../../../os/common/ports/AVR/chcore.h **** /**
+  64:../../../os/common/ports/AVR/chcore.h ****  * @brief   Working Areas alignment constant.
+  65:../../../os/common/ports/AVR/chcore.h ****  * @note    It is the alignment to be enforced for thread working areas.
+  66:../../../os/common/ports/AVR/chcore.h ****  */
+  67:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA_ALIGN         1U
+  68:../../../os/common/ports/AVR/chcore.h **** /** @} */
+  69:../../../os/common/ports/AVR/chcore.h **** 
+  70:../../../os/common/ports/AVR/chcore.h **** /**
+  71:../../../os/common/ports/AVR/chcore.h ****  * @name    Architecture and Compiler
+  72:../../../os/common/ports/AVR/chcore.h ****  * @{
+  73:../../../os/common/ports/AVR/chcore.h ****  */
+  74:../../../os/common/ports/AVR/chcore.h **** /**
+  75:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining an AVR architecture.
+  76:../../../os/common/ports/AVR/chcore.h ****  */
+  77:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR
+  78:../../../os/common/ports/AVR/chcore.h **** 
+  79:../../../os/common/ports/AVR/chcore.h **** /**
+  80:../../../os/common/ports/AVR/chcore.h ****  * @brief   Macro defining the specific AVR architecture.
+  81:../../../os/common/ports/AVR/chcore.h ****  */
+  82:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_AVR_MEGAAVR
+  83:../../../os/common/ports/AVR/chcore.h **** 
+  84:../../../os/common/ports/AVR/chcore.h **** /**
+  85:../../../os/common/ports/AVR/chcore.h ****  * @brief   Name of the implemented architecture.
+  86:../../../os/common/ports/AVR/chcore.h ****  */
+  87:../../../os/common/ports/AVR/chcore.h **** #define PORT_ARCHITECTURE_NAME          "MegaAVR"
+  88:../../../os/common/ports/AVR/chcore.h **** 
+  89:../../../os/common/ports/AVR/chcore.h **** /**
+  90:../../../os/common/ports/AVR/chcore.h ****  * @brief   Compiler name and version.
+  91:../../../os/common/ports/AVR/chcore.h ****  */
+  92:../../../os/common/ports/AVR/chcore.h **** #if defined(__GNUC__) || defined(__DOXYGEN__)
+  93:../../../os/common/ports/AVR/chcore.h **** #define PORT_COMPILER_NAME              "GCC " __VERSION__
+  94:../../../os/common/ports/AVR/chcore.h **** 
+  95:../../../os/common/ports/AVR/chcore.h **** #else
+  96:../../../os/common/ports/AVR/chcore.h **** #error "unsupported compiler"
+  97:../../../os/common/ports/AVR/chcore.h **** #endif
+  98:../../../os/common/ports/AVR/chcore.h **** 
+  99:../../../os/common/ports/AVR/chcore.h **** /**
+ 100:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-specific information string.
+ 101:../../../os/common/ports/AVR/chcore.h ****  */
+ 102:../../../os/common/ports/AVR/chcore.h **** #define PORT_INFO                       "None"
+ 103:../../../os/common/ports/AVR/chcore.h **** /** @} */
+ 104:../../../os/common/ports/AVR/chcore.h **** 
+ 105:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 106:../../../os/common/ports/AVR/chcore.h **** /* Module pre-compile time settings.                                         */
+ 107:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 108:../../../os/common/ports/AVR/chcore.h **** 
+ 109:../../../os/common/ports/AVR/chcore.h **** /**
+ 110:../../../os/common/ports/AVR/chcore.h ****  * @brief   Stack size for the system idle thread.
+ 111:../../../os/common/ports/AVR/chcore.h ****  * @details This size depends on the idle thread implementation, usually
+ 112:../../../os/common/ports/AVR/chcore.h ****  *          the idle thread should take no more space than those reserved
+ 113:../../../os/common/ports/AVR/chcore.h ****  *          by @p PORT_INT_REQUIRED_STACK.
+ 114:../../../os/common/ports/AVR/chcore.h ****  */
+ 115:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_IDLE_THREAD_STACK_SIZE) || defined(__DOXYGEN__)
+ 116:../../../os/common/ports/AVR/chcore.h **** #define PORT_IDLE_THREAD_STACK_SIZE     8
+ 117:../../../os/common/ports/AVR/chcore.h **** #endif
+ 118:../../../os/common/ports/AVR/chcore.h **** 
+ 119:../../../os/common/ports/AVR/chcore.h **** /**
+ 120:../../../os/common/ports/AVR/chcore.h ****  * @brief   Per-thread stack overhead for interrupts servicing.
+ 121:../../../os/common/ports/AVR/chcore.h ****  * @details This constant is used in the calculation of the correct working
+ 122:../../../os/common/ports/AVR/chcore.h ****  *          area size.
+ 123:../../../os/common/ports/AVR/chcore.h ****  */
+ 124:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_INT_REQUIRED_STACK) || defined(__DOXYGEN__)
+ 125:../../../os/common/ports/AVR/chcore.h **** #define PORT_INT_REQUIRED_STACK         32
+ 126:../../../os/common/ports/AVR/chcore.h **** #endif
+ 127:../../../os/common/ports/AVR/chcore.h **** 
+ 128:../../../os/common/ports/AVR/chcore.h **** /**
+ 129:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables an alternative timer implementation.
+ 130:../../../os/common/ports/AVR/chcore.h ****  * @details Usually the port uses a timer interface defined in the file
+ 131:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer.h, if this option is enabled then the file
+ 132:../../../os/common/ports/AVR/chcore.h ****  *          @p chcore_timer_alt.h is included instead.
+ 133:../../../os/common/ports/AVR/chcore.h ****  */
+ 134:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_USE_ALT_TIMER) || defined(__DOXYGEN__)
+ 135:../../../os/common/ports/AVR/chcore.h **** #define PORT_USE_ALT_TIMER              FALSE
+ 136:../../../os/common/ports/AVR/chcore.h **** #endif
+ 137:../../../os/common/ports/AVR/chcore.h **** 
+ 138:../../../os/common/ports/AVR/chcore.h **** /**
+ 139:../../../os/common/ports/AVR/chcore.h ****  * @brief   Enables a "wait for interrupt" instruction in the idle loop.
+ 140:../../../os/common/ports/AVR/chcore.h ****  */
+ 141:../../../os/common/ports/AVR/chcore.h **** #if !defined(PORT_AVR_WFI_SLEEP_IDLE) || defined(__DOXYGEN__)
+ 142:../../../os/common/ports/AVR/chcore.h **** #define PORT_AVR_WFI_SLEEP_IDLE      FALSE
+ 143:../../../os/common/ports/AVR/chcore.h **** #endif
+ 144:../../../os/common/ports/AVR/chcore.h **** 
+ 145:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 146:../../../os/common/ports/AVR/chcore.h **** /* Derived constants and error checks.                                       */
+ 147:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 148:../../../os/common/ports/AVR/chcore.h **** 
+ 149:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 150:../../../os/common/ports/AVR/chcore.h **** /* Module data structures and types.                                         */
+ 151:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 152:../../../os/common/ports/AVR/chcore.h **** 
+ 153:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 154:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 155:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 156:../../../os/common/ports/AVR/chcore.h **** 
+ 157:../../../os/common/ports/AVR/chcore.h **** /**
+ 158:../../../os/common/ports/AVR/chcore.h ****  * @brief   Type of stack and memory alignment enforcement.
+ 159:../../../os/common/ports/AVR/chcore.h ****  * @note    In this architecture the stack alignment is enforced to 8 bits.
+ 160:../../../os/common/ports/AVR/chcore.h ****  */
+ 161:../../../os/common/ports/AVR/chcore.h **** typedef uint8_t stkalign_t;
+ 162:../../../os/common/ports/AVR/chcore.h **** 
+ 163:../../../os/common/ports/AVR/chcore.h **** /**
+ 164:../../../os/common/ports/AVR/chcore.h ****  * @brief   Interrupt saved context.
+ 165:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the stack frame saved during a
+ 166:../../../os/common/ports/AVR/chcore.h ****  *          preemption-capable interrupt handler.
+ 167:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 168:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 169:../../../os/common/ports/AVR/chcore.h ****  */
+ 170:../../../os/common/ports/AVR/chcore.h **** struct port_extctx {
+ 171:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 172:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r31;
+ 173:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r30;
+ 174:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r27;
+ 175:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r26;
+ 176:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r25;
+ 177:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r24;
+ 178:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r23;
+ 179:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r22;
+ 180:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r21;
+ 181:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r20;
+ 182:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r19;
+ 183:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r18;
+ 184:../../../os/common/ports/AVR/chcore.h ****   uint8_t       sr;
+ 185:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r1;
+ 186:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r0;
+ 187:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 188:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 189:../../../os/common/ports/AVR/chcore.h **** #endif
+ 190:../../../os/common/ports/AVR/chcore.h ****   uint16_t      pc;
+ 191:../../../os/common/ports/AVR/chcore.h **** };
+ 192:../../../os/common/ports/AVR/chcore.h **** 
+ 193:../../../os/common/ports/AVR/chcore.h **** /**
+ 194:../../../os/common/ports/AVR/chcore.h ****  * @brief   System saved context.
+ 195:../../../os/common/ports/AVR/chcore.h ****  * @details This structure represents the inner stack frame during a context
+ 196:../../../os/common/ports/AVR/chcore.h ****  *          switching.
+ 197:../../../os/common/ports/AVR/chcore.h ****  * @note    R2 and R13 are not saved because those are assumed to be immutable
+ 198:../../../os/common/ports/AVR/chcore.h ****  *          during the system life cycle.
+ 199:../../../os/common/ports/AVR/chcore.h ****  * @note    LR is stored in the caller context so it is not present in this
+ 200:../../../os/common/ports/AVR/chcore.h ****  *          structure.
+ 201:../../../os/common/ports/AVR/chcore.h ****  */
+ 202:../../../os/common/ports/AVR/chcore.h **** struct port_intctx {
+ 203:../../../os/common/ports/AVR/chcore.h ****   uint8_t       _next;
+ 204:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r29;
+ 205:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r28;
+ 206:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r17;
+ 207:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r16;
+ 208:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r15;
+ 209:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r14;
+ 210:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r13;
+ 211:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r12;
+ 212:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r11;
+ 213:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r10;
+ 214:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r9;
+ 215:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r8;
+ 216:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r7;
+ 217:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r6;
+ 218:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r5;
+ 219:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r4;
+ 220:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r3;
+ 221:../../../os/common/ports/AVR/chcore.h ****   uint8_t       r2;
+ 222:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__)
+ 223:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcx;
+ 224:../../../os/common/ports/AVR/chcore.h **** #endif
+ 225:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pcl;
+ 226:../../../os/common/ports/AVR/chcore.h ****   uint8_t       pch;
+ 227:../../../os/common/ports/AVR/chcore.h **** };
+ 228:../../../os/common/ports/AVR/chcore.h **** 
+ 229:../../../os/common/ports/AVR/chcore.h **** /**
+ 230:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p thread_t structure.
+ 231:../../../os/common/ports/AVR/chcore.h ****  * @details This structure usually contains just the saved stack pointer
+ 232:../../../os/common/ports/AVR/chcore.h ****  *          defined as a pointer to a @p port_intctx structure.
+ 233:../../../os/common/ports/AVR/chcore.h ****  */
+ 234:../../../os/common/ports/AVR/chcore.h **** struct port_context {
+ 235:../../../os/common/ports/AVR/chcore.h ****   struct port_intctx *sp;
+ 236:../../../os/common/ports/AVR/chcore.h **** };
+ 237:../../../os/common/ports/AVR/chcore.h **** 
+ 238:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 239:../../../os/common/ports/AVR/chcore.h **** 
+ 240:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 241:../../../os/common/ports/AVR/chcore.h **** /* Module macros.                                                            */
+ 242:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 243:../../../os/common/ports/AVR/chcore.h **** 
+ 244:../../../os/common/ports/AVR/chcore.h **** /**
+ 245:../../../os/common/ports/AVR/chcore.h ****  * @brief   Platform dependent part of the @p chThdCreateI() API.
+ 246:../../../os/common/ports/AVR/chcore.h ****  * @details This code usually setup the context switching frame represented
+ 247:../../../os/common/ports/AVR/chcore.h ****  *          by an @p port_intctx structure.
+ 248:../../../os/common/ports/AVR/chcore.h ****  */
+ 249:../../../os/common/ports/AVR/chcore.h **** #if defined(__AVR_3_BYTE_PC__) || defined(__DOXYGEN__)
+ 250:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 251:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 252:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 253:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 254:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 255:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 256:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 257:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcx = (uint8_t)0;                                             \
+ 258:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 259:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 260:../../../os/common/ports/AVR/chcore.h **** }
+ 261:../../../os/common/ports/AVR/chcore.h **** #else /* !__AVR_3_BYTE_PC__ */
+ 262:../../../os/common/ports/AVR/chcore.h **** #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
+ 263:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp = (struct port_intctx *)((uint8_t *)(wtop) -                   \
+ 264:../../../os/common/ports/AVR/chcore.h ****                                       sizeof(struct port_intctx));          \
+ 265:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r2  = (uint8_t)(0xff & (uint16_t)pf);                         \
+ 266:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r3  = (uint8_t)((uint16_t)(pf) >> 8);                         \
+ 267:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r4  = (uint8_t)(0xff & (uint16_t)arg);                        \
+ 268:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->r5  = (uint8_t)((uint16_t)(arg) >> 8);                        \
+ 269:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pcl = (uint16_t)_port_thread_start >> 8;                      \
+ 270:../../../os/common/ports/AVR/chcore.h ****   tp->ctx.sp->pch = (uint8_t)(0xff & (uint16_t)_port_thread_start);         \
+ 271:../../../os/common/ports/AVR/chcore.h **** }
+ 272:../../../os/common/ports/AVR/chcore.h **** #endif /* !__AVR_3_BYTE_PC__ */
+ 273:../../../os/common/ports/AVR/chcore.h **** 
+ 274:../../../os/common/ports/AVR/chcore.h **** /**
+ 275:../../../os/common/ports/AVR/chcore.h ****  * @brief   Computes the thread working area global size.
+ 276:../../../os/common/ports/AVR/chcore.h ****  * @note    There is no need to perform alignments in this macro.
+ 277:../../../os/common/ports/AVR/chcore.h ****  */
+ 278:../../../os/common/ports/AVR/chcore.h **** #define PORT_WA_SIZE(n) ((sizeof(struct port_intctx) - 1) +                \
+ 279:../../../os/common/ports/AVR/chcore.h ****                          (sizeof(struct port_extctx) - 1) +                \
+ 280:../../../os/common/ports/AVR/chcore.h ****                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
+ 281:../../../os/common/ports/AVR/chcore.h **** 
+ 282:../../../os/common/ports/AVR/chcore.h **** /**
+ 283:../../../os/common/ports/AVR/chcore.h ****  * @brief   Static working area allocation.
+ 284:../../../os/common/ports/AVR/chcore.h ****  * @details This macro is used to allocate a static thread working area
+ 285:../../../os/common/ports/AVR/chcore.h ****  *          aligned as both position and size.
+ 286:../../../os/common/ports/AVR/chcore.h ****  *
+ 287:../../../os/common/ports/AVR/chcore.h ****  * @param[in] s         the name to be assigned to the stack array
+ 288:../../../os/common/ports/AVR/chcore.h ****  * @param[in] n         the stack size to be assigned to the thread
+ 289:../../../os/common/ports/AVR/chcore.h ****  */
+ 290:../../../os/common/ports/AVR/chcore.h **** #define PORT_WORKING_AREA(s, n)                                             \
+ 291:../../../os/common/ports/AVR/chcore.h ****   stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
+ 292:../../../os/common/ports/AVR/chcore.h **** 
+ 293:../../../os/common/ports/AVR/chcore.h **** /**
+ 294:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 295:../../../os/common/ports/AVR/chcore.h ****  */
+ 296:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_PRIORITY(n) false
+ 297:../../../os/common/ports/AVR/chcore.h **** 
+ 298:../../../os/common/ports/AVR/chcore.h **** /**
+ 299:../../../os/common/ports/AVR/chcore.h ****  * @brief   Priority level verification macro.
+ 300:../../../os/common/ports/AVR/chcore.h ****  */
+ 301:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_IS_VALID_KERNEL_PRIORITY(n) false
+ 302:../../../os/common/ports/AVR/chcore.h **** 
+ 303:../../../os/common/ports/AVR/chcore.h **** /**
+ 304:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ prologue code.
+ 305:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the start of all IRQ handlers
+ 306:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 307:../../../os/common/ports/AVR/chcore.h ****  * @note    This code tricks the compiler to save all the specified registers
+ 308:../../../os/common/ports/AVR/chcore.h ****  *          by "touching" them.
+ 309:../../../os/common/ports/AVR/chcore.h ****  */
+ 310:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_PROLOGUE() {                                               \
+ 311:../../../os/common/ports/AVR/chcore.h ****   asm ("" : : : "r18", "r19", "r20", "r21", "r22", "r23", "r24",            \
+ 312:../../../os/common/ports/AVR/chcore.h ****                 "r25", "r26", "r27", "r30", "r31");                         \
+ 313:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 314:../../../os/common/ports/AVR/chcore.h **** }
+ 315:../../../os/common/ports/AVR/chcore.h **** 
+ 316:../../../os/common/ports/AVR/chcore.h **** /**
+ 317:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ epilogue code.
+ 318:../../../os/common/ports/AVR/chcore.h ****  * @details This macro must be inserted at the end of all IRQ handlers
+ 319:../../../os/common/ports/AVR/chcore.h ****  *          enabled to invoke system APIs.
+ 320:../../../os/common/ports/AVR/chcore.h ****  */
+ 321:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_EPILOGUE() {                                               \
+ 322:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = false;                                                     \
+ 323:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_lock();                                                        \
+ 324:../../../os/common/ports/AVR/chcore.h ****   if (chSchIsPreemptionRequired())                                          \
+ 325:../../../os/common/ports/AVR/chcore.h ****     chSchDoReschedule();                                                    \
+ 326:../../../os/common/ports/AVR/chcore.h ****   _dbg_check_unlock();                                                      \
+ 327:../../../os/common/ports/AVR/chcore.h **** }
+ 328:../../../os/common/ports/AVR/chcore.h **** 
+ 329:../../../os/common/ports/AVR/chcore.h **** /**
+ 330:../../../os/common/ports/AVR/chcore.h ****  * @brief   IRQ handler function declaration.
+ 331:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 332:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 333:../../../os/common/ports/AVR/chcore.h ****  */
+ 334:../../../os/common/ports/AVR/chcore.h **** #define PORT_IRQ_HANDLER(id) ISR(id)
+ 335:../../../os/common/ports/AVR/chcore.h **** 
+ 336:../../../os/common/ports/AVR/chcore.h **** /**
+ 337:../../../os/common/ports/AVR/chcore.h ****  * @brief   Fast IRQ handler function declaration.
+ 338:../../../os/common/ports/AVR/chcore.h ****  * @note    @p id can be a function name or a vector number depending on the
+ 339:../../../os/common/ports/AVR/chcore.h ****  *          port implementation.
+ 340:../../../os/common/ports/AVR/chcore.h ****  */
+ 341:../../../os/common/ports/AVR/chcore.h **** #define PORT_FAST_IRQ_HANDLER(id) ISR(id)
+ 342:../../../os/common/ports/AVR/chcore.h **** 
+ 343:../../../os/common/ports/AVR/chcore.h **** /**
+ 344:../../../os/common/ports/AVR/chcore.h ****  * @brief   Performs a context switch between two threads.
+ 345:../../../os/common/ports/AVR/chcore.h ****  * @details This is the most critical code in any port, this function
+ 346:../../../os/common/ports/AVR/chcore.h ****  *          is responsible for the context switch between 2 threads.
+ 347:../../../os/common/ports/AVR/chcore.h ****  * @note    The implementation of this code affects <b>directly</b> the context
+ 348:../../../os/common/ports/AVR/chcore.h ****  *          switch performance so optimize here as much as you can.
+ 349:../../../os/common/ports/AVR/chcore.h ****  *
+ 350:../../../os/common/ports/AVR/chcore.h ****  * @param[in] ntp       the thread to be switched in
+ 351:../../../os/common/ports/AVR/chcore.h ****  * @param[in] otp       the thread to be switched out
+ 352:../../../os/common/ports/AVR/chcore.h ****  */
+ 353:../../../os/common/ports/AVR/chcore.h **** #define port_switch(ntp, otp) {                                             \
+ 354:../../../os/common/ports/AVR/chcore.h ****   _port_switch(ntp, otp);                                                   \
+ 355:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("" : : : "memory");                                         \
+ 356:../../../os/common/ports/AVR/chcore.h **** }
+ 357:../../../os/common/ports/AVR/chcore.h **** 
+ 358:../../../os/common/ports/AVR/chcore.h **** 
+ 359:../../../os/common/ports/AVR/chcore.h **** /**
+ 360:../../../os/common/ports/AVR/chcore.h ****  * @brief   Port-related initialization code.
+ 361:../../../os/common/ports/AVR/chcore.h ****  * @note    This function is empty in this port.
+ 362:../../../os/common/ports/AVR/chcore.h ****  */
+ 363:../../../os/common/ports/AVR/chcore.h **** #define port_init() {                                                       \
+ 364:../../../os/common/ports/AVR/chcore.h ****   __avr_in_isr = true;                                                      \
+ 365:../../../os/common/ports/AVR/chcore.h **** }
+ 366:../../../os/common/ports/AVR/chcore.h **** 
+ 367:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 368:../../../os/common/ports/AVR/chcore.h **** /* External declarations.                                                    */
+ 369:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 370:../../../os/common/ports/AVR/chcore.h **** 
+ 371:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 372:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 373:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 374:../../../os/common/ports/AVR/chcore.h **** 
+ 375:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 376:../../../os/common/ports/AVR/chcore.h **** extern "C" {
+ 377:../../../os/common/ports/AVR/chcore.h **** #endif
+ 378:../../../os/common/ports/AVR/chcore.h ****   void _port_switch(thread_t *ntp, thread_t *otp);
+ 379:../../../os/common/ports/AVR/chcore.h ****   void _port_thread_start(void);
+ 380:../../../os/common/ports/AVR/chcore.h **** #ifdef __cplusplus
+ 381:../../../os/common/ports/AVR/chcore.h **** }
+ 382:../../../os/common/ports/AVR/chcore.h **** #endif
+ 383:../../../os/common/ports/AVR/chcore.h **** 
+ 384:../../../os/common/ports/AVR/chcore.h **** #endif /* !defined(_FROM_ASM_) */
+ 385:../../../os/common/ports/AVR/chcore.h **** 
+ 386:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 387:../../../os/common/ports/AVR/chcore.h **** /* Module inline functions.                                                  */
+ 388:../../../os/common/ports/AVR/chcore.h **** /*===========================================================================*/
+ 389:../../../os/common/ports/AVR/chcore.h **** 
+ 390:../../../os/common/ports/AVR/chcore.h **** /* The following code is not processed when the file is included from an
+ 391:../../../os/common/ports/AVR/chcore.h ****    asm module.*/
+ 392:../../../os/common/ports/AVR/chcore.h **** #if !defined(_FROM_ASM_)
+ 393:../../../os/common/ports/AVR/chcore.h **** 
+ 394:../../../os/common/ports/AVR/chcore.h **** /**
+ 395:../../../os/common/ports/AVR/chcore.h ****  * @brief   Returns a word encoding the current interrupts status.
+ 396:../../../os/common/ports/AVR/chcore.h ****  *
+ 397:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupts status.
+ 398:../../../os/common/ports/AVR/chcore.h ****  */
+ 399:../../../os/common/ports/AVR/chcore.h **** static inline syssts_t port_get_irq_status(void) {
+ 400:../../../os/common/ports/AVR/chcore.h **** 
+ 401:../../../os/common/ports/AVR/chcore.h ****   return SREG;
+ 402:../../../os/common/ports/AVR/chcore.h **** }
+ 403:../../../os/common/ports/AVR/chcore.h **** 
+ 404:../../../os/common/ports/AVR/chcore.h **** /**
+ 405:../../../os/common/ports/AVR/chcore.h ****  * @brief   Checks the interrupt status.
+ 406:../../../os/common/ports/AVR/chcore.h ****  *
+ 407:../../../os/common/ports/AVR/chcore.h ****  * @param[in] sts       the interrupt status word
+ 408:../../../os/common/ports/AVR/chcore.h ****  *
+ 409:../../../os/common/ports/AVR/chcore.h ****  * @return              The interrupt status.
+ 410:../../../os/common/ports/AVR/chcore.h ****  * @retval false        the word specified a disabled interrupts status.
+ 411:../../../os/common/ports/AVR/chcore.h ****  * @retval true         the word specified an enabled interrupts status.
+ 412:../../../os/common/ports/AVR/chcore.h ****  */
+ 413:../../../os/common/ports/AVR/chcore.h **** static inline bool port_irq_enabled(syssts_t sts) {
+ 414:../../../os/common/ports/AVR/chcore.h **** 
+ 415:../../../os/common/ports/AVR/chcore.h ****   return (bool)((sts & 0x80) != 0);
+ 416:../../../os/common/ports/AVR/chcore.h **** }
+ 417:../../../os/common/ports/AVR/chcore.h **** 
+ 418:../../../os/common/ports/AVR/chcore.h **** /**
+ 419:../../../os/common/ports/AVR/chcore.h ****  * @brief   Determines the current execution context.
+ 420:../../../os/common/ports/AVR/chcore.h ****  *
+ 421:../../../os/common/ports/AVR/chcore.h ****  * @return              The execution context.
+ 422:../../../os/common/ports/AVR/chcore.h ****  * @retval false        not running in ISR mode.
+ 423:../../../os/common/ports/AVR/chcore.h ****  * @retval true         running in ISR mode.
+ 424:../../../os/common/ports/AVR/chcore.h ****  */
+ 425:../../../os/common/ports/AVR/chcore.h **** static inline bool port_is_isr_context(void) {
+ 426:../../../os/common/ports/AVR/chcore.h **** 
+ 427:../../../os/common/ports/AVR/chcore.h ****   return __avr_in_isr;
+ 428:../../../os/common/ports/AVR/chcore.h **** }
+ 429:../../../os/common/ports/AVR/chcore.h **** 
+ 430:../../../os/common/ports/AVR/chcore.h **** /**
+ 431:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-lock action.
+ 432:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just disables interrupts but may perform more
+ 433:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 434:../../../os/common/ports/AVR/chcore.h ****  */
+ 435:../../../os/common/ports/AVR/chcore.h **** static inline void port_lock(void) {
+ 436:../../../os/common/ports/AVR/chcore.h **** 
+ 437:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("cli" : : : "memory");
+ 154               		.loc 3 437 0
+ 155               	/* #APP */
+ 156               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 157 0000 F894      		cli
+ 158               	 ;  0 "" 2
+ 159               	/* #NOAPP */
+ 160               	.LBE80:
+ 161               	.LBE79:
+ 162               	.LBE78:
+ 123:../../../os/rt/src/chsem.c ****   chSchRescheduleS();
+ 163               		.loc 1 123 0
+ 164 0002 0E94 0000 		call chSemResetI
+ 165               	.LVL14:
+ 124:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 166               		.loc 1 124 0
+ 167 0006 0E94 0000 		call chSchRescheduleS
+ 168               	.LVL15:
+ 169               	.LBB81:
+ 170               	.LBB82:
+ 171               	.LBB83:
+ 172               	.LBB84:
+ 438:../../../os/common/ports/AVR/chcore.h **** }
+ 439:../../../os/common/ports/AVR/chcore.h **** 
+ 440:../../../os/common/ports/AVR/chcore.h **** /**
+ 441:../../../os/common/ports/AVR/chcore.h ****  * @brief   Kernel-unlock action.
+ 442:../../../os/common/ports/AVR/chcore.h ****  * @details Usually this function just enables interrupts but may perform more
+ 443:../../../os/common/ports/AVR/chcore.h ****  *          actions.
+ 444:../../../os/common/ports/AVR/chcore.h ****  */
+ 445:../../../os/common/ports/AVR/chcore.h **** static inline void port_unlock(void) {
+ 446:../../../os/common/ports/AVR/chcore.h **** 
+ 447:../../../os/common/ports/AVR/chcore.h ****   asm volatile ("sei" : : : "memory");
+ 173               		.loc 3 447 0
+ 174               	/* #APP */
+ 175               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 176 000a 7894      		sei
+ 177               	 ;  0 "" 2
+ 178               	/* #NOAPP */
+ 179 000c 0895      		ret
+ 180               	.LBE84:
+ 181               	.LBE83:
+ 182               	.LBE82:
+ 183               	.LBE81:
+ 184               		.cfi_endproc
+ 185               	.LFE149:
+ 187               		.section	.text.chSemWait,"ax",@progbits
+ 188               	.global	chSemWait
+ 190               	chSemWait:
+ 191               	.LFB151:
+ 162:../../../os/rt/src/chsem.c **** 
+ 163:../../../os/rt/src/chsem.c **** /**
+ 164:../../../os/rt/src/chsem.c ****  * @brief   Performs a wait operation on a semaphore.
+ 165:../../../os/rt/src/chsem.c ****  *
+ 166:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 167:../../../os/rt/src/chsem.c ****  * @return              A message specifying how the invoking thread has been
+ 168:../../../os/rt/src/chsem.c ****  *                      released from the semaphore.
+ 169:../../../os/rt/src/chsem.c ****  * @retval MSG_OK       if the thread has not stopped on the semaphore or the
+ 170:../../../os/rt/src/chsem.c ****  *                      semaphore has been signaled.
+ 171:../../../os/rt/src/chsem.c ****  * @retval MSG_RESET    if the semaphore has been reset using @p chSemReset().
+ 172:../../../os/rt/src/chsem.c ****  *
+ 173:../../../os/rt/src/chsem.c ****  * @api
+ 174:../../../os/rt/src/chsem.c ****  */
+ 175:../../../os/rt/src/chsem.c **** msg_t chSemWait(semaphore_t *sp) {
+ 192               		.loc 1 175 0
+ 193               		.cfi_startproc
+ 194               	.LVL16:
+ 195 0000 CF93      		push r28
+ 196               	.LCFI5:
+ 197               		.cfi_def_cfa_offset 3
+ 198               		.cfi_offset 28, -2
+ 199 0002 DF93      		push r29
+ 200               	.LCFI6:
+ 201               		.cfi_def_cfa_offset 4
+ 202               		.cfi_offset 29, -3
+ 203               	/* prologue: function */
+ 204               	/* frame size = 0 */
+ 205               	/* stack size = 2 */
+ 206               	.L__stack_usage = 2
+ 207 0004 FC01      		movw r30,r24
+ 208               	.LBB98:
+ 209               	.LBB99:
+ 210               	.LBB100:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 211               		.loc 3 437 0
+ 212               	/* #APP */
+ 213               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 214 0006 F894      		cli
+ 215               	 ;  0 "" 2
+ 216               	.LVL17:
+ 217               	/* #NOAPP */
+ 218               	.LBE100:
+ 219               	.LBE99:
+ 220               	.LBE98:
+ 221               	.LBB101:
+ 222               	.LBB102:
+ 176:../../../os/rt/src/chsem.c ****   msg_t msg;
+ 177:../../../os/rt/src/chsem.c **** 
+ 178:../../../os/rt/src/chsem.c ****   chSysLock();
+ 179:../../../os/rt/src/chsem.c ****   msg = chSemWaitS(sp);
+ 180:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 181:../../../os/rt/src/chsem.c **** 
+ 182:../../../os/rt/src/chsem.c ****   return msg;
+ 183:../../../os/rt/src/chsem.c **** }
+ 184:../../../os/rt/src/chsem.c **** 
+ 185:../../../os/rt/src/chsem.c **** /**
+ 186:../../../os/rt/src/chsem.c ****  * @brief   Performs a wait operation on a semaphore.
+ 187:../../../os/rt/src/chsem.c ****  *
+ 188:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 189:../../../os/rt/src/chsem.c ****  * @return              A message specifying how the invoking thread has been
+ 190:../../../os/rt/src/chsem.c ****  *                      released from the semaphore.
+ 191:../../../os/rt/src/chsem.c ****  * @retval MSG_OK       if the thread has not stopped on the semaphore or the
+ 192:../../../os/rt/src/chsem.c ****  *                      semaphore has been signaled.
+ 193:../../../os/rt/src/chsem.c ****  * @retval MSG_RESET    if the semaphore has been reset using @p chSemReset().
+ 194:../../../os/rt/src/chsem.c ****  *
+ 195:../../../os/rt/src/chsem.c ****  * @sclass
+ 196:../../../os/rt/src/chsem.c ****  */
+ 197:../../../os/rt/src/chsem.c **** msg_t chSemWaitS(semaphore_t *sp) {
+ 198:../../../os/rt/src/chsem.c **** 
+ 199:../../../os/rt/src/chsem.c ****   chDbgCheckClassS();
+ 200:../../../os/rt/src/chsem.c ****   chDbgCheck(sp != NULL);
+ 201:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 202:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 203:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 204:../../../os/rt/src/chsem.c **** 
+ 205:../../../os/rt/src/chsem.c ****   if (--sp->cnt < (cnt_t)0) {
+ 223               		.loc 1 205 0
+ 224 0008 9481      		ldd r25,Z+4
+ 225 000a 9150      		subi r25,lo8(-(-1))
+ 226 000c 9483      		std Z+4,r25
+ 227 000e 97FD      		sbrc r25,7
+ 228 0010 00C0      		rjmp .L13
+ 206:../../../os/rt/src/chsem.c ****     currp->u.wtsemp = sp;
+ 207:../../../os/rt/src/chsem.c ****     sem_insert(currp, &sp->queue);
+ 208:../../../os/rt/src/chsem.c ****     chSchGoSleepS(CH_STATE_WTSEM);
+ 209:../../../os/rt/src/chsem.c **** 
+ 210:../../../os/rt/src/chsem.c ****     return currp->u.rdymsg;
+ 211:../../../os/rt/src/chsem.c ****   }
+ 212:../../../os/rt/src/chsem.c **** 
+ 213:../../../os/rt/src/chsem.c ****   return MSG_OK;
+ 229               		.loc 1 213 0
+ 230 0012 80E0      		ldi r24,0
+ 231 0014 90E0      		ldi r25,0
+ 232               	.LVL18:
+ 233               	.LBE102:
+ 234               	.LBE101:
+ 235               	.LBB108:
+ 236               	.LBB109:
+ 237               	.LBB110:
+ 238               	.LBB111:
+ 239               		.loc 3 447 0
+ 240               	/* #APP */
+ 241               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 242 0016 7894      		sei
+ 243               	 ;  0 "" 2
+ 244               	/* epilogue start */
+ 245               	/* #NOAPP */
+ 246               	.LBE111:
+ 247               	.LBE110:
+ 248               	.LBE109:
+ 249               	.LBE108:
+ 183:../../../os/rt/src/chsem.c **** 
+ 250               		.loc 1 183 0
+ 251 0018 DF91      		pop r29
+ 252 001a CF91      		pop r28
+ 253 001c 0895      		ret
+ 254               	.LVL19:
+ 255               	.L13:
+ 256               	.LBB115:
+ 257               	.LBB107:
+ 258               	.LBB103:
+ 259               	.LBB104:
+ 206:../../../os/rt/src/chsem.c ****     currp->u.wtsemp = sp;
+ 260               		.loc 1 206 0
+ 261 001e A091 0000 		lds r26,ch+11
+ 262 0022 B091 0000 		lds r27,ch+11+1
+ 263 0026 5196      		adiw r26,16+1
+ 264 0028 FC93      		st X,r31
+ 265 002a EE93      		st -X,r30
+ 266 002c 5097      		sbiw r26,16
+ 267               	.LVL20:
+ 268               	.LBB105:
+ 269               	.LBB106:
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 270               		.loc 2 600 0
+ 271 002e 1196      		adiw r26,1
+ 272 0030 FC93      		st X,r31
+ 273 0032 EE93      		st -X,r30
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 274               		.loc 2 601 0
+ 275 0034 C281      		ldd r28,Z+2
+ 276 0036 D381      		ldd r29,Z+3
+ 277 0038 1396      		adiw r26,2+1
+ 278 003a DC93      		st X,r29
+ 279 003c CE93      		st -X,r28
+ 280 003e 1297      		sbiw r26,2
+ 602:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 281               		.loc 2 602 0
+ 282 0040 B983      		std Y+1,r27
+ 283 0042 A883      		st Y,r26
+ 603:../../../os/rt/include/chschd.h **** }
+ 284               		.loc 2 603 0
+ 285 0044 B383      		std Z+3,r27
+ 286 0046 A283      		std Z+2,r26
+ 287               	.LVL21:
+ 288               	.LBE106:
+ 289               	.LBE105:
+ 208:../../../os/rt/src/chsem.c **** 
+ 290               		.loc 1 208 0
+ 291 0048 85E0      		ldi r24,lo8(5)
+ 292               	.LVL22:
+ 293 004a 0E94 0000 		call chSchGoSleepS
+ 294               	.LVL23:
+ 210:../../../os/rt/src/chsem.c ****   }
+ 295               		.loc 1 210 0
+ 296 004e E091 0000 		lds r30,ch+11
+ 297 0052 F091 0000 		lds r31,ch+11+1
+ 298 0056 8089      		ldd r24,Z+16
+ 299 0058 9189      		ldd r25,Z+17
+ 300               	.LVL24:
+ 301               	.LBE104:
+ 302               	.LBE103:
+ 303               	.LBE107:
+ 304               	.LBE115:
+ 305               	.LBB116:
+ 306               	.LBB114:
+ 307               	.LBB113:
+ 308               	.LBB112:
+ 309               		.loc 3 447 0
+ 310               	/* #APP */
+ 311               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 312 005a 7894      		sei
+ 313               	 ;  0 "" 2
+ 314               	/* epilogue start */
+ 315               	/* #NOAPP */
+ 316               	.LBE112:
+ 317               	.LBE113:
+ 318               	.LBE114:
+ 319               	.LBE116:
+ 183:../../../os/rt/src/chsem.c **** 
+ 320               		.loc 1 183 0
+ 321 005c DF91      		pop r29
+ 322 005e CF91      		pop r28
+ 323 0060 0895      		ret
+ 324               		.cfi_endproc
+ 325               	.LFE151:
+ 327               		.section	.text.chSemWaitS,"ax",@progbits
+ 328               	.global	chSemWaitS
+ 330               	chSemWaitS:
+ 331               	.LFB152:
+ 197:../../../os/rt/src/chsem.c **** 
+ 332               		.loc 1 197 0
+ 333               		.cfi_startproc
+ 334               	.LVL25:
+ 335 0000 CF93      		push r28
+ 336               	.LCFI7:
+ 337               		.cfi_def_cfa_offset 3
+ 338               		.cfi_offset 28, -2
+ 339 0002 DF93      		push r29
+ 340               	.LCFI8:
+ 341               		.cfi_def_cfa_offset 4
+ 342               		.cfi_offset 29, -3
+ 343               	/* prologue: function */
+ 344               	/* frame size = 0 */
+ 345               	/* stack size = 2 */
+ 346               	.L__stack_usage = 2
+ 347 0004 FC01      		movw r30,r24
+ 205:../../../os/rt/src/chsem.c ****     currp->u.wtsemp = sp;
+ 348               		.loc 1 205 0
+ 349 0006 9481      		ldd r25,Z+4
+ 350 0008 9150      		subi r25,lo8(-(-1))
+ 351 000a 9483      		std Z+4,r25
+ 352 000c 97FD      		sbrc r25,7
+ 353 000e 00C0      		rjmp .L17
+ 354               		.loc 1 213 0
+ 355 0010 80E0      		ldi r24,0
+ 356 0012 90E0      		ldi r25,0
+ 357               	.LVL26:
+ 358               	/* epilogue start */
+ 214:../../../os/rt/src/chsem.c **** }
+ 359               		.loc 1 214 0
+ 360 0014 DF91      		pop r29
+ 361 0016 CF91      		pop r28
+ 362 0018 0895      		ret
+ 363               	.LVL27:
+ 364               	.L17:
+ 365               	.LBB121:
+ 366               	.LBB122:
+ 206:../../../os/rt/src/chsem.c ****     sem_insert(currp, &sp->queue);
+ 367               		.loc 1 206 0
+ 368 001a A091 0000 		lds r26,ch+11
+ 369 001e B091 0000 		lds r27,ch+11+1
+ 370 0022 5196      		adiw r26,16+1
+ 371 0024 FC93      		st X,r31
+ 372 0026 EE93      		st -X,r30
+ 373 0028 5097      		sbiw r26,16
+ 374               	.LVL28:
+ 375               	.LBB123:
+ 376               	.LBB124:
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 377               		.loc 2 600 0
+ 378 002a 1196      		adiw r26,1
+ 379 002c FC93      		st X,r31
+ 380 002e EE93      		st -X,r30
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 381               		.loc 2 601 0
+ 382 0030 C281      		ldd r28,Z+2
+ 383 0032 D381      		ldd r29,Z+3
+ 384 0034 1396      		adiw r26,2+1
+ 385 0036 DC93      		st X,r29
+ 386 0038 CE93      		st -X,r28
+ 387 003a 1297      		sbiw r26,2
+ 602:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 388               		.loc 2 602 0
+ 389 003c B983      		std Y+1,r27
+ 390 003e A883      		st Y,r26
+ 603:../../../os/rt/include/chschd.h **** }
+ 391               		.loc 2 603 0
+ 392 0040 B383      		std Z+3,r27
+ 393 0042 A283      		std Z+2,r26
+ 394               	.LVL29:
+ 395               	.LBE124:
+ 396               	.LBE123:
+ 208:../../../os/rt/src/chsem.c **** 
+ 397               		.loc 1 208 0
+ 398 0044 85E0      		ldi r24,lo8(5)
+ 399               	.LVL30:
+ 400 0046 0E94 0000 		call chSchGoSleepS
+ 401               	.LVL31:
+ 210:../../../os/rt/src/chsem.c ****   }
+ 402               		.loc 1 210 0
+ 403 004a E091 0000 		lds r30,ch+11
+ 404 004e F091 0000 		lds r31,ch+11+1
+ 405 0052 8089      		ldd r24,Z+16
+ 406 0054 9189      		ldd r25,Z+17
+ 407               	.LVL32:
+ 408               	/* epilogue start */
+ 409               	.LBE122:
+ 410               	.LBE121:
+ 411               		.loc 1 214 0
+ 412 0056 DF91      		pop r29
+ 413 0058 CF91      		pop r28
+ 414 005a 0895      		ret
+ 415               		.cfi_endproc
+ 416               	.LFE152:
+ 418               		.section	.text.chSemWaitTimeout,"ax",@progbits
+ 419               	.global	chSemWaitTimeout
+ 421               	chSemWaitTimeout:
+ 422               	.LFB153:
+ 215:../../../os/rt/src/chsem.c **** 
+ 216:../../../os/rt/src/chsem.c **** /**
+ 217:../../../os/rt/src/chsem.c ****  * @brief   Performs a wait operation on a semaphore with timeout specification.
+ 218:../../../os/rt/src/chsem.c ****  *
+ 219:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 220:../../../os/rt/src/chsem.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
+ 221:../../../os/rt/src/chsem.c ****  *                      the following special values are allowed:
+ 222:../../../os/rt/src/chsem.c ****  *                      - @a TIME_IMMEDIATE immediate timeout.
+ 223:../../../os/rt/src/chsem.c ****  *                      - @a TIME_INFINITE no timeout.
+ 224:../../../os/rt/src/chsem.c ****  *                      .
+ 225:../../../os/rt/src/chsem.c ****  * @return              A message specifying how the invoking thread has been
+ 226:../../../os/rt/src/chsem.c ****  *                      released from the semaphore.
+ 227:../../../os/rt/src/chsem.c ****  * @retval MSG_OK       if the thread has not stopped on the semaphore or the
+ 228:../../../os/rt/src/chsem.c ****  *                      semaphore has been signaled.
+ 229:../../../os/rt/src/chsem.c ****  * @retval MSG_RESET    if the semaphore has been reset using @p chSemReset().
+ 230:../../../os/rt/src/chsem.c ****  * @retval MSG_TIMEOUT  if the semaphore has not been signaled or reset within
+ 231:../../../os/rt/src/chsem.c ****  *                      the specified timeout.
+ 232:../../../os/rt/src/chsem.c ****  *
+ 233:../../../os/rt/src/chsem.c ****  * @api
+ 234:../../../os/rt/src/chsem.c ****  */
+ 235:../../../os/rt/src/chsem.c **** msg_t chSemWaitTimeout(semaphore_t *sp, sysinterval_t timeout) {
+ 423               		.loc 1 235 0
+ 424               		.cfi_startproc
+ 425               	.LVL33:
+ 426 0000 CF93      		push r28
+ 427               	.LCFI9:
+ 428               		.cfi_def_cfa_offset 3
+ 429               		.cfi_offset 28, -2
+ 430 0002 DF93      		push r29
+ 431               	.LCFI10:
+ 432               		.cfi_def_cfa_offset 4
+ 433               		.cfi_offset 29, -3
+ 434               	/* prologue: function */
+ 435               	/* frame size = 0 */
+ 436               	/* stack size = 2 */
+ 437               	.L__stack_usage = 2
+ 438 0004 FC01      		movw r30,r24
+ 439               	.LBB138:
+ 440               	.LBB139:
+ 441               	.LBB140:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 442               		.loc 3 437 0
+ 443               	/* #APP */
+ 444               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 445 0006 F894      		cli
+ 446               	 ;  0 "" 2
+ 447               	.LVL34:
+ 448               	/* #NOAPP */
+ 449               	.LBE140:
+ 450               	.LBE139:
+ 451               	.LBE138:
+ 452               	.LBB141:
+ 453               	.LBB142:
+ 236:../../../os/rt/src/chsem.c ****   msg_t msg;
+ 237:../../../os/rt/src/chsem.c **** 
+ 238:../../../os/rt/src/chsem.c ****   chSysLock();
+ 239:../../../os/rt/src/chsem.c ****   msg = chSemWaitTimeoutS(sp, timeout);
+ 240:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 241:../../../os/rt/src/chsem.c **** 
+ 242:../../../os/rt/src/chsem.c ****   return msg;
+ 243:../../../os/rt/src/chsem.c **** }
+ 244:../../../os/rt/src/chsem.c **** 
+ 245:../../../os/rt/src/chsem.c **** /**
+ 246:../../../os/rt/src/chsem.c ****  * @brief   Performs a wait operation on a semaphore with timeout specification.
+ 247:../../../os/rt/src/chsem.c ****  *
+ 248:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 249:../../../os/rt/src/chsem.c ****  * @param[in] timeout   the number of ticks before the operation timeouts,
+ 250:../../../os/rt/src/chsem.c ****  *                      the following special values are allowed:
+ 251:../../../os/rt/src/chsem.c ****  *                      - @a TIME_IMMEDIATE immediate timeout.
+ 252:../../../os/rt/src/chsem.c ****  *                      - @a TIME_INFINITE no timeout.
+ 253:../../../os/rt/src/chsem.c ****  *                      .
+ 254:../../../os/rt/src/chsem.c ****  * @return              A message specifying how the invoking thread has been
+ 255:../../../os/rt/src/chsem.c ****  *                      released from the semaphore.
+ 256:../../../os/rt/src/chsem.c ****  * @retval MSG_OK       if the thread has not stopped on the semaphore or the
+ 257:../../../os/rt/src/chsem.c ****  *                      semaphore has been signaled.
+ 258:../../../os/rt/src/chsem.c ****  * @retval MSG_RESET    if the semaphore has been reset using @p chSemReset().
+ 259:../../../os/rt/src/chsem.c ****  * @retval MSG_TIMEOUT  if the semaphore has not been signaled or reset within
+ 260:../../../os/rt/src/chsem.c ****  *                      the specified timeout.
+ 261:../../../os/rt/src/chsem.c ****  *
+ 262:../../../os/rt/src/chsem.c ****  * @sclass
+ 263:../../../os/rt/src/chsem.c ****  */
+ 264:../../../os/rt/src/chsem.c **** msg_t chSemWaitTimeoutS(semaphore_t *sp, sysinterval_t timeout) {
+ 265:../../../os/rt/src/chsem.c **** 
+ 266:../../../os/rt/src/chsem.c ****   chDbgCheckClassS();
+ 267:../../../os/rt/src/chsem.c ****   chDbgCheck(sp != NULL);
+ 268:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 269:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 270:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 271:../../../os/rt/src/chsem.c **** 
+ 272:../../../os/rt/src/chsem.c ****   if (--sp->cnt < (cnt_t)0) {
+ 454               		.loc 1 272 0
+ 455 0008 9481      		ldd r25,Z+4
+ 456 000a 8FEF      		ldi r24,lo8(-1)
+ 457               	.LVL35:
+ 458 000c 890F      		add r24,r25
+ 459 000e 8483      		std Z+4,r24
+ 460 0010 87FD      		sbrc r24,7
+ 461 0012 00C0      		rjmp .L22
+ 273:../../../os/rt/src/chsem.c ****     if (TIME_IMMEDIATE == timeout) {
+ 274:../../../os/rt/src/chsem.c ****       sp->cnt++;
+ 275:../../../os/rt/src/chsem.c **** 
+ 276:../../../os/rt/src/chsem.c ****       return MSG_TIMEOUT;
+ 277:../../../os/rt/src/chsem.c ****     }
+ 278:../../../os/rt/src/chsem.c ****     currp->u.wtsemp = sp;
+ 279:../../../os/rt/src/chsem.c ****     sem_insert(currp, &sp->queue);
+ 280:../../../os/rt/src/chsem.c **** 
+ 281:../../../os/rt/src/chsem.c ****     return chSchGoSleepTimeoutS(CH_STATE_WTSEM, timeout);
+ 282:../../../os/rt/src/chsem.c ****   }
+ 283:../../../os/rt/src/chsem.c **** 
+ 284:../../../os/rt/src/chsem.c ****   return MSG_OK;
+ 462               		.loc 1 284 0
+ 463 0014 80E0      		ldi r24,0
+ 464 0016 90E0      		ldi r25,0
+ 465               	.L19:
+ 466               	.LVL36:
+ 467               	.LBE142:
+ 468               	.LBE141:
+ 469               	.LBB149:
+ 470               	.LBB150:
+ 471               	.LBB151:
+ 472               	.LBB152:
+ 473               		.loc 3 447 0
+ 474               	/* #APP */
+ 475               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 476 0018 7894      		sei
+ 477               	 ;  0 "" 2
+ 478               	/* epilogue start */
+ 479               	/* #NOAPP */
+ 480               	.LBE152:
+ 481               	.LBE151:
+ 482               	.LBE150:
+ 483               	.LBE149:
+ 243:../../../os/rt/src/chsem.c **** 
+ 484               		.loc 1 243 0
+ 485 001a DF91      		pop r29
+ 486 001c CF91      		pop r28
+ 487 001e 0895      		ret
+ 488               	.LVL37:
+ 489               	.L22:
+ 490               	.LBB156:
+ 491               	.LBB147:
+ 273:../../../os/rt/src/chsem.c ****     if (TIME_IMMEDIATE == timeout) {
+ 492               		.loc 1 273 0
+ 493 0020 6115      		cp r22,__zero_reg__
+ 494 0022 7105      		cpc r23,__zero_reg__
+ 495 0024 01F0      		breq .L23
+ 496               	.LVL38:
+ 497               	.LBB143:
+ 498               	.LBB144:
+ 278:../../../os/rt/src/chsem.c ****     sem_insert(currp, &sp->queue);
+ 499               		.loc 1 278 0
+ 500 0026 A091 0000 		lds r26,ch+11
+ 501 002a B091 0000 		lds r27,ch+11+1
+ 502 002e 5196      		adiw r26,16+1
+ 503 0030 FC93      		st X,r31
+ 504 0032 EE93      		st -X,r30
+ 505 0034 5097      		sbiw r26,16
+ 506               	.LVL39:
+ 507               	.LBB145:
+ 508               	.LBB146:
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 509               		.loc 2 600 0
+ 510 0036 1196      		adiw r26,1
+ 511 0038 FC93      		st X,r31
+ 512 003a EE93      		st -X,r30
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 513               		.loc 2 601 0
+ 514 003c C281      		ldd r28,Z+2
+ 515 003e D381      		ldd r29,Z+3
+ 516 0040 1396      		adiw r26,2+1
+ 517 0042 DC93      		st X,r29
+ 518 0044 CE93      		st -X,r28
+ 519 0046 1297      		sbiw r26,2
+ 602:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 520               		.loc 2 602 0
+ 521 0048 B983      		std Y+1,r27
+ 522 004a A883      		st Y,r26
+ 603:../../../os/rt/include/chschd.h **** }
+ 523               		.loc 2 603 0
+ 524 004c B383      		std Z+3,r27
+ 525 004e A283      		std Z+2,r26
+ 526               	.LVL40:
+ 527               	.LBE146:
+ 528               	.LBE145:
+ 281:../../../os/rt/src/chsem.c ****   }
+ 529               		.loc 1 281 0
+ 530 0050 85E0      		ldi r24,lo8(5)
+ 531 0052 0E94 0000 		call chSchGoSleepTimeoutS
+ 532               	.LVL41:
+ 533               	.LBE144:
+ 534               	.LBE143:
+ 535               	.LBE147:
+ 536               	.LBE156:
+ 537               	.LBB157:
+ 538               	.LBB155:
+ 539               	.LBB154:
+ 540               	.LBB153:
+ 541               		.loc 3 447 0
+ 542               	/* #APP */
+ 543               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 544 0056 7894      		sei
+ 545               	 ;  0 "" 2
+ 546               	/* epilogue start */
+ 547               	/* #NOAPP */
+ 548               	.LBE153:
+ 549               	.LBE154:
+ 550               	.LBE155:
+ 551               	.LBE157:
+ 243:../../../os/rt/src/chsem.c **** 
+ 552               		.loc 1 243 0
+ 553 0058 DF91      		pop r29
+ 554 005a CF91      		pop r28
+ 555 005c 0895      		ret
+ 556               	.LVL42:
+ 557               	.L23:
+ 558               	.LBB158:
+ 559               	.LBB148:
+ 274:../../../os/rt/src/chsem.c **** 
+ 560               		.loc 1 274 0
+ 561 005e 9483      		std Z+4,r25
+ 276:../../../os/rt/src/chsem.c ****     }
+ 562               		.loc 1 276 0
+ 563 0060 8FEF      		ldi r24,lo8(-1)
+ 564 0062 9FEF      		ldi r25,lo8(-1)
+ 565 0064 00C0      		rjmp .L19
+ 566               	.LBE148:
+ 567               	.LBE158:
+ 568               		.cfi_endproc
+ 569               	.LFE153:
+ 571               		.section	.text.chSemWaitTimeoutS,"ax",@progbits
+ 572               	.global	chSemWaitTimeoutS
+ 574               	chSemWaitTimeoutS:
+ 575               	.LFB154:
+ 264:../../../os/rt/src/chsem.c **** 
+ 576               		.loc 1 264 0
+ 577               		.cfi_startproc
+ 578               	.LVL43:
+ 579 0000 CF93      		push r28
+ 580               	.LCFI11:
+ 581               		.cfi_def_cfa_offset 3
+ 582               		.cfi_offset 28, -2
+ 583 0002 DF93      		push r29
+ 584               	.LCFI12:
+ 585               		.cfi_def_cfa_offset 4
+ 586               		.cfi_offset 29, -3
+ 587               	/* prologue: function */
+ 588               	/* frame size = 0 */
+ 589               	/* stack size = 2 */
+ 590               	.L__stack_usage = 2
+ 591 0004 FC01      		movw r30,r24
+ 272:../../../os/rt/src/chsem.c ****     if (TIME_IMMEDIATE == timeout) {
+ 592               		.loc 1 272 0
+ 593 0006 9481      		ldd r25,Z+4
+ 594 0008 8FEF      		ldi r24,lo8(-1)
+ 595               	.LVL44:
+ 596 000a 890F      		add r24,r25
+ 597 000c 8483      		std Z+4,r24
+ 598 000e 87FD      		sbrc r24,7
+ 599 0010 00C0      		rjmp .L28
+ 600               		.loc 1 284 0
+ 601 0012 80E0      		ldi r24,0
+ 602 0014 90E0      		ldi r25,0
+ 603               	.L25:
+ 604               	/* epilogue start */
+ 285:../../../os/rt/src/chsem.c **** }
+ 605               		.loc 1 285 0
+ 606 0016 DF91      		pop r29
+ 607 0018 CF91      		pop r28
+ 608 001a 0895      		ret
+ 609               	.L28:
+ 273:../../../os/rt/src/chsem.c ****       sp->cnt++;
+ 610               		.loc 1 273 0
+ 611 001c 6115      		cp r22,__zero_reg__
+ 612 001e 7105      		cpc r23,__zero_reg__
+ 613 0020 01F0      		breq .L29
+ 614               	.LVL45:
+ 615               	.LBB163:
+ 616               	.LBB164:
+ 278:../../../os/rt/src/chsem.c ****     sem_insert(currp, &sp->queue);
+ 617               		.loc 1 278 0
+ 618 0022 A091 0000 		lds r26,ch+11
+ 619 0026 B091 0000 		lds r27,ch+11+1
+ 620 002a 5196      		adiw r26,16+1
+ 621 002c FC93      		st X,r31
+ 622 002e EE93      		st -X,r30
+ 623 0030 5097      		sbiw r26,16
+ 624               	.LVL46:
+ 625               	.LBB165:
+ 626               	.LBB166:
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 627               		.loc 2 600 0
+ 628 0032 1196      		adiw r26,1
+ 629 0034 FC93      		st X,r31
+ 630 0036 EE93      		st -X,r30
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 631               		.loc 2 601 0
+ 632 0038 C281      		ldd r28,Z+2
+ 633 003a D381      		ldd r29,Z+3
+ 634 003c 1396      		adiw r26,2+1
+ 635 003e DC93      		st X,r29
+ 636 0040 CE93      		st -X,r28
+ 637 0042 1297      		sbiw r26,2
+ 602:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 638               		.loc 2 602 0
+ 639 0044 B983      		std Y+1,r27
+ 640 0046 A883      		st Y,r26
+ 603:../../../os/rt/include/chschd.h **** }
+ 641               		.loc 2 603 0
+ 642 0048 B383      		std Z+3,r27
+ 643 004a A283      		std Z+2,r26
+ 644               	.LVL47:
+ 645               	.LBE166:
+ 646               	.LBE165:
+ 281:../../../os/rt/src/chsem.c ****   }
+ 647               		.loc 1 281 0
+ 648 004c 85E0      		ldi r24,lo8(5)
+ 649               	/* epilogue start */
+ 650               	.LBE164:
+ 651               	.LBE163:
+ 652               		.loc 1 285 0
+ 653 004e DF91      		pop r29
+ 654 0050 CF91      		pop r28
+ 655               	.LBB168:
+ 656               	.LBB167:
+ 281:../../../os/rt/src/chsem.c ****   }
+ 657               		.loc 1 281 0
+ 658 0052 0C94 0000 		jmp chSchGoSleepTimeoutS
+ 659               	.LVL48:
+ 660               	.L29:
+ 661               	.LBE167:
+ 662               	.LBE168:
+ 274:../../../os/rt/src/chsem.c **** 
+ 663               		.loc 1 274 0
+ 664 0056 9483      		std Z+4,r25
+ 276:../../../os/rt/src/chsem.c ****     }
+ 665               		.loc 1 276 0
+ 666 0058 8FEF      		ldi r24,lo8(-1)
+ 667 005a 9FEF      		ldi r25,lo8(-1)
+ 668 005c 00C0      		rjmp .L25
+ 669               		.cfi_endproc
+ 670               	.LFE154:
+ 672               		.section	.text.chSemSignal,"ax",@progbits
+ 673               	.global	chSemSignal
+ 675               	chSemSignal:
+ 676               	.LFB155:
+ 286:../../../os/rt/src/chsem.c **** 
+ 287:../../../os/rt/src/chsem.c **** /**
+ 288:../../../os/rt/src/chsem.c ****  * @brief   Performs a signal operation on a semaphore.
+ 289:../../../os/rt/src/chsem.c ****  *
+ 290:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 291:../../../os/rt/src/chsem.c ****  *
+ 292:../../../os/rt/src/chsem.c ****  * @api
+ 293:../../../os/rt/src/chsem.c ****  */
+ 294:../../../os/rt/src/chsem.c **** void chSemSignal(semaphore_t *sp) {
+ 677               		.loc 1 294 0
+ 678               		.cfi_startproc
+ 679               	.LVL49:
+ 680 0000 CF93      		push r28
+ 681               	.LCFI13:
+ 682               		.cfi_def_cfa_offset 3
+ 683               		.cfi_offset 28, -2
+ 684 0002 DF93      		push r29
+ 685               	.LCFI14:
+ 686               		.cfi_def_cfa_offset 4
+ 687               		.cfi_offset 29, -3
+ 688               	/* prologue: function */
+ 689               	/* frame size = 0 */
+ 690               	/* stack size = 2 */
+ 691               	.L__stack_usage = 2
+ 692 0004 FC01      		movw r30,r24
+ 693               	.LBB169:
+ 694               	.LBB170:
+ 695               	.LBB171:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 696               		.loc 3 437 0
+ 697               	/* #APP */
+ 698               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 699 0006 F894      		cli
+ 700               	 ;  0 "" 2
+ 701               	/* #NOAPP */
+ 702               	.LBE171:
+ 703               	.LBE170:
+ 704               	.LBE169:
+ 295:../../../os/rt/src/chsem.c **** 
+ 296:../../../os/rt/src/chsem.c ****   chDbgCheck(sp != NULL);
+ 297:../../../os/rt/src/chsem.c **** 
+ 298:../../../os/rt/src/chsem.c ****   chSysLock();
+ 299:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 300:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 301:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 302:../../../os/rt/src/chsem.c ****   if (++sp->cnt <= (cnt_t)0) {
+ 705               		.loc 1 302 0
+ 706 0008 9481      		ldd r25,Z+4
+ 707 000a 9F5F      		subi r25,lo8(-(1))
+ 708 000c 9483      		std Z+4,r25
+ 709 000e 1916      		cp __zero_reg__,r25
+ 710 0010 04F4      		brge .L32
+ 711               	.LBB172:
+ 712               	.LBB173:
+ 713               	.LBB174:
+ 714               	.LBB175:
+ 715               		.loc 3 447 0
+ 716               	/* #APP */
+ 717               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 718 0012 7894      		sei
+ 719               	 ;  0 "" 2
+ 720               	/* epilogue start */
+ 721               	/* #NOAPP */
+ 722               	.LBE175:
+ 723               	.LBE174:
+ 724               	.LBE173:
+ 725               	.LBE172:
+ 303:../../../os/rt/src/chsem.c ****     chSchWakeupS(queue_fifo_remove(&sp->queue), MSG_OK);
+ 304:../../../os/rt/src/chsem.c ****   }
+ 305:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 306:../../../os/rt/src/chsem.c **** }
+ 726               		.loc 1 306 0
+ 727 0014 DF91      		pop r29
+ 728 0016 CF91      		pop r28
+ 729 0018 0895      		ret
+ 730               	.L32:
+ 731               	.LVL50:
+ 732               	.LBB179:
+ 733               	.LBB180:
+ 607:../../../os/rt/include/chschd.h **** 
+ 734               		.loc 2 607 0
+ 735 001a 8081      		ld r24,Z
+ 736 001c 9181      		ldd r25,Z+1
+ 737               	.LVL51:
+ 609:../../../os/rt/include/chschd.h ****   tqp->next->queue.prev = (thread_t *)tqp;
+ 738               		.loc 2 609 0
+ 739 001e EC01      		movw r28,r24
+ 740 0020 A881      		ld r26,Y
+ 741 0022 B981      		ldd r27,Y+1
+ 742 0024 B183      		std Z+1,r27
+ 743 0026 A083      		st Z,r26
+ 610:../../../os/rt/include/chschd.h **** 
+ 744               		.loc 2 610 0
+ 745 0028 1396      		adiw r26,2+1
+ 746 002a FC93      		st X,r31
+ 747 002c EE93      		st -X,r30
+ 748 002e 1297      		sbiw r26,2
+ 749               	.LVL52:
+ 750               	.LBE180:
+ 751               	.LBE179:
+ 303:../../../os/rt/src/chsem.c ****   }
+ 752               		.loc 1 303 0
+ 753 0030 60E0      		ldi r22,0
+ 754 0032 70E0      		ldi r23,0
+ 755 0034 0E94 0000 		call chSchWakeupS
+ 756               	.LVL53:
+ 757               	.LBB181:
+ 758               	.LBB178:
+ 759               	.LBB177:
+ 760               	.LBB176:
+ 761               		.loc 3 447 0
+ 762               	/* #APP */
+ 763               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 764 0038 7894      		sei
+ 765               	 ;  0 "" 2
+ 766               	/* epilogue start */
+ 767               	/* #NOAPP */
+ 768               	.LBE176:
+ 769               	.LBE177:
+ 770               	.LBE178:
+ 771               	.LBE181:
+ 772               		.loc 1 306 0
+ 773 003a DF91      		pop r29
+ 774 003c CF91      		pop r28
+ 775 003e 0895      		ret
+ 776               		.cfi_endproc
+ 777               	.LFE155:
+ 779               		.section	.text.chSemSignalI,"ax",@progbits
+ 780               	.global	chSemSignalI
+ 782               	chSemSignalI:
+ 783               	.LFB156:
+ 307:../../../os/rt/src/chsem.c **** 
+ 308:../../../os/rt/src/chsem.c **** /**
+ 309:../../../os/rt/src/chsem.c ****  * @brief   Performs a signal operation on a semaphore.
+ 310:../../../os/rt/src/chsem.c ****  * @post    This function does not reschedule so a call to a rescheduling
+ 311:../../../os/rt/src/chsem.c ****  *          function must be performed before unlocking the kernel. Note that
+ 312:../../../os/rt/src/chsem.c ****  *          interrupt handlers always reschedule on exit so an explicit
+ 313:../../../os/rt/src/chsem.c ****  *          reschedule must not be performed in ISRs.
+ 314:../../../os/rt/src/chsem.c ****  *
+ 315:../../../os/rt/src/chsem.c ****  * @param[in] sp    pointer to a @p semaphore_t structure
+ 316:../../../os/rt/src/chsem.c ****  *
+ 317:../../../os/rt/src/chsem.c ****  * @iclass
+ 318:../../../os/rt/src/chsem.c ****  */
+ 319:../../../os/rt/src/chsem.c **** void chSemSignalI(semaphore_t *sp) {
+ 784               		.loc 1 319 0
+ 785               		.cfi_startproc
+ 786               	.LVL54:
+ 787 0000 CF93      		push r28
+ 788               	.LCFI15:
+ 789               		.cfi_def_cfa_offset 3
+ 790               		.cfi_offset 28, -2
+ 791 0002 DF93      		push r29
+ 792               	.LCFI16:
+ 793               		.cfi_def_cfa_offset 4
+ 794               		.cfi_offset 29, -3
+ 795               	/* prologue: function */
+ 796               	/* frame size = 0 */
+ 797               	/* stack size = 2 */
+ 798               	.L__stack_usage = 2
+ 799 0004 FC01      		movw r30,r24
+ 320:../../../os/rt/src/chsem.c **** 
+ 321:../../../os/rt/src/chsem.c ****   chDbgCheckClassI();
+ 322:../../../os/rt/src/chsem.c ****   chDbgCheck(sp != NULL);
+ 323:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 324:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 325:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 326:../../../os/rt/src/chsem.c **** 
+ 327:../../../os/rt/src/chsem.c ****   if (++sp->cnt <= (cnt_t)0) {
+ 800               		.loc 1 327 0
+ 801 0006 9481      		ldd r25,Z+4
+ 802 0008 9F5F      		subi r25,lo8(-(1))
+ 803 000a 9483      		std Z+4,r25
+ 804 000c 1916      		cp __zero_reg__,r25
+ 805 000e 04F4      		brge .L35
+ 806               	/* epilogue start */
+ 328:../../../os/rt/src/chsem.c ****     /* Note, it is done this way in order to allow a tail call on
+ 329:../../../os/rt/src/chsem.c ****              chSchReadyI().*/
+ 330:../../../os/rt/src/chsem.c ****     thread_t *tp = queue_fifo_remove(&sp->queue);
+ 331:../../../os/rt/src/chsem.c ****     tp->u.rdymsg = MSG_OK;
+ 332:../../../os/rt/src/chsem.c ****     (void) chSchReadyI(tp);
+ 333:../../../os/rt/src/chsem.c ****   }
+ 334:../../../os/rt/src/chsem.c **** }
+ 807               		.loc 1 334 0
+ 808 0010 DF91      		pop r29
+ 809 0012 CF91      		pop r28
+ 810 0014 0895      		ret
+ 811               	.L35:
+ 812               	.LVL55:
+ 813               	.LBB182:
+ 814               	.LBB183:
+ 815               	.LBB184:
+ 607:../../../os/rt/include/chschd.h **** 
+ 816               		.loc 2 607 0
+ 817 0016 8081      		ld r24,Z
+ 818 0018 9181      		ldd r25,Z+1
+ 819               	.LVL56:
+ 609:../../../os/rt/include/chschd.h ****   tqp->next->queue.prev = (thread_t *)tqp;
+ 820               		.loc 2 609 0
+ 821 001a EC01      		movw r28,r24
+ 822 001c A881      		ld r26,Y
+ 823 001e B981      		ldd r27,Y+1
+ 824 0020 B183      		std Z+1,r27
+ 825 0022 A083      		st Z,r26
+ 610:../../../os/rt/include/chschd.h **** 
+ 826               		.loc 2 610 0
+ 827 0024 1396      		adiw r26,2+1
+ 828 0026 FC93      		st X,r31
+ 829 0028 EE93      		st -X,r30
+ 830 002a 1297      		sbiw r26,2
+ 831               	.LVL57:
+ 832               	.LBE184:
+ 833               	.LBE183:
+ 331:../../../os/rt/src/chsem.c ****     (void) chSchReadyI(tp);
+ 834               		.loc 1 331 0
+ 835 002c 198A      		std Y+17,__zero_reg__
+ 836 002e 188A      		std Y+16,__zero_reg__
+ 837               	/* epilogue start */
+ 838               	.LBE182:
+ 839               		.loc 1 334 0
+ 840 0030 DF91      		pop r29
+ 841 0032 CF91      		pop r28
+ 842               	.LBB185:
+ 332:../../../os/rt/src/chsem.c ****   }
+ 843               		.loc 1 332 0
+ 844 0034 0C94 0000 		jmp chSchReadyI
+ 845               	.LVL58:
+ 846               	.LBE185:
+ 847               		.cfi_endproc
+ 848               	.LFE156:
+ 850               		.section	.text.chSemAddCounterI,"ax",@progbits
+ 851               	.global	chSemAddCounterI
+ 853               	chSemAddCounterI:
+ 854               	.LFB157:
+ 335:../../../os/rt/src/chsem.c **** 
+ 336:../../../os/rt/src/chsem.c **** /**
+ 337:../../../os/rt/src/chsem.c ****  * @brief   Adds the specified value to the semaphore counter.
+ 338:../../../os/rt/src/chsem.c ****  * @post    This function does not reschedule so a call to a rescheduling
+ 339:../../../os/rt/src/chsem.c ****  *          function must be performed before unlocking the kernel. Note that
+ 340:../../../os/rt/src/chsem.c ****  *          interrupt handlers always reschedule on exit so an explicit
+ 341:../../../os/rt/src/chsem.c ****  *          reschedule must not be performed in ISRs.
+ 342:../../../os/rt/src/chsem.c ****  *
+ 343:../../../os/rt/src/chsem.c ****  * @param[in] sp        pointer to a @p semaphore_t structure
+ 344:../../../os/rt/src/chsem.c ****  * @param[in] n         value to be added to the semaphore counter. The value
+ 345:../../../os/rt/src/chsem.c ****  *                      must be positive.
+ 346:../../../os/rt/src/chsem.c ****  *
+ 347:../../../os/rt/src/chsem.c ****  * @iclass
+ 348:../../../os/rt/src/chsem.c ****  */
+ 349:../../../os/rt/src/chsem.c **** void chSemAddCounterI(semaphore_t *sp, cnt_t n) {
+ 855               		.loc 1 349 0
+ 856               		.cfi_startproc
+ 857               	.LVL59:
+ 858 0000 0F93      		push r16
+ 859               	.LCFI17:
+ 860               		.cfi_def_cfa_offset 3
+ 861               		.cfi_offset 16, -2
+ 862 0002 1F93      		push r17
+ 863               	.LCFI18:
+ 864               		.cfi_def_cfa_offset 4
+ 865               		.cfi_offset 17, -3
+ 866 0004 CF93      		push r28
+ 867               	.LCFI19:
+ 868               		.cfi_def_cfa_offset 5
+ 869               		.cfi_offset 28, -4
+ 870               	/* prologue: function */
+ 871               	/* frame size = 0 */
+ 872               	/* stack size = 3 */
+ 873               	.L__stack_usage = 3
+ 874 0006 8C01      		movw r16,r24
+ 875 0008 C62F      		mov r28,r22
+ 350:../../../os/rt/src/chsem.c **** 
+ 351:../../../os/rt/src/chsem.c ****   chDbgCheckClassI();
+ 352:../../../os/rt/src/chsem.c ****   chDbgCheck((sp != NULL) && (n > (cnt_t)0));
+ 353:../../../os/rt/src/chsem.c ****   chDbgAssert(((sp->cnt >= (cnt_t)0) && queue_isempty(&sp->queue)) ||
+ 354:../../../os/rt/src/chsem.c ****               ((sp->cnt < (cnt_t)0) && queue_notempty(&sp->queue)),
+ 355:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 356:../../../os/rt/src/chsem.c **** 
+ 357:../../../os/rt/src/chsem.c ****   while (n > (cnt_t)0) {
+ 876               		.loc 1 357 0
+ 877 000a 1616      		cp __zero_reg__,r22
+ 878 000c 04F0      		brlt .L41
+ 879 000e 00C0      		rjmp .L36
+ 880               	.LVL60:
+ 881               	.L38:
+ 882 0010 C150      		subi r28,lo8(-(-1))
+ 883               	.LVL61:
+ 884 0012 01F0      		breq .L36
+ 885               	.L41:
+ 358:../../../os/rt/src/chsem.c ****     if (++sp->cnt <= (cnt_t)0) {
+ 886               		.loc 1 358 0
+ 887 0014 D801      		movw r26,r16
+ 888 0016 1496      		adiw r26,4
+ 889 0018 8C91      		ld r24,X
+ 890 001a 1497      		sbiw r26,4
+ 891 001c 8F5F      		subi r24,lo8(-(1))
+ 892 001e 1496      		adiw r26,4
+ 893 0020 8C93      		st X,r24
+ 894 0022 1497      		sbiw r26,4
+ 895 0024 1816      		cp __zero_reg__,r24
+ 896 0026 04F0      		brlt .L38
+ 897               	.LVL62:
+ 898               	.LBB186:
+ 899               	.LBB187:
+ 607:../../../os/rt/include/chschd.h **** 
+ 900               		.loc 2 607 0
+ 901 0028 8D91      		ld r24,X+
+ 902 002a 9C91      		ld r25,X
+ 903               	.LVL63:
+ 609:../../../os/rt/include/chschd.h ****   tqp->next->queue.prev = (thread_t *)tqp;
+ 904               		.loc 2 609 0
+ 905 002c DC01      		movw r26,r24
+ 906 002e ED91      		ld r30,X+
+ 907 0030 FC91      		ld r31,X
+ 908 0032 D801      		movw r26,r16
+ 909 0034 ED93      		st X+,r30
+ 910 0036 FC93      		st X,r31
+ 610:../../../os/rt/include/chschd.h **** 
+ 911               		.loc 2 610 0
+ 912 0038 1383      		std Z+3,r17
+ 913 003a 0283      		std Z+2,r16
+ 914               	.LVL64:
+ 915               	.LBE187:
+ 916               	.LBE186:
+ 359:../../../os/rt/src/chsem.c ****       chSchReadyI(queue_fifo_remove(&sp->queue))->u.rdymsg = MSG_OK;
+ 917               		.loc 1 359 0
+ 918 003c 0E94 0000 		call chSchReadyI
+ 919               	.LVL65:
+ 920 0040 FC01      		movw r30,r24
+ 921 0042 118A      		std Z+17,__zero_reg__
+ 922 0044 108A      		std Z+16,__zero_reg__
+ 923 0046 C150      		subi r28,lo8(-(-1))
+ 924               	.LVL66:
+ 357:../../../os/rt/src/chsem.c ****     if (++sp->cnt <= (cnt_t)0) {
+ 925               		.loc 1 357 0
+ 926 0048 01F4      		brne .L41
+ 927               	.L36:
+ 928               	/* epilogue start */
+ 360:../../../os/rt/src/chsem.c ****     }
+ 361:../../../os/rt/src/chsem.c ****     n--;
+ 362:../../../os/rt/src/chsem.c ****   }
+ 363:../../../os/rt/src/chsem.c **** }
+ 929               		.loc 1 363 0
+ 930 004a CF91      		pop r28
+ 931               	.LVL67:
+ 932 004c 1F91      		pop r17
+ 933 004e 0F91      		pop r16
+ 934               	.LVL68:
+ 935 0050 0895      		ret
+ 936               		.cfi_endproc
+ 937               	.LFE157:
+ 939               		.section	.text.chSemSignalWait,"ax",@progbits
+ 940               	.global	chSemSignalWait
+ 942               	chSemSignalWait:
+ 943               	.LFB158:
+ 364:../../../os/rt/src/chsem.c **** 
+ 365:../../../os/rt/src/chsem.c **** /**
+ 366:../../../os/rt/src/chsem.c ****  * @brief   Performs atomic signal and wait operations on two semaphores.
+ 367:../../../os/rt/src/chsem.c ****  *
+ 368:../../../os/rt/src/chsem.c ****  * @param[in] sps       pointer to a @p semaphore_t structure to be signaled
+ 369:../../../os/rt/src/chsem.c ****  * @param[in] spw       pointer to a @p semaphore_t structure to wait on
+ 370:../../../os/rt/src/chsem.c ****  * @return              A message specifying how the invoking thread has been
+ 371:../../../os/rt/src/chsem.c ****  *                      released from the semaphore.
+ 372:../../../os/rt/src/chsem.c ****  * @retval MSG_OK       if the thread has not stopped on the semaphore or the
+ 373:../../../os/rt/src/chsem.c ****  *                      semaphore has been signaled.
+ 374:../../../os/rt/src/chsem.c ****  * @retval MSG_RESET    if the semaphore has been reset using @p chSemReset().
+ 375:../../../os/rt/src/chsem.c ****  *
+ 376:../../../os/rt/src/chsem.c ****  * @api
+ 377:../../../os/rt/src/chsem.c ****  */
+ 378:../../../os/rt/src/chsem.c **** msg_t chSemSignalWait(semaphore_t *sps, semaphore_t *spw) {
+ 944               		.loc 1 378 0
+ 945               		.cfi_startproc
+ 946               	.LVL69:
+ 947 0000 0F93      		push r16
+ 948               	.LCFI20:
+ 949               		.cfi_def_cfa_offset 3
+ 950               		.cfi_offset 16, -2
+ 951 0002 1F93      		push r17
+ 952               	.LCFI21:
+ 953               		.cfi_def_cfa_offset 4
+ 954               		.cfi_offset 17, -3
+ 955 0004 CF93      		push r28
+ 956               	.LCFI22:
+ 957               		.cfi_def_cfa_offset 5
+ 958               		.cfi_offset 28, -4
+ 959 0006 DF93      		push r29
+ 960               	.LCFI23:
+ 961               		.cfi_def_cfa_offset 6
+ 962               		.cfi_offset 29, -5
+ 963               	/* prologue: function */
+ 964               	/* frame size = 0 */
+ 965               	/* stack size = 4 */
+ 966               	.L__stack_usage = 4
+ 967 0008 FC01      		movw r30,r24
+ 968 000a EB01      		movw r28,r22
+ 969               	.LBB188:
+ 970               	.LBB189:
+ 971               	.LBB190:
+ 437:../../../os/common/ports/AVR/chcore.h **** }
+ 972               		.loc 3 437 0
+ 973               	/* #APP */
+ 974               	 ;  437 "../../../os/common/ports/AVR/chcore.h" 1
+ 975 000c F894      		cli
+ 976               	 ;  0 "" 2
+ 977               	/* #NOAPP */
+ 978               	.LBE190:
+ 979               	.LBE189:
+ 980               	.LBE188:
+ 379:../../../os/rt/src/chsem.c ****   msg_t msg;
+ 380:../../../os/rt/src/chsem.c **** 
+ 381:../../../os/rt/src/chsem.c ****   chDbgCheck((sps != NULL) && (spw != NULL));
+ 382:../../../os/rt/src/chsem.c **** 
+ 383:../../../os/rt/src/chsem.c ****   chSysLock();
+ 384:../../../os/rt/src/chsem.c ****   chDbgAssert(((sps->cnt >= (cnt_t)0) && queue_isempty(&sps->queue)) ||
+ 385:../../../os/rt/src/chsem.c ****               ((sps->cnt < (cnt_t)0) && queue_notempty(&sps->queue)),
+ 386:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 387:../../../os/rt/src/chsem.c ****   chDbgAssert(((spw->cnt >= (cnt_t)0) && queue_isempty(&spw->queue)) ||
+ 388:../../../os/rt/src/chsem.c ****               ((spw->cnt < (cnt_t)0) && queue_notempty(&spw->queue)),
+ 389:../../../os/rt/src/chsem.c ****               "inconsistent semaphore");
+ 390:../../../os/rt/src/chsem.c ****   if (++sps->cnt <= (cnt_t)0) {
+ 981               		.loc 1 390 0
+ 982 000e 9481      		ldd r25,Z+4
+ 983 0010 9F5F      		subi r25,lo8(-(1))
+ 984 0012 9483      		std Z+4,r25
+ 985 0014 1916      		cp __zero_reg__,r25
+ 986 0016 04F4      		brge .L47
+ 987               	.LVL70:
+ 988               	.L44:
+ 391:../../../os/rt/src/chsem.c ****     chSchReadyI(queue_fifo_remove(&sps->queue))->u.rdymsg = MSG_OK;
+ 392:../../../os/rt/src/chsem.c ****   }
+ 393:../../../os/rt/src/chsem.c ****   if (--spw->cnt < (cnt_t)0) {
+ 989               		.loc 1 393 0
+ 990 0018 8C81      		ldd r24,Y+4
+ 991 001a 8150      		subi r24,lo8(-(-1))
+ 992 001c 8C83      		std Y+4,r24
+ 993 001e 87FD      		sbrc r24,7
+ 994 0020 00C0      		rjmp .L48
+ 394:../../../os/rt/src/chsem.c ****     thread_t *ctp = currp;
+ 395:../../../os/rt/src/chsem.c ****     sem_insert(ctp, &spw->queue);
+ 396:../../../os/rt/src/chsem.c ****     ctp->u.wtsemp = spw;
+ 397:../../../os/rt/src/chsem.c ****     chSchGoSleepS(CH_STATE_WTSEM);
+ 398:../../../os/rt/src/chsem.c ****     msg = ctp->u.rdymsg;
+ 399:../../../os/rt/src/chsem.c ****   }
+ 400:../../../os/rt/src/chsem.c ****   else {
+ 401:../../../os/rt/src/chsem.c ****     chSchRescheduleS();
+ 995               		.loc 1 401 0
+ 996 0022 0E94 0000 		call chSchRescheduleS
+ 997               	.LVL71:
+ 402:../../../os/rt/src/chsem.c ****     msg = MSG_OK;
+ 998               		.loc 1 402 0
+ 999 0026 80E0      		ldi r24,0
+ 1000 0028 90E0      		ldi r25,0
+ 1001               	.LVL72:
+ 1002               	.LBB191:
+ 1003               	.LBB192:
+ 1004               	.LBB193:
+ 1005               	.LBB194:
+ 1006               		.loc 3 447 0
+ 1007               	/* #APP */
+ 1008               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 1009 002a 7894      		sei
+ 1010               	 ;  0 "" 2
+ 1011               	/* epilogue start */
+ 1012               	/* #NOAPP */
+ 1013               	.LBE194:
+ 1014               	.LBE193:
+ 1015               	.LBE192:
+ 1016               	.LBE191:
+ 403:../../../os/rt/src/chsem.c ****   }
+ 404:../../../os/rt/src/chsem.c ****   chSysUnlock();
+ 405:../../../os/rt/src/chsem.c **** 
+ 406:../../../os/rt/src/chsem.c ****   return msg;
+ 407:../../../os/rt/src/chsem.c **** }
+ 1017               		.loc 1 407 0
+ 1018 002c DF91      		pop r29
+ 1019 002e CF91      		pop r28
+ 1020               	.LVL73:
+ 1021 0030 1F91      		pop r17
+ 1022 0032 0F91      		pop r16
+ 1023 0034 0895      		ret
+ 1024               	.LVL74:
+ 1025               	.L48:
+ 1026               	.LBB198:
+ 394:../../../os/rt/src/chsem.c ****     sem_insert(ctp, &spw->queue);
+ 1027               		.loc 1 394 0
+ 1028 0036 0091 0000 		lds r16,ch+11
+ 1029 003a 1091 0000 		lds r17,ch+11+1
+ 1030               	.LVL75:
+ 1031               	.LBB199:
+ 1032               	.LBB200:
+ 600:../../../os/rt/include/chschd.h ****   tp->queue.prev             = tqp->prev;
+ 1033               		.loc 2 600 0
+ 1034 003e D801      		movw r26,r16
+ 1035 0040 1196      		adiw r26,1
+ 1036 0042 DC93      		st X,r29
+ 1037 0044 CE93      		st -X,r28
+ 601:../../../os/rt/include/chschd.h ****   tp->queue.prev->queue.next = tp;
+ 1038               		.loc 2 601 0
+ 1039 0046 EA81      		ldd r30,Y+2
+ 1040 0048 FB81      		ldd r31,Y+3
+ 1041 004a 1396      		adiw r26,2+1
+ 1042 004c FC93      		st X,r31
+ 1043 004e EE93      		st -X,r30
+ 1044 0050 1297      		sbiw r26,2
+ 602:../../../os/rt/include/chschd.h ****   tqp->prev                  = tp;
+ 1045               		.loc 2 602 0
+ 1046 0052 1183      		std Z+1,r17
+ 1047 0054 0083      		st Z,r16
+ 603:../../../os/rt/include/chschd.h **** }
+ 1048               		.loc 2 603 0
+ 1049 0056 1B83      		std Y+3,r17
+ 1050 0058 0A83      		std Y+2,r16
+ 1051               	.LVL76:
+ 1052               	.LBE200:
+ 1053               	.LBE199:
+ 396:../../../os/rt/src/chsem.c ****     chSchGoSleepS(CH_STATE_WTSEM);
+ 1054               		.loc 1 396 0
+ 1055 005a 5196      		adiw r26,16+1
+ 1056 005c DC93      		st X,r29
+ 1057 005e CE93      		st -X,r28
+ 1058 0060 5097      		sbiw r26,16
+ 397:../../../os/rt/src/chsem.c ****     msg = ctp->u.rdymsg;
+ 1059               		.loc 1 397 0
+ 1060 0062 85E0      		ldi r24,lo8(5)
+ 1061 0064 0E94 0000 		call chSchGoSleepS
+ 1062               	.LVL77:
+ 398:../../../os/rt/src/chsem.c ****   }
+ 1063               		.loc 1 398 0
+ 1064 0068 F801      		movw r30,r16
+ 1065 006a 8089      		ldd r24,Z+16
+ 1066 006c 9189      		ldd r25,Z+17
+ 1067               	.LVL78:
+ 1068               	.LBE198:
+ 1069               	.LBB201:
+ 1070               	.LBB197:
+ 1071               	.LBB196:
+ 1072               	.LBB195:
+ 1073               		.loc 3 447 0
+ 1074               	/* #APP */
+ 1075               	 ;  447 "../../../os/common/ports/AVR/chcore.h" 1
+ 1076 006e 7894      		sei
+ 1077               	 ;  0 "" 2
+ 1078               	/* epilogue start */
+ 1079               	/* #NOAPP */
+ 1080               	.LBE195:
+ 1081               	.LBE196:
+ 1082               	.LBE197:
+ 1083               	.LBE201:
+ 1084               		.loc 1 407 0
+ 1085 0070 DF91      		pop r29
+ 1086 0072 CF91      		pop r28
+ 1087               	.LVL79:
+ 1088 0074 1F91      		pop r17
+ 1089 0076 0F91      		pop r16
+ 1090               	.LVL80:
+ 1091 0078 0895      		ret
+ 1092               	.LVL81:
+ 1093               	.L47:
+ 1094               	.LBB202:
+ 1095               	.LBB203:
+ 607:../../../os/rt/include/chschd.h **** 
+ 1096               		.loc 2 607 0
+ 1097 007a 8081      		ld r24,Z
+ 1098 007c 9181      		ldd r25,Z+1
+ 1099               	.LVL82:
+ 609:../../../os/rt/include/chschd.h ****   tqp->next->queue.prev = (thread_t *)tqp;
+ 1100               		.loc 2 609 0
+ 1101 007e DC01      		movw r26,r24
+ 1102 0080 2D91      		ld r18,X+
+ 1103 0082 3C91      		ld r19,X
+ 1104 0084 3183      		std Z+1,r19
+ 1105 0086 2083      		st Z,r18
+ 610:../../../os/rt/include/chschd.h **** 
+ 1106               		.loc 2 610 0
+ 1107 0088 D901      		movw r26,r18
+ 1108 008a 1396      		adiw r26,2+1
+ 1109 008c FC93      		st X,r31
+ 1110 008e EE93      		st -X,r30
+ 1111 0090 1297      		sbiw r26,2
+ 1112               	.LVL83:
+ 1113               	.LBE203:
+ 1114               	.LBE202:
+ 391:../../../os/rt/src/chsem.c ****   }
+ 1115               		.loc 1 391 0
+ 1116 0092 0E94 0000 		call chSchReadyI
+ 1117               	.LVL84:
+ 1118 0096 FC01      		movw r30,r24
+ 1119 0098 118A      		std Z+17,__zero_reg__
+ 1120 009a 108A      		std Z+16,__zero_reg__
+ 1121 009c 00C0      		rjmp .L44
+ 1122               		.cfi_endproc
+ 1123               	.LFE158:
+ 1125               		.text
+ 1126               	.Letext0:
+ 1127               		.file 4 "/usr/lib/avr/include/stdint.h"
+ 1128               		.file 5 "../../../os/common/ports/AVR/compilers/GCC/chtypes.h"
+ 1129               		.file 6 "../../../os/rt/include/chsystypes.h"
+ 1130               		.file 7 "../../../os/rt/include/chtime.h"
+ 1131               		.file 8 "../../../os/rt/include/chsem.h"
+ 1132               		.file 9 "../../../os/rt/include/chmtx.h"
+ 1133               		.file 10 "../../../os/rt/include/chsys.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 chsem.c
+     /tmp/cc6ksAsu.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cc6ksAsu.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cc6ksAsu.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cc6ksAsu.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cc6ksAsu.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cc6ksAsu.s:13     .text.chSemObjectInit:0000000000000000 chSemObjectInit
+     /tmp/cc6ksAsu.s:46     .text.chSemResetI:0000000000000000 chSemResetI
+     /tmp/cc6ksAsu.s:141    .text.chSemReset:0000000000000000 chSemReset
+     /tmp/cc6ksAsu.s:190    .text.chSemWait:0000000000000000 chSemWait
+     /tmp/cc6ksAsu.s:330    .text.chSemWaitS:0000000000000000 chSemWaitS
+     /tmp/cc6ksAsu.s:421    .text.chSemWaitTimeout:0000000000000000 chSemWaitTimeout
+     /tmp/cc6ksAsu.s:574    .text.chSemWaitTimeoutS:0000000000000000 chSemWaitTimeoutS
+     /tmp/cc6ksAsu.s:675    .text.chSemSignal:0000000000000000 chSemSignal
+     /tmp/cc6ksAsu.s:782    .text.chSemSignalI:0000000000000000 chSemSignalI
+     /tmp/cc6ksAsu.s:853    .text.chSemAddCounterI:0000000000000000 chSemAddCounterI
+     /tmp/cc6ksAsu.s:942    .text.chSemSignalWait:0000000000000000 chSemSignalWait
+
+UNDEFINED SYMBOLS
+chSchReadyI
+chSchRescheduleS
+ch
+chSchGoSleepS
+chSchGoSleepTimeoutS
+chSchWakeupS

@@ -42,26 +42,27 @@ static THD_FUNCTION(Thread1, arg) {
   sysinterval_t TIMEOUT=500;
   msg_t debug;
   int errors;
-  bool gce = FALSE;
+  bool gce = TRUE;
    for (uint8_t n = 0; n < txbytes ; n++){
         txbuffer[n]=n+10;
         chprintf((BaseSequentialStream *) &SD1, "Slave txbuffer[%d]=%d ",n ,txbuffer[n]);
          }
   (void)arg;
-  chRegSetThreadName("SlaveRecieveI2C");
-  //i2cSlaveConfigure( slaveaddr, txbuffer, txbytes, rxbuf, rxbytes, TIMEOUT);
-  while (true) {
+  //chRegSetThreadName("SlaveRecieveI2C");
+  chRegSetThreadName("SlaveReplyI2C");
+    while (true) {
 
     chprintf((BaseSequentialStream *) &SD1, "\r\n");
-    chprintf((BaseSequentialStream *) &SD1, "\r\n iniciando processo de recebimento do slave\r\n");  
+    chprintf((BaseSequentialStream *) &SD1, "\r\n iniciando processo de envio do slave\r\n");  
     //chThdSleepMilliseconds(500);
     /*configurar endereço do slave */
     
     i2cMatchAddress(&I2CD1, slaveaddr); 
-
+    /*testar gce false e gce true*/
     errors=i2cGetErrors(&I2CD1);
     chprintf((BaseSequentialStream *) &SD1, "errors = %d\r\n",errors);
-    debug=i2cSlaveReceive(&I2CD1, rxbuffer, rxbytes, gce, TIMEOUT); 
+    //debug=i2cSlaveReceive(&I2CD1, rxbuffer, rxbytes, gce, TIMEOUT); 
+    debug = i2cSlaveReply(&I2CD1, txbuffer, txbytes, rxbuffer, rxbytes, TIMEOUT);
     //debug = i2cSlaveReply(&I2CD1, txbuffer, txbytes, rxbuffer, rxbytes, TIMEOUT);
     chprintf((BaseSequentialStream *) &SD1, "debug slave API = %d\r\n",debug);
     chprintf((BaseSequentialStream *) &SD1, "final da execucao da thread\r\n");

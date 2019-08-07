@@ -115,8 +115,8 @@ OSAL_IRQ_HANDLER(TWI_vect) {
 
   /*slave recieve status*/
   case TWI_SLAVE_RX_ADDR_ACK: /*ref $60*/
-  /*review cases where state 0x60 should return nack through an if statment
-  same decision making on the 0x68 and 0x70)*/
+  case TWI_SLAVE_RX_GCA:           /*ref 0x70*/
+  case TWI_SLAVE_RX_POST_ARB_LOST: /*ref 0x68*/
     if (i2cp->rxidx == (i2cp->rxbytes -1)){
       TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
     }
@@ -124,30 +124,19 @@ OSAL_IRQ_HANDLER(TWI_vect) {
       TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN)  | (1 << TWEA));
     }
   break;
-  case TWI_SLAVE_RX_POST_ARB_LOST: /*ref $68*/
-  i2cp->rxbuf[i2cp->rxidx++] = TWDR;
-    if (i2cp->rxidx==(i2cp->rxbytes -1)){
-      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
-    }
-    else{
-      TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
-    }
-  break;  
-  case TWI_SLAVE_RX_DATA_ACK: /*ref $80*/
-  /*Read the data from the bus to the buffer rxbuf recieves the byte from TWDR*/
+  case TWI_SLAVE_RX_DATA_ACK:      /*ref x80*/
+  case TWI_SLAVE_RX_GCA_DATA_ACK:  /*ref x90*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
-  /*send nack master move to $88*/
-  if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
+    if (i2cp->rxidx == (i2cp->rxbytes - 1)) {
     TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN));
   }
-  /*buffer can recieve more bytes stay in $80*/
   else {
     TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
   }
   break;
-  case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/
+  case TWI_SLAVE_RX_DATA_NACK: /*ref $88*/ /*nack should be returned*/
+  case TWI_SLAVE_RX_GCA_DATA_NACK: /*ref 0x98*/
   i2cp->rxbuf[i2cp->rxidx++] = TWDR; 
-
    /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1<< TWIE) | (1<<TWEN) | (1<<TWEA));
@@ -192,15 +181,10 @@ OSAL_IRQ_HANDLER(TWI_vect) {
   }
   break;
   case TWI_SLAVE_TX_DATA_NACK: /*ref $C0*/
+  case TWI_SLAVE_TX_LAST_DATA_ACK: /*ref $C8*/ /*test TWEA*/
   /*implement decision making past communication with flags*/
    /*default to retain addr and not send start*/
    TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEN) | (1 << TWEA));
-   _i2c_wakeup_isr(i2cp);
-  break;
-  case TWI_SLAVE_TX_LAST_DATA_ACK: /*ref $C8*/
-  /*implement decision making past communication with flags*/
-   /*default to retain addr and not send start*/
-   TWCR = ((1 << TWINT) | (1 << TWIE) | (1 << TWEA) | (1 << TWEN));
    _i2c_wakeup_isr(i2cp);
    break;
   case TWI_ARBITRATION_LOST:
@@ -369,16 +353,16 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 */
 msg_t i2c_lld_matchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   if (i2cadr != 0 ){ 
-    uint8_t adr = i2cadr << 1;                                     /*by pass General Call ADDR, add mechanism to implement GC*/
-    i2cp->addr = adr;                                               /*Implement slave addr*/
+    uint8_t adr = i2cadr << 1;                                     /* General Call ADDR @ slave recieve*/
+    i2cp->addr = adr;                                               
     TWAR = adr;
     return I2C_NO_ERROR; 
     }
   else
-    return I2C_NOADDRESS; /*To Do: develop error detection mechanism*/
-    //return i2c_lld_get_slaveErrors(i2cp);  /*find a ERROR*/
+    return I2C_NOADDRESS; /*To Do: test error return*/
+   
 }
-/*stop respond to certain addr*/
+
 
 msg_t i2c_ld_unmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr){
   
@@ -401,7 +385,6 @@ void i2c_lld_unmatchAll(I2CDriver *i2cp){
  * @notapi
  */
 
-/*Usar as funcoes do mestre como referência e ver diferenças*/
 msg_t  i2c_lld_slaveReceive(I2CDriver *i2cp, uint8_t *rxbuf, size_t rxbytes, bool gce,
                                       systime_t timeout){
   if (gce) {
@@ -416,9 +399,7 @@ msg_t  i2c_lld_slaveReceive(I2CDriver *i2cp, uint8_t *rxbuf, size_t rxbytes, boo
   i2cp->rxidx = 0;
 
   TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA)); 
-  //osal thread  suspend
  return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);
-  //acordar thread no final da maquina de estados (osal recapthread)
   }
 
 msg_t  i2c_lld_slaveReply(I2CDriver *i2cp, const uint8_t *txbuf, size_t txbytes,
@@ -431,12 +412,11 @@ msg_t  i2c_lld_slaveReply(I2CDriver *i2cp, const uint8_t *txbuf, size_t txbytes,
   i2cp->rxbuf = NULL;
   i2cp->rxbytes = 0;
   i2cp->rxidx = 0;
+
   TWCR = ((1 << TWINT) | (1 << TWEN) | (1 << TWIE) | (1<< TWEA));
+
   return osalThreadSuspendTimeoutS(&i2cp->thread, TIME_INFINITE);    
   }
-
-
-
 /** @} */
 
 #endif 

@@ -72,7 +72,7 @@
 /**@brief  general call address received ACK has been returned */
 #define TWI_SLAVE_RX_GCA           0x70
 
-/**@brief  Arbitration lost in SLA+R/W as master; GCA recieved  */
+/**@brief  Arbitration lost in SLA+W as master; GCA recieved  */
 #define TWI_SLAVE_RX_GCA_POST_ARB_LOST      0x78
 
 /**@brief   previously addressed with own SLA+W data recieved ACK */
@@ -219,7 +219,6 @@ struct I2CDriver {
    */
   size_t                    rxidx;
 
-  bool                       GCE_flag;
 };
 
 /**

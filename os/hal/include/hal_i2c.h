@@ -49,6 +49,8 @@
                                                 reception.                  */
 #define I2C_TIMEOUT                0x20    /**< @brief Hardware timeout.    */
 #define I2C_SMB_ALERT              0x40    /**< @brief SMBus Alert.         */
+#define I2C_NOADDRESS              0x50    /**< @brief SlaveAPI without setting TWAR*/
+#define I2C_UNMATCHFAIL            0X60    /**< @brief Failed to unmatch Address */
 /** @} */
 
 /*===========================================================================*/

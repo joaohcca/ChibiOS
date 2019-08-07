@@ -43,6 +43,11 @@
 
 #include <hal_i2c.h>
 
+/*===========================================================================*/
+/* Driver constants.                                                         */
+/*===========================================================================*/
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -97,106 +102,6 @@ void  i2cUnmatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr);
 void  i2cUnmatchAll(I2CDriver *i2cp);
 
 
-/**
- * @brief   Configure to respond to messages directed to the given i2cadr
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] i2cadr    I2C bus address
- *                      - @a 0 matches "all call"
- *                      .
- * @return              non-zero implies failure.
- *
- * @details  Identical to i2cMatchAddress(), but called from interrupt context
- *
- * @api
- */
-static inline msg_t
-  i2cMatchAddressI(I2CDriver *i2cp, i2caddr_t  i2cadr)
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_matchAddress(i2cp, i2cadr);
-}
-
-
-/**
- * @brief   Configure to ignore messages directed to the given i2cadr
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] i2cadr    I2C bus address
- *                      - @a 0 matches "all call"
- *                      .
- * @details Identical to i2cUnmatchAddress(), but called from interrupt context
- *
- * @api
- */
-static inline void
-  i2cUnmatchAddressI(I2CDriver *i2cp, i2caddr_t  i2cadr)
-{
-  osalDbgCheck(i2cp != NULL);
-  i2c_lld_unmatchAddress(i2cp, i2cadr);
-}
-
-
-/**
- * @brief   Configure to ignore all messages
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- *
- * @details Identical to i2cUnmatchAll(), but called from interrupt context
- *
- * @api
- */
-static inline void
-  i2cUnmatchAllI(I2CDriver *i2cp)
-/*
-  Notes:
-      Must be called from interrupt context
-      Does not affect the processing of any message currently being received
-*/
-{
-  osalDbgCheck(i2cp != NULL);
-  i2c_lld_unmatchAll(i2cp);
-}
-
-
-/*  I2C Bus activity timeout configuration  */
-
-/**
- * @brief   return maximum number of ticks a slave bus transaction may last
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- *
- * @return              maximum number of ticks a slave bus transaction my last
- *
- * @details initialized to TIME_INFINITE (disabling slave mode bus timeouts)
- *
- * @api
- */
-static inline
-  systime_t i2cSlaveTimeout(I2CDriver *i2cp)
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_get_slaveTimeout(i2cp);
-}
-
-
-/**
- * @brief   set the maximum number of ticks a slave bus transaction may last
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] ticks     maximum number of ticks a slave bus transaction my last
- *                      - @a TIME_INFINITE disables slave mode bus timeouts
- *                      - @a TIME_IMMEDIATE is invalid
- *                      .
- *
- * @api
- */
-static inline
-  void i2cSlaveSetTimeout(I2CDriver *i2cp, systime_t ticks)
-{
-  osalDbgCheck(i2cp != NULL && ticks != TIME_IMMEDIATE);
-  i2c_lld_set_slaveTimeout(i2cp, ticks);
-}
 
 
 /* bus transaction attributes */
@@ -210,47 +115,12 @@ static inline
  *
  * @api
  */
-static inline
+/*static inline
   i2cflags_t i2cSlaveErrors(I2CDriver *i2cp)
 {
   osalDbgCheck(i2cp != NULL);
   return i2c_lld_get_slaveErrors(i2cp);
-}
-
-/**
- * @brief   return number of bytes transferred during this slave transaction
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- *
- * @return              number of bytes actually transferred on the bus
- *
- * @api
- */
-static inline
-  size_t i2cSlaveBytes(I2CDriver *i2cp)
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_get_slaveBytes(i2cp);
-}
-
-/**
- * @brief   return i2c address to which this message was targetted
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- *
- * @return              i2c address to which this message was targetted
- *
- * @details             The address returns will be one of those
- *                      specified earlier as an argument to i2cMatchAddress()
- *
- * @api
- */
-static inline
-  i2caddr_t i2cSlaveTargetAdr(I2CDriver *i2cp)
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_get_slaveTargetAdr(i2cp);
-}
+}*/
 
 
 /*
@@ -286,141 +156,14 @@ static inline
   Note that Receive and Reply processing is initially "locked".
 */
 
-/**
- * @brief   Configure callbacks & buffers for message reception & query reply
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- *
- * @details             Must be called from a thread
- *                      Call i2cMatchAddress() after this to start processing
- *     Enabling match addresses before installing handler callbacks can
- *     result in locking the I2C bus when a master accesses those
- *     unconfigured slave addresses
- *
- * @api
- */
-void i2cSlaveConfigure(I2CDriver *i2cp,
-                   const I2CSlaveMsg *rxMsg, const I2CSlaveMsg *replyMsg);
+msg_t i2cSlaveReceive(I2CDriver *i2cp, uint8_t *rxbuf, size_t rxbytes, bool gce, sysinterval_t timeout);
 
 
-/**
- * @brief   Configure callbacks & buffers for message reception
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- *
- * @details             Must be called from a thread
- *                      Call i2cMatchAddress() after this to start processing
- *     Enabling match addresses before installing handler callbacks can
- *     result in locking the I2C bus when a master accesses those
- *     unconfigured slave addresses
- *
- * @api
- */
-msg_t i2cSlaveReceive(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
-
-/**
- * @brief   return @p I2CSlaveMsg for processing received messages
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @returns             @p I2CSlaveMsg struct for processing subsequent messages
- *
- * @api
- */
-static inline
-  const I2CSlaveMsg *i2cSlaveReceiveMsg(I2CDriver *i2cp)
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_get_slaveReceive(i2cp);
-}
-
-/**
- * @brief   Configure callbacks & buffers for query reply
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent queries
- *
- * @details             Must be called from a thread
- *                      Call i2cMatchAddress() after this to start processing
- *     Enabling match addresses before installing handler callbacks can
- *     result in locking the I2C bus when a master accesses those
- *     unconfigured slave addresses
- *
- * @api
- */
-msg_t i2cSlaveReply(I2CDriver *i2cp, i2caddr_t addr, const uint8_t *txbuf, size_t txbytes,
+msg_t i2cSlaveReply(I2CDriver *i2cp, const uint8_t *txbuf, size_t txbytes,
                                       uint8_t *rxbuf, size_t rxbytes, sysinterval_t timeout);
 
 
-/**
- * @brief   return @p I2CSlaveMsg for processing received messages
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @returns             @p I2CSlaveMsg struct for processing subsequent messages
- *
- * @api
- */
-static inline
-  const I2CSlaveMsg *i2cSlaveReplyMsg(I2CDriver *i2cp)
-/*
-  processing descriptor for the next reply message
-*/
-{
-  osalDbgCheck(i2cp != NULL);
-  return i2c_lld_get_slaveReply(i2cp);
-}
 
-/**
- * @brief   Configure callbacks & buffers for message reception
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] rxMsg     @p I2CSlaveMsg struct for processing subsequent messages
- *
- * @details             Must be called from an interrupt context
- *
- * @api
- */
-static inline void
-  i2cSlaveReceiveI(I2CDriver *i2cp, i2caddr_t addr,
-                                      const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes,
-                                      systime_t timeout)
-{
-  osalDbgCheck(i2cp != NULL);
-  i2c_lld_slaveReceive(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
-}
-
-/**
- * @brief   Configure callbacks & buffers for query reply
- *
- * @param[in] i2cp      pointer to the @p I2CDriver object
- * @param[in] replyMsg  @p I2CSlaveMsg struct for processing subsequent messages
- *
- * @details             Must be called from an interrupt context
- *
- * @api
- */
-static inline void
-  i2cSlaveReplyI(I2CDriver *i2cp, i2caddr_t addr,
-                                      const uint8_t *txbuf, size_t txbytes,
-                                      uint8_t *rxbuf, size_t rxbytes,
-                                      systime_t timeout)
-/*
-  Prepare to reply to I2C read requests from bus masters
-  according to the replyMsg configuration.
-
-  Notes:
-      Must be called from interrupt context
-      Does not affect the processing of any message reply being sent
-*/
-{
-   osalDbgCheck(i2cp != NULL );
-   i2c_lld_slaveReply(i2cp,  addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
-}
 
 #ifdef __cplusplus
 }
